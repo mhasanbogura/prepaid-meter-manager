@@ -63,11 +63,15 @@ function attr(html, re) {
 
 function parseHtml(html) {
   const start = html.indexOf('id="con_info_div"');
+  if (start < 0) {
+    return { info: {}, history: [] };
+  }
   let end = html.indexOf('consumerRechargeData', start);
   if (end < 0) end = html.indexOf('arrear_notice_div', start);
   if (end < 0) end = html.length;
-  const seg = start >= 0 ? html.slice(start, end) : html;
-  const inputs = [...seg.matchAll(/<input[^>]*value="([^"]*)"/g)].map(m => m[1]);
+  const seg = html.slice(start, end);
+  // Only extract readonly inputs (actual customer data fields)
+  const inputs = [...seg.matchAll(/<input[^>]*readonly[^>]*value="([^"]*)"/g)].map(m => m[1]);
   const take = i => (inputs[i] || '').trim();
   const info = {
     name: take(0),
@@ -127,7 +131,7 @@ async function nescoLookup(cust) {
   });
   if (post.status !== 200) throw new Error('nesco portal http ' + post.status);
   const { info, history } = parseHtml(post.body.toString('utf8'));
-  if (!info.consumerNo && !info.name) throw new Error('NESCO returned no customer data');
+  if (!info.consumerNo && !info.name && !info.meterNo) throw new Error('NESCO returned no customer data. The portal may have changed or blocked this request.');
   return {
     info,
     history: history.map(h => ({
