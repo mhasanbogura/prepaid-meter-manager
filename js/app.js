@@ -513,26 +513,23 @@ async function uploadMetersTxt(file) {
       } else { failed++; continue; }
       if (prov !== 'desco' && prov !== 'nesco') { failed++; continue; }
       if (state.meters.some(m => m.consumerNo === num || m.accountNo === num || m.meterNo === num)) { skipped++; continue; }
-      try {
-        let meter;
-        if (prov === 'nesco') {
-          if (!/^\d{8,11}$/.test(num)) { failed++; continue; }
-          const r = await nescoQuery(num);
-          if (!r.ok) throw new Error(r.error);
-          meter = { id: 'm' + Date.now() + added, provider: 'nesco', consumerNo: num, nickname: nickname || r.info?.name || '', info: r.info, history: r.history || [], balance: null, readingTime: new Date().toISOString(), updatedAt: null, err: null, loading: true };
-        } else {
-          if (!/^\d{8,12}$/.test(num)) { failed++; continue; }
-          const isAccount = num.length === 8;
-          const probe = await probeSystemType(isAccount ? num : undefined, isAccount ? undefined : num);
-          if (!probe) { failed++; continue; }
-          meter = { id: 'm' + Date.now() + added, provider: 'desco', sys: probe.sys, accountNo: probe.info.accountNo, meterNo: probe.info.meterNo, nickname: nickname || probe.info?.customerName || '', info: probe.info, balance: null, readingTime: null, updatedAt: null, err: null, loading: true };
-        }
-        state.meters.push(meter); added++;
-        refreshMeter(meter, { silent: true });
-      } catch (e) { console.error('Upload add error:', line, e); failed++; }
+      if (prov === 'nesco' && !/^\d{8,11}$/.test(num)) { failed++; continue; }
+      if (prov === 'desco' && !/^\d{8,12}$/.test(num)) { failed++; continue; }
+      const isAccount = num.length === 8;
+      state.meters.push({
+        id: 'm' + Date.now() + added,
+        provider: prov,
+        consumerNo: prov === 'nesco' ? num : undefined,
+        accountNo: prov === 'desco' && isAccount ? num : undefined,
+        meterNo: prov === 'desco' && !isAccount ? num : undefined,
+        nickname,
+        balance: null, readingTime: null, updatedAt: null, err: null, loading: true
+      });
+      added++;
     }
     saveMeters(); renderHome();
-    toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}`);
+    toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}. Updating…`);
+    refreshAllMeters().then(() => renderHome());
   } catch (e) { toast('Error reading file: ' + e.message, true); }
 }
 
@@ -984,7 +981,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.27 (build 84)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.30 (build 93)</span>
       </div>`;
     return;
   }
@@ -1030,7 +1027,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.27 (build 84)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.30 (build 93)</span>
     </div>
   `;
 }
