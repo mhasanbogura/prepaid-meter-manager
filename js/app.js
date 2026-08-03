@@ -544,8 +544,8 @@ function showImportExport() {
   openDialog('Import / Export', `
     <textarea id="ieText" style="width:100%;min-height:120px;font-family:monospace;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical">${esc(txt)}</textarea>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
-      <button class="btn secondary" onclick="ieExport()">Export to file</button>
-      <button class="btn secondary" onclick="ieImport()">Import from file</button>
+      <button class="btn secondary" onclick="ieExport()">Export file</button>
+      <button class="btn secondary" onclick="ieImport()">Import file</button>
       <button class="btn secondary" onclick="navigator.clipboard.writeText($('#ieText').value).then(() => toast('Copied')).catch(()=>{})">Copy</button>
       <button class="btn secondary" onclick="importMetersFromText($('#ieText').value);closeDialog()">Save</button>
     </div>`, []);
@@ -1018,7 +1018,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.37 (build 114)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.38 (build 117)</span>
       </div>`;
     return;
   }
@@ -1064,7 +1064,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.37 (build 114)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.38 (build 117)</span>
     </div>
   `;
 }
