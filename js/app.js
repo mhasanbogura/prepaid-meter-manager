@@ -143,7 +143,7 @@ const I18N = {
 /* ================= state ================= */
 const LS_METERS = 'prepaidpro.meters.v1';
 const LS_SETTINGS = 'prepaidpro.settings.v1';
-const MAX_METERS = 5;
+const MAX_METERS = Infinity;
 const LOW_BALANCE = 200;
 const WHATSAPP = 'https://wa.me/8801721665453';
 const DESCO = 'https://prepaid.desco.org.bd';
@@ -956,7 +956,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.19 (build 60)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.20 (build 63)</span>
       </div>`;
     return;
   }
@@ -1002,7 +1002,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.19 (build 60)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.20 (build 63)</span>
     </div>
   `;
 }
