@@ -494,7 +494,6 @@ async function uploadMetersTxt(file) {
     if (!lines.length) { toast('No valid lines found in file.', true); return; }
     let added = 0, skipped = 0, failed = 0;
     for (const line of lines) {
-      if (state.meters.length >= MAX_METERS) { skipped++; continue; }
       const parts = line.split(/\s+/);
       let nickname = '', prov = '', num = '';
       if (parts.length >= 3) {
@@ -985,7 +984,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.26 (build 81)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.27 (build 84)</span>
       </div>`;
     return;
   }
@@ -1031,7 +1030,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.26 (build 81)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.27 (build 84)</span>
     </div>
   `;
 }
