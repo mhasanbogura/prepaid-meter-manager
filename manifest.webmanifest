@@ -1,0 +1,18 @@
+{
+  "name": "Meter Manager",
+  "short_name": "Prepaid Meter Mgr",
+  "description": "Track your DESCO prepaid electricity meter: live balance, daily & monthly consumption, recharge history and quick recharge via ekPay.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b3d91",
+  "theme_color": "#0b3d91",
+  "lang": "en",
+  "categories": ["utilities", "finance"],
+  "icons": [
+    { "src": "icons/icon-electricity.svg", "type": "image/svg+xml" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

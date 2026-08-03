@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Meter Manager – Bangladesh prepaid electricity meter manager. Check DESCO prepaid meter balance, daily/monthly consumption, recharge history and recharge via ekPay.">
+    <meta name="theme-color" content="#0b3d91">
+    <title>Meter Manager</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-317.png">
+<link rel="apple-touch-icon" href="icons/icon-317.png">
+<link rel="preconnect" href="https://prepaid.desco.org.bd">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app" class="app">
+
+  <header class="topbar">
+    <div class="brand" id="btnBrand" style="cursor:pointer" title="Refresh">
+      <img src="icons/icon-electricity.svg" alt="" class="brand-logo">
+      <div class="brand-text">
+        <strong data-i18n="app.name">Meter Manager</strong>
+      </div>
+    </div>
+    <button id="btnRefreshAll" class="icon-btn" aria-label="Refresh" title="Refresh all">
+      <svg id="refreshIcon" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    </button>
+    <button id="btnClearAll" class="icon-btn" aria-label="Remove all meters" title="Remove all meters &amp; reset">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+    </button>
+  </header>
+
+  <main id="view-home" class="view">
+    <div id="homeContent" class="home-content"></div>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <div id="dlg" class="dialog-wrap" hidden>
+    <div class="dialog">
+      <h3 id="dlgTitle"></h3>
+      <div id="dlgBody"></div>
+      <div id="dlgActions" class="dialog-actions"></div>
+    </div>
+  </div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

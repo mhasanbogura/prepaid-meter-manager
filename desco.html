@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91">
+<title>DESCO Meter</title>
+<link rel="icon" type="image/png" href="icons/icon-317.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app" class="app">
+  <header class="topbar">
+    <a href="index.html" class="brand" style="text-decoration:none;color:inherit">
+      <img src="icons/icon-electricity.svg" alt="" class="brand-logo">
+      <div class="brand-text"><strong>Meter Manager</strong></div>
+    </a>
+  </header>
+  <main class="view">
+    <div id="root" class="home-content">
+      <div style="text-align:center;padding:60px 20px"><div class="spinner"></div><p style="margin-top:12px;color:var(--text-2);font-size:14px">Loading DESCO meter info…</p></div>
+    </div>
+  </main>
+</div>
+<script>
+'use strict';
+const DESCO = 'https://prepaid.desco.org.bd';
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmtBdt(n) { return '\u09F3' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+function fmtDate(s) { if (!s) return '–'; const d = new Date(s); if (isNaN(d)) return String(s); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+function todayStr(off = 0) { const d = new Date(); d.setDate(d.getDate() - off); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function getAccount() {
+  const m = location.pathname.match(/\/desco\.html\/(\d+)/);
+  if (m) return m[1];
+  const h = location.hash.replace(/^#/, '').match(/^(\d+)$/);
+  if (h) return h[1];
+  const q = new URLSearchParams(location.search).get('account');
+  if (q && /^\d+$/.test(q)) return q;
+  return null;
+}
+async function apiGet(url, params) {
+  const qs = new URLSearchParams(params).toString();
+  return await (await fetch(url + '?' + qs)).json();
+}
+async function probeSystemType(accountNo) {
+  const [a, b] = await Promise.allSettled([
+    apiGet(`${DESCO}/api/tkdes/customer/getCustomerInfo`, { accountNo }),
+    apiGet(`${DESCO}/api/unified/customer/getCustomerInfo`, { accountNo })
+  ]);
+  if (a.status === 'fulfilled' && a.value.code === 200 && a.value.data) return { sys: 'tkdes', info: a.value.data };
+  if (b.status === 'fulfilled' && b.value.code === 200 && b.value.data) return { sys: 'unified', info: b.value.data };
+  return null;
+}
+function kv(k, v) { return v ? `<tr><td style="color:var(--text-2)">${esc(k)}</td><td style="font-weight:600">${esc(String(v))}</td></tr>` : ''; }
+function descoTakaToKwh(taka) {
+  if (taka <= 0) return 0;
+  const tiers = [{ kwh: 75, rate: 6.18 }, { kwh: 125, rate: 8.50 }, { kwh: 100, rate: 9.10 }, { kwh: 100, rate: 9.62 }, { kwh: 200, rate: 15.01 }, { kwh: Infinity, rate: 17.75 }];
+  let remaining = taka, totalKwh = 0;
+  for (const tier of tiers) {
+    const tierCost = tier.kwh * tier.rate;
+    if (remaining < tierCost) { totalKwh += remaining / tier.rate; return Math.round(totalKwh * 100) / 100; }
+    totalKwh += tier.kwh;
+    remaining -= tierCost;
+  }
+  return Math.round(totalKwh * 100) / 100;
+}
+async function main() {
+  const root = document.getElementById('root');
+  const account = getAccount();
+  if (!account) { root.innerHTML = '<div style="text-align:center;padding:40px 20px"><h2 style="font-size:18px;margin-bottom:8px;color:var(--danger)">Invalid URL</h2><p style="color:var(--text-2)">Use: desco.html/{8-digit account}</p></div>'; return; }
+  document.title = `DESCO ${account} – Meter Info`;
+  try {
+    const probe = await probeSystemType(account);
+    if (!probe) throw new Error('Account not found in DESCO database.');
+    const sys = probe.sys, info = probe.info;
+    const params = { accountNo: info.accountNo || account, meterNo: info.meterNo || '' };
+    const [balR, histR] = await Promise.all([
+      apiGet(`${DESCO}/api/${sys}/customer/getBalance`, params).catch(() => ({ code: -1 })),
+      apiGet(`${DESCO}/api/${sys}/customer/getRechargeHistory`, Object.assign({}, params, { dateFrom: todayStr(364), dateTo: todayStr(0) })).catch(() => ({ code: -1, data: [] }))
+    ]);
+    const balance = (balR.code === 200 && balR.data && balR.data.balance != null) ? balR.data.balance : null;
+    const readingTime = balR.data?.readingTime || null;
+    const hist = (histR.code === 200 && Array.isArray(histR.data)) ? histR.data : [];
+    const low = balance !== null && balance < 200;
+    let avgDay = null;
+    if (hist.length && balance != null) {
+      let totalTaka = 0, earliest = null;
+      for (const r of hist) { totalTaka += Number(r.totalAmount) || 0; const d = (r.rechargeDate || '').slice(0,10); if (d && (!earliest || d < earliest)) earliest = d; }
+      if (earliest && totalTaka > 0) { const consumed = Math.max(0, totalTaka - balance); const days = Math.max(1, Math.round((Date.now() - new Date(earliest).getTime()) / 864e5)); avgDay = Math.round(consumed / days); }
+    }
+    const name = info.customerName || '';
+    root.innerHTML = `
+      <div class="page-head"><h2 style="font-size:19px">${esc(name)}</h2></div>
+      <div class="balance-hero">
+        <div class="bh-label"><span>Remaining balance</span><span>DESCO · ${esc(sys)}</span></div>
+        <div class="bh-amount"${low ? ' style="color:#ff6b6b"' : ''}>${balance === null ? '––' : fmtBdt(balance)}${low ? ' <span style="font-size:13px;font-weight:700;color:#ff6b6b">Low balance</span>' : ''}</div>
+        <div class="bh-meta">
+          <span>Meter: ${esc(info.meterNo || '–')}</span>
+          ${avgDay != null ? `<span>Average cost per day: ${fmtBdt(avgDay)}</span>` : ''}
+          <span>Last reading: ${readingTime ? fmtDate(readingTime) : '–'}</span>
+        </div>
+      </div>
+      <section class="card"><h3>Customer info</h3><table style="width:100%;font-size:14px">
+        ${kv('Name', info.customerName)}${kv('Account', info.accountNo)}${kv('Meter', info.meterNo)}${kv('Route', info.route)}
+        ${kv('Sanctioned load', info.sanctionedLoad)}${kv('Tariff', info.tariffSolution)}${kv('Phase', info.phaseType)}${kv('Status', info.status)}
+      </table></section>
+      ${(() => {
+        let totalTaka = 0, earliest = null;
+        for (const r of hist) { totalTaka += Number(r.totalAmount) || 0; const d = (r.rechargeDate || '').slice(0,10); if (d && (!earliest || d < earliest)) earliest = d; }
+        if (earliest && totalTaka > 0 && balance != null) {
+          const consumedTaka = Math.max(0, totalTaka - balance);
+          const daysDiff = Math.max(1, Math.round((Date.now() - new Date(earliest).getTime()) / 864e5));
+          const dailyT = consumedTaka / daysDiff;
+          const now = new Date();
+          const thisMT = Math.round(dailyT * now.getDate() * 100) / 100;
+          const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const lastDays = new Date(lm.getFullYear(), lm.getMonth() + 1, 0).getDate();
+          const lastMT = Math.round(dailyT * lastDays * 100) / 100;
+          return `<section class="card"><h3>Total use</h3><table class="list"><tbody>
+            <tr><td style="color:var(--text-2)">This month</td><td style="text-align:right"><strong>${fmtBdt(thisMT)}</strong></td><td style="text-align:right">${descoTakaToKwh(thisMT)} kWh</td></tr>
+            <tr><td style="color:var(--text-2)">Last month</td><td style="text-align:right"><strong>${fmtBdt(lastMT)}</strong></td><td style="text-align:right">${descoTakaToKwh(lastMT)} kWh</td></tr>
+          </tbody></table></section>`;
+        }
+        return '';
+      })()}
+      ${hist.length ? `<section class="card">
+        <h3>Recharge history</h3>
+        <div class="tbl-scroll"><table class="list"><thead><tr><th>Date</th><th>Token</th><th style="text-align:right">Total</th><th style="text-align:right">Energy</th><th style="text-align:right">VAT</th><th style="text-align:right">Rebate</th></tr></thead><tbody>
+        ${hist.slice(0,60).map(r => `<tr><td>${esc(fmtDate(r.rechargeDate))}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${esc(r.orderID)}</td><td style="text-align:right;font-weight:600">${fmtBdt(r.totalAmount)}</td><td style="text-align:right">${fmtBdt(r.energyAmount)}</td><td style="text-align:right">${fmtBdt(r.VAT)}</td><td style="text-align:right">${fmtBdt(r.rebate)}</td></tr>`).join('')}
+        </tbody></table></div></section>` : ''}
+    `;
+  } catch (e) {
+    root.innerHTML = `<div style="text-align:center;padding:40px 20px"><h2 style="font-size:18px;margin-bottom:8px;color:var(--danger)">Error</h2><p style="color:var(--text-2)">${esc(e.message)}</p></div>`;
+  }
+}
+main();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91">
+<title>NESCO Meter</title>
+<link rel="icon" type="image/png" href="icons/icon-317.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app" class="app">
+  <header class="topbar">
+    <a href="index.html" class="brand" style="text-decoration:none;color:inherit">
+      <img src="icons/icon-electricity.svg" alt="" class="brand-logo">
+      <div class="brand-text"><strong>Meter Manager</strong></div>
+    </a>
+  </header>
+  <main class="view">
+    <div id="root" class="home-content">
+      <div style="text-align:center;padding:60px 20px"><div class="spinner"></div><p style="margin-top:12px;color:var(--text-2);font-size:14px">Loading NESCO meter info…</p></div>
+    </div>
+  </main>
+</div>
+<script>
+'use strict';
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmtBdt(n) { return '\u09F3' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+function fmtDate(s) { if (!s) return '–'; const d = new Date(s); if (isNaN(d)) return String(s); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+function getConsumer() {
+  const m = location.pathname.match(/\/nesco\.html\/(\d+)/);
+  if (m) return m[1];
+  const h = location.hash.replace(/^#/, '').match(/^(\d+)$/);
+  if (h) return h[1];
+  const q = new URLSearchParams(location.search).get('account');
+  if (q && /^\d+$/.test(q)) return q;
+  return null;
+}
+function kv(k, v) { return v ? `<tr><td style="color:var(--text-2)">${esc(k)}</td><td style="font-weight:600">${esc(String(v))}</td></tr>` : ''; }
+async function main() {
+  const root = document.getElementById('root');
+  const consumer = getConsumer();
+  if (!consumer) { root.innerHTML = '<div style="text-align:center;padding:40px 20px"><h2 style="font-size:18px;margin-bottom:8px;color:var(--danger)">Invalid URL</h2><p style="color:var(--text-2)">Use: nesco.html/{consumer number}</p></div>'; return; }
+  document.title = `NESCO ${consumer} – Meter Info`;
+  let base = '/nesco';
+  try { const p = await fetch(base + '?probe=1'); if (!p.ok) throw 0; } catch {
+    base = 'https://prepaidmetermanager.up.railway.app/nesco';
+    try { const p = await fetch(base + '?probe=1'); if (!p.ok) throw 0; } catch {
+      const host = location.hostname || 'localhost';
+      base = 'http://' + host + ':3000/nesco';
+      try { const p = await fetch(base + '?probe=1'); if (!p.ok) throw 0; } catch {
+        root.innerHTML = '<div style="text-align:center;padding:40px 20px"><h2 style="font-size:18px;margin-bottom:8px;color:var(--danger)">NESCO proxy not running</h2><p style="color:var(--text-2)">Start the server with: node server.js</p></div>';
+        return;
+      }
+    }
+  }
+  try {
+    const r = await fetch(`${base}?cust=${encodeURIComponent(consumer)}`);
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'NESCO returned no data.');
+    const info = data.info;
+    const hist = data.history || [];
+    const balance = Number(info.balance) || null;
+    const low = balance !== null && balance < 200;
+    let avgDay = null;
+    if (hist.length && balance != null) {
+      let totalTaka = 0, earliest = null;
+      for (const r of hist) { totalTaka += Number(r.rechargeAmount) || 0; const d = (r.rechargeDate || '').replace(/(\d+)-(\w+)-(\d+).*/, '$1 $2 $3'); const dt = new Date(d); if (!isNaN(dt)) { const ds = dt.toISOString().slice(0,10); if (!earliest || ds < earliest) earliest = ds; } }
+      if (earliest && totalTaka > 0) { const consumed = Math.max(0, totalTaka - balance); const days = Math.max(1, Math.round((Date.now() - new Date(earliest).getTime()) / 864e5)); avgDay = Math.round(consumed / days); }
+    }
+    const name = info.name || '';
+    root.innerHTML = `
+      <div class="page-head"><h2 style="font-size:19px">${esc(name)}</h2></div>
+      <div class="balance-hero">
+        <div class="bh-label"><span>Remaining balance</span><span>NESCO</span></div>
+        <div class="bh-amount"${low ? ' style="color:#ff6b6b"' : ''}>${balance === null ? '––' : fmtBdt(balance)}${low ? ' <span style="font-size:13px;font-weight:700;color:#ff6b6b">Low balance</span>' : ''}</div>
+        <div class="bh-meta">
+          <span>Meter: ${esc(info.meterNo || '–')}</span>
+          ${avgDay != null ? `<span>Average cost per day: ${fmtBdt(avgDay)}</span>` : ''}
+          <span>Last reading: ${fmtDate(new Date().toISOString())}</span>
+        </div>
+      </div>
+      <section class="card"><h3>Customer info</h3><table style="width:100%;font-size:14px">
+        ${kv('Name', info.name)}${kv('Consumer', info.consumerNo)}${kv('Meter', info.meterNo)}
+        ${kv('Sanctioned load', info.sanctionedLoad)}${kv('Tariff', info.tariff)}${kv('Meter type', info.meterType)}${kv('Status', info.meterStatus)}
+        ${kv('Mobile', info.mobile)}${kv('Address', info.address)}${kv('Office', info.office)}${kv('Father/Husband', info.fatherOrHusband)}${kv('Feeder', info.feeder)}
+        ${kv('Install date', info.installDate)}${kv('Min. recharge', info.minimumRecharge)}
+      </table></section>
+      ${(() => {
+        if (hist.length && balance != null) {
+          let totalTaka = 0, totalUnit = 0, earliest = null;
+          for (const r of hist) {
+            totalTaka += Number(r.rechargeAmount) || 0;
+            totalUnit += Number(r.energyUnit) || 0;
+            const d = (r.rechargeDate || '').replace(/(\d+)-(\w+)-(\d+).*/, '$1 $2 $3');
+            const dt = new Date(d);
+            if (!isNaN(dt)) { const ds = dt.toISOString().slice(0,10); if (!earliest || ds < earliest) earliest = ds; }
+          }
+          if (earliest && totalTaka > 0) {
+            const consumedTaka = Math.max(0, totalTaka - balance);
+            const daysDiff = Math.max(1, Math.round((Date.now() - new Date(earliest).getTime()) / 864e5));
+            const dailyT = consumedTaka / daysDiff;
+            const now = new Date();
+            const thisMT = Math.round(dailyT * now.getDate() * 100) / 100;
+            const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const lastDays = new Date(lm.getFullYear(), lm.getMonth() + 1, 0).getDate();
+            const lastMT = Math.round(dailyT * lastDays * 100) / 100;
+            const dailyU = totalUnit / daysDiff;
+            const thisMU = Math.round(dailyU * now.getDate() * 100) / 100;
+            const lastMU = Math.round(dailyU * lastDays * 100) / 100;
+            return `<section class="card"><h3>Total use</h3><table class="list"><tbody>
+              <tr><td style="color:var(--text-2)">This month</td><td style="text-align:right"><strong>${fmtBdt(thisMT)}</strong></td><td style="text-align:right">${thisMU} kWh</td></tr>
+              <tr><td style="color:var(--text-2)">Last month</td><td style="text-align:right"><strong>${fmtBdt(lastMT)}</strong></td><td style="text-align:right">${lastMU} kWh</td></tr>
+            </tbody></table></section>`;
+          }
+        }
+        return '';
+      })()}
+      ${hist.length ? `<section class="card">
+        <h3>Recharge history</h3>
+        <div class="tbl-scroll"><table class="list"><thead><tr><th>Date</th><th>Token</th><th style="text-align:right">Total</th><th style="text-align:right">Energy</th><th style="text-align:right">VAT</th><th style="text-align:right">Unit</th></tr></thead><tbody>
+        ${hist.slice(0,60).map(r => `<tr><td>${esc(fmtDate(r.rechargeDate))}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${(r.tokenNo || r.orderID || r.orderId || '').replace(/,?\s*&lt;br&gt;\s*/g, ', ').replace(/,\s*$/, '')}</td><td style="text-align:right;font-weight:600">${fmtBdt(r.rechargeAmount)}</td><td style="text-align:right">${fmtBdt(r.electricityAmount)}</td><td style="text-align:right">${fmtBdt(r.vat)}</td><td style="text-align:right">${esc(String(r.energyUnit))} kWh</td></tr>`).join('')}
+        </tbody></table></div></section>` : ''}
+    `;
+  } catch (e) {
+    root.innerHTML = `<div style="text-align:center;padding:40px 20px"><h2 style="font-size:18px;margin-bottom:8px;color:var(--danger)">Error</h2><p style="color:var(--text-2)">${esc(e.message)}</p></div>`;
+  }
+}
+main();
+</script>
+</body>
+</html>
