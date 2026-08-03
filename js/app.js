@@ -489,52 +489,85 @@ function showAddMeter() {
   }
 }
 
-async function uploadMetersTxt(file) {
-  if (!file) { toast('No file selected.', true); return; }
-  try {
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-    if (!lines.length) { toast('No valid lines found in file.', true); return; }
-    let added = 0, skipped = 0, failed = 0;
-    for (const line of lines) {
-      const parts = line.split(/\s+/);
-      let nickname = '', prov = '', num = '';
-      if (parts.length >= 3) {
-        prov = parts[parts.length - 2].toLowerCase();
-        num = parts[parts.length - 1].replace(/[\s\-]/g, '');
-        if (prov !== 'desco' && prov !== 'nesco') {
-          prov = parts[0].toLowerCase();
-          num = parts[1].replace(/[\s\-]/g, '');
-          nickname = parts.slice(2).join(' ');
-        } else {
-          nickname = parts.slice(0, parts.length - 2).join(' ');
-        }
-      } else if (parts.length === 2) {
+function exportMetersTxt() {
+  return state.meters.map(m => {
+    const num = m.accountNo || m.meterNo || m.consumerNo || '';
+    const prov = m.provider || '';
+    const nick = m.nickname || '';
+    return nick ? `${nick} ${prov} ${num}` : `${prov} ${num}`;
+  }).join('\n');
+}
+function importMetersFromText(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  if (!lines.length) { toast('No valid lines found.', true); return; }
+  let added = 0, skipped = 0, failed = 0;
+  for (const line of lines) {
+    const parts = line.split(/\s+/);
+    let nickname = '', prov = '', num = '';
+    if (parts.length >= 3) {
+      prov = parts[parts.length - 2].toLowerCase();
+      num = parts[parts.length - 1].replace(/[\s\-]/g, '');
+      if (prov !== 'desco' && prov !== 'nesco') {
         prov = parts[0].toLowerCase();
         num = parts[1].replace(/[\s\-]/g, '');
-        nickname = '';
-      } else { failed++; continue; }
-      if (prov !== 'desco' && prov !== 'nesco') { failed++; continue; }
-      if (state.meters.some(m => m.consumerNo === num || m.accountNo === num || m.meterNo === num)) { skipped++; continue; }
-      if (prov === 'nesco' && !/^\d{8,11}$/.test(num)) { failed++; continue; }
-      if (prov === 'desco' && !/^\d{8,12}$/.test(num)) { failed++; continue; }
-      const isAccount = num.length === 8;
-      state.meters.push({
-        id: 'm' + Date.now() + added,
-        provider: prov,
-        consumerNo: prov === 'nesco' ? num : undefined,
-        accountNo: prov === 'desco' && isAccount ? num : undefined,
-        meterNo: prov === 'desco' && !isAccount ? num : undefined,
-        nickname,
-        balance: null, readingTime: null, updatedAt: null, err: null, loading: true
-      });
-      added++;
-    }
-    saveMeters(); renderHome();
-    toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}. Updating…`);
-    refreshAllMeters().then(() => renderHome());
-  } catch (e) { toast('Error reading file: ' + e.message, true); }
+        nickname = parts.slice(2).join(' ');
+      } else {
+        nickname = parts.slice(0, parts.length - 2).join(' ');
+      }
+    } else if (parts.length === 2) {
+      prov = parts[0].toLowerCase();
+      num = parts[1].replace(/[\s\-]/g, '');
+      nickname = '';
+    } else { failed++; continue; }
+    if (prov !== 'desco' && prov !== 'nesco') { failed++; continue; }
+    if (state.meters.some(m => m.consumerNo === num || m.accountNo === num || m.meterNo === num)) { skipped++; continue; }
+    if (prov === 'nesco' && !/^\d{8,11}$/.test(num)) { failed++; continue; }
+    if (prov === 'desco' && !/^\d{8,12}$/.test(num)) { failed++; continue; }
+    const isAccount = num.length === 8;
+    state.meters.push({
+      id: 'm' + Date.now() + added,
+      provider: prov,
+      consumerNo: prov === 'nesco' ? num : undefined,
+      accountNo: prov === 'desco' && isAccount ? num : undefined,
+      meterNo: prov === 'desco' && !isAccount ? num : undefined,
+      nickname,
+      balance: null, readingTime: null, updatedAt: null, err: null, loading: true
+    });
+    added++;
+  }
+  saveMeters(); renderHome();
+  toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}. Updating…`);
+  refreshAllMeters().then(() => renderHome());
 }
+function showImportExport() {
+  const txt = exportMetersTxt();
+  openDialog('Import / Export', `
+    <textarea id="ieText" style="width:100%;min-height:120px;font-family:monospace;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical">${esc(txt)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn secondary" onclick="ieExport()">Export to file</button>
+      <button class="btn secondary" onclick="ieImport()">Import from file</button>
+    </div>`, [
+    { key: 'copy', label: 'Copy', cls: 'secondary', fn: () => { navigator.clipboard.writeText($('#ieText').value).then(() => toast('Copied')).catch(() => {}); } },
+    { key: 'cancel', label: 'Cancel', cls: 'secondary', fn: closeDialog },
+    { key: 'save', label: 'Save', cls: '', fn: () => { importMetersFromText($('#ieText').value); closeDialog(); } }
+  ]);
+}
+window.ieExport = () => {
+  const text = $('#ieText').value;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'meters.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('File exported');
+};
+window.ieImport = () => {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.txt,text/plain';
+  inp.onchange = async () => { const f = inp.files[0]; if (f) { const t = await f.text(); $('#ieText').value = t; } };
+  inp.click();
+};
 
 async function doAddMeter(prov) {
   if (!prov || prov.tagName) {
@@ -984,7 +1017,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.32 (build 99)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.33 (build 102)</span>
       </div>`;
     return;
   }
@@ -1030,7 +1063,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.32 (build 99)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.33 (build 102)</span>
     </div>
   `;
 }
@@ -1169,16 +1202,7 @@ function showView(name) {
 }
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
-  $('#btnUpload').onclick = () => {
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = '.txt,text/plain,*/*';
-    inp.onchange = () => uploadMetersTxt(inp.files[0]);
-    inp.click();
-  };
-  window.addEventListener('popstate', e => {
-    if (!$('#dlg').hidden) { closeDialog(); return; }
-    if (currentView === 'meter') { currentMeterId = null; showView('home'); }
-  });
+  $('#btnUpload').onclick = () => showImportExport();
   $('#btnRefreshAll').onclick = async () => {
     const el = $('#refreshIcon'); el.parentElement.classList.add('spinning');
     await refreshAllMeters();
