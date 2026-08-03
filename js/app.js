@@ -1136,7 +1136,7 @@ function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
   $('#btnUpload').onclick = () => {
     const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = '.txt,text/plain';
+    inp.type = 'file'; inp.accept = '.txt,text/plain,*/*';
     inp.onchange = () => uploadMetersTxt(inp.files[0]);
     inp.click();
   };
