@@ -413,6 +413,13 @@ async function refreshMeter(meter, opts = {}) {
   }
 }
 
+async function refreshAllMeters() {
+  for (const m of state.meters) {
+    await refreshMeter(m, { silent: true });
+    await new Promise(r => setTimeout(r, 800));
+  }
+}
+
 /* ================= dialogs ================= */
 function openDialog(title, bodyHtml, actions = []) {
   $('#dlgTitle').textContent = title;
@@ -636,6 +643,7 @@ function openMeter(id) {
   currentView = 'meter';
   history.pushState({ view: 'meter', id }, '', '');
   renderMeterDetail();
+  window.scrollTo(0, 0);
 }
 function currentMeter() { return state.meters.find(m => m.id === currentMeterId); }
 
@@ -956,7 +964,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.20 (build 63)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.24 (build 75)</span>
       </div>`;
     return;
   }
@@ -1002,7 +1010,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.20 (build 63)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.24 (build 75)</span>
     </div>
   `;
 }
@@ -1137,6 +1145,7 @@ function showView(name) {
   currentView = name;
   if (name === 'home') { currentMeterId = null; renderHome(); }
   if (name === 'meter') renderMeterDetail();
+  window.scrollTo(0, 0);
 }
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
@@ -1152,7 +1161,7 @@ function initUi() {
   });
   $('#btnRefreshAll').onclick = async () => {
     const el = $('#refreshIcon'); el.parentElement.classList.add('spinning');
-    await Promise.all(state.meters.map(m => refreshMeter(m, { silent: true })));
+    await refreshAllMeters();
     saveMeters();
     el.parentElement.classList.remove('spinning');
     if (currentView === 'home') renderHome();
@@ -1197,7 +1206,7 @@ async function enableNotifications() {
   const res = await Notification.requestPermission();
   if (res !== 'granted') toast(t('alerts.perm'), true);
 }
-let alertTimer = null, autoTimer = null;
+let alertTimer = null, autoTimer = null, autoBusy = false;
 function scheduleAlerts() {
   clearInterval(alertTimer);
   if (!state.settings.alerts) return;
@@ -1206,7 +1215,11 @@ function scheduleAlerts() {
 function scheduleAutoRefresh() {
   clearInterval(autoTimer);
   if (!state.settings.autoRefresh) return;
-  autoTimer = setInterval(() => { state.meters.forEach(m => refreshMeter(m, { silent: true })); setTimeout(() => renderHome(), 500); }, state.settings.autoFreq * 1000);
+  autoTimer = setInterval(() => {
+    if (autoBusy) return;
+    autoBusy = true;
+    refreshAllMeters().then(() => { autoBusy = false; renderHome(); });
+  }, state.settings.autoFreq * 1000);
 }
 async function checkAlerts() {
   for (const m of state.meters) {
@@ -1236,7 +1249,7 @@ async function boot() {
   initUi();
   registerSw();
   showView('home');
-  await Promise.all(state.meters.map(m => refreshMeter(m, { silent: true })));
+  await refreshAllMeters();
   renderHome();
   scheduleAlerts();
   scheduleAutoRefresh();
@@ -1254,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', boot);
   home.addEventListener('touchmove', e => {
     if (!pulling) return;
     const dy = e.touches[0].clientY - startY;
-    if (dy > 80) { pulling = false; toast(t('home.refreshing')); Promise.all(state.meters.map(m => refreshMeter(m, { silent: true }))).then(() => renderHome()); }
+    if (dy > 80) { pulling = false; toast(t('home.refreshing')); refreshAllMeters().then(() => renderHome()); }
   }, { passive: true });
   home.addEventListener('touchend', () => { pulling = false; }, { passive: true });
 })();
