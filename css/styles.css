@@ -81,7 +81,7 @@ input, select { font-family: inherit; }
   display: flex; align-items: center; gap: 14px;
   background: none; border: 0; border-radius: 10px;
   padding: 12px 14px; font-size: 15px; color: var(--text);
-  text-align: left; transition: background .15s;
+  text-align: left; transition: background .15s; width: 100%;
 }
 .drawer-item:hover { background: var(--surface-2); }
 .drawer-item.active { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary-2); font-weight: 600; }

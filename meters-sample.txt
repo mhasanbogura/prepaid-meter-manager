@@ -1,0 +1,6 @@
+# Meter Manager — Upload File
+# Format: nickname provider number
+# provider = desco or nesco
+
+Home desco 34295231
+Office nesco 33900435

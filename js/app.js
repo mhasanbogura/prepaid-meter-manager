@@ -469,6 +469,43 @@ function showAddMeter() {
   }
 }
 
+async function uploadMetersTxt(file) {
+  if (!file) return;
+  const text = await file.text();
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  if (!lines.length) { toast('No valid lines found in file.', true); return; }
+  let added = 0, skipped = 0, failed = 0;
+  for (const line of lines) {
+    const parts = line.split(/\s+/);
+    if (parts.length < 3) { failed++; continue; }
+    const nickname = parts.slice(0, parts.length - 2).join(' ');
+    const prov = parts[parts.length - 2].toLowerCase();
+    const num = parts[parts.length - 1].replace(/[\s\-]/g, '');
+    if (prov !== 'desco' && prov !== 'nesco') { failed++; continue; }
+    if (state.meters.some(m => m.consumerNo === num || m.accountNo === num || m.meterNo === num)) { skipped++; continue; }
+    if (state.meters.length >= MAX_METERS) { skipped++; continue; }
+    try {
+      let meter;
+      if (prov === 'nesco') {
+        if (!/^\d{8,11}$/.test(num)) { failed++; continue; }
+        const r = await nescoQuery(num);
+        if (!r.ok) throw new Error(r.error);
+        meter = { id: 'm' + Date.now() + added, provider: 'nesco', consumerNo: num, nickname, info: r.info, history: r.history || [], balance: null, readingTime: new Date().toISOString(), updatedAt: null, err: null, loading: true };
+      } else {
+        if (!/^\d{8,12}$/.test(num)) { failed++; continue; }
+        const isAccount = num.length === 8;
+        const probe = await probeSystemType(isAccount ? num : undefined, isAccount ? undefined : num);
+        if (!probe) { failed++; continue; }
+        meter = { id: 'm' + Date.now() + added, provider: 'desco', sys: probe.sys, accountNo: probe.info.accountNo, meterNo: probe.info.meterNo, nickname, info: probe.info, balance: null, readingTime: null, updatedAt: null, err: null, loading: true };
+      }
+      state.meters.push(meter); added++;
+      refreshMeter(meter, { silent: true });
+    } catch { failed++; }
+  }
+  saveMeters(); renderHome();
+  toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}`);
+}
+
 async function doAddMeter(prov) {
   if (!prov || prov.tagName) {
     const sel = $('#addProvider .prov-btn[style*="3px solid var(--primary)"]') ||
@@ -1083,6 +1120,20 @@ function showView(name) {
 }
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
+  $('#btnUpdateAll').onclick = async () => {
+    if (!state.meters.length) { toast(t('home.empty.title')); return; }
+    const el = $('#refreshIcon'); el.parentElement.classList.add('spinning');
+    await Promise.all(state.meters.map(m => refreshMeter(m, { silent: true })));
+    saveMeters(); el.parentElement.classList.remove('spinning');
+    if (currentView === 'home') renderHome(); else if (currentView === 'meter') renderMeterDetail();
+    toast(t('home.last_updated', { t: t('time.just') }));
+  };
+  $('#btnUpload').onclick = () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.txt,text/plain';
+    inp.onchange = () => uploadMetersTxt(inp.files[0]);
+    inp.click();
+  };
   window.addEventListener('popstate', e => {
     if (!$('#dlg').hidden) { closeDialog(); return; }
     if (currentView === 'meter') { currentMeterId = null; showView('home'); }
