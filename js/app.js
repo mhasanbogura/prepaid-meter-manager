@@ -955,7 +955,7 @@ function renderHome() {
         </button>
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
-      <div style="text-align:center;margin-top:48px;padding:16px 0">
+      <div style="text-align:center;margin-top:80px;padding:16px 0">
         <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.11 (build 36)</span>
       </div>`;
     return;
@@ -1001,7 +1001,7 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
-    <div style="text-align:center;margin-top:64px;padding:16px 0;border-top:1px solid var(--border)">
+    <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
       <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.11 (build 36)</span>
     </div>
   `;
@@ -1242,3 +1242,19 @@ async function boot() {
   scheduleAutoRefresh();
 }
 document.addEventListener('DOMContentLoaded', boot);
+
+/* ================= Pull-to-refresh ================= */
+(function() {
+  let startY = 0, pulling = false;
+  const home = document.getElementById('view-home');
+  if (!home) return;
+  home.addEventListener('touchstart', e => {
+    if (home.scrollTop === 0) { startY = e.touches[0].clientY; pulling = true; }
+  }, { passive: true });
+  home.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 80) { pulling = false; toast(t('home.refreshing')); Promise.all(state.meters.map(m => refreshMeter(m, { silent: true }))).then(() => renderHome()); }
+  }, { passive: true });
+  home.addEventListener('touchend', () => { pulling = false; }, { passive: true });
+})();
