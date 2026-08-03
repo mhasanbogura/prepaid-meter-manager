@@ -568,7 +568,7 @@ async function doAddMeter(prov) {
     if (currentView === 'home') renderHome();
     toast(t('add.found'));
   } catch (e) {
-    status.textContent = e.message && e.message.includes('node server.js') ? t('nesco.needs_server') : (t('add.error') + (e.message ? ' (' + e.message + ')' : ''));
+    status.textContent = e.message && e.message.includes('node server.js') ? t('nesco.needs_server') : (prov === 'nesco' ? (e.message || t('nesco.no_data')) : (t('add.error') + (e.message ? ' (' + e.message + ')' : '')));
   } finally {
     btn.disabled = false; btn.style.opacity = 1;
   }
@@ -956,7 +956,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.11 (build 36)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.17 (build 54)</span>
       </div>`;
     return;
   }
@@ -1002,7 +1002,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.11 (build 36)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.17 (build 54)</span>
     </div>
   `;
 }
