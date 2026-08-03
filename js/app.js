@@ -14,12 +14,12 @@ const I18N = {
     'hero.live': 'Live balance & meter info', 'hero.cost': 'Average cost per day', 'hero.history': 'Total use of this month & last month', 'hero.consumption': 'Daily & monthly consumption', 'hero.recharge': 'Recharge history',
     'home.reorder': 'Drag to reorder', 'home.avg_day': 'Average cost per day: {v}',
     'home.desc': 'Your prepaid meter balances and usage, pulled live from DESCO and NESCO Server.',
-    'home.last_updated': 'Refreshed {t}', 'home.updated_never': 'Not refreshed yet', 'home.low': 'Low balance',
-    'home.refreshing': 'Refreshing…', 'home.max': 'Maximum 5 meters allowed.',
+    'home.last_updated': 'Updated {t}', 'home.updated_never': 'Not updated yet', 'home.low': 'Low balance',
+    'home.refreshing': 'Updating…', 'home.max': 'Maximum 5 meters allowed.',
     'meter.desco': 'DESCO', 'meter.nesco': 'NESCO',
     'meter.remove_q': 'Remove this meter?', 'meter.remove_text': 'The meter will be removed from this device only.',
     'btn.cancel': 'Cancel', 'btn.remove': 'Remove', 'btn.add': 'Add meter', 'btn.close': 'Close', 'btn.ok': 'OK', 'btn.edit': 'Edit',
-    'btn.refresh': 'Refresh',
+    'btn.refresh': 'Update',
     'btn.copy': 'Copy token', 'btn.check': 'Check payment status', 'btn.done': 'Done',
     'add.title': 'Add meter', 'add.provider': 'Provider',
     'add.number': 'Account or meter number', 'add.number.hint': 'Enter the 8-digit account number or 12-digit meter number printed on your bill.',
@@ -54,8 +54,8 @@ const I18N = {
     'settings.alerts': 'Balance alerts', 'settings.alerts.enable': 'Low-balance & recharge notifications',
     'settings.alerts.threshold': 'Alert when balance falls below (BDT)', 'settings.alerts.freq': 'Check every',
     'settings.alerts.note': 'Alerts need notification permission. On mobile, install this page (PWA) and keep it open to receive them.',
-    'settings.auto': 'Auto refresh', 'settings.auto.enable': 'Auto-refresh balances in background',
-    'settings.auto.freq': 'Refresh every',
+    'settings.auto': 'Auto update', 'settings.auto.enable': 'Auto-update balances in background',
+    'settings.auto.freq': 'Update every',
     'settings.data': 'Meter data', 'settings.data.note': 'Your meters are stored only in this browser (localStorage) and are never sent to any server other than the official DESCO portal API.',
     'settings.clear': 'Remove all meters & reset', 'settings.cleared': 'All meter data cleared.',
     'settings.perm': 'Enable notifications', 'settings.perm.granted': 'Notifications enabled',
@@ -81,12 +81,12 @@ const I18N = {
     'hero.live': 'লাইভ ব্যালেন্স ও মিটারের তথ্য', 'hero.cost': 'গড় দৈনিক খরচ', 'hero.history': 'এই মাস ও গত মাসের মোট ব্যবহার', 'hero.consumption': 'দৈনিক ও মাসিক ব্যবহার', 'hero.recharge': 'রিচার্জ ইতিহাস',
     'home.reorder': 'সাজাতে টেনে আনুন', 'home.avg_day': 'গড় খরচ প্রতিদিন: {v}',
     'home.desc': 'ডেসকো ও নেসকো সার্ভার থেকে সরাসরি আনা আপনার প্রিপেইড মিটারের ব্যালেন্স ও ব্যবহার।',
-    'home.last_updated': 'রিফ্রেশ হয়েছে {t}', 'home.updated_never': 'এখনো রিফ্রেশ হয়নি', 'home.low': 'ব্যালেন্স কম',
-    'home.refreshing': 'রিফ্রেশ হচ্ছে…', 'home.max': 'সর্বোচ্চ ৫টি মিটার যোগ করা যাবে।',
+    'home.last_updated': 'আপডেট হয়েছে {t}', 'home.updated_never': 'এখনো আপডেট হয়নি', 'home.low': 'ব্যালেন্স কম',
+    'home.refreshing': 'আপডেট হচ্ছে…', 'home.max': 'সর্বোচ্চ ৫টি মিটার যোগ করা যাবে।',
     'meter.desco': 'ডেসকো', 'meter.nesco': 'নেসকো',
     'meter.remove_q': 'এই মিটারটি মুছে ফেলবেন?', 'meter.remove_text': 'মিটারটি শুধু এই ডিভাইস থেকে সরানো হবে।',
     'btn.cancel': 'বাতিল', 'btn.remove': 'মুছে ফেলুন', 'btn.add': 'মিটার যোগ করুন', 'btn.close': 'বন্ধ', 'btn.ok': 'ঠিক আছে', 'btn.edit': 'সম্পাদনা',
-    'btn.refresh': 'রিফ্রেশ',
+    'btn.refresh': 'আপডেট',
     'btn.copy': 'টোকেন কপি', 'btn.check': 'পেমেন্ট স্ট্যাটাস দেখুন', 'btn.done': 'সম্পন্ন',
     'add.title': 'মিটার যোগ করুন', 'add.provider': 'প্রোভাইডার',
     'add.number': 'অ্যাকাউন্ট বা মিটার নম্বর', 'add.number.hint': 'বিলে লেখা ৮ সংখ্যার অ্যাকাউন্ট নম্বর বা ১২ সংখ্যার মিটার নম্বর দিন।',
@@ -121,7 +121,7 @@ const I18N = {
     'settings.alerts': 'ব্যালেন্স অ্যালার্ট', 'settings.alerts.enable': 'কম ব্যালেন্স ও রিচার্জ নোটিফিকেশন',
     'settings.alerts.threshold': 'কত টাকার নিচে নেমে গেলে অ্যালার্ট দেবে', 'settings.alerts.freq': 'প্রতি',
     'settings.alerts.note': 'অ্যালার্টের জন্য নোটিফিকেশন অনুমতি প্রয়োজন। মোবাইলে এই পৃষ্ঠাটি (PWA) ইনস্টল করে খোলা রাখুন।',
-    'settings.auto': 'স্বয়ংক্রিয় রিফ্রেশ', 'settings.auto.enable': 'পটভূমিতে ব্যালেন্স অটো-রিফ্রেশ',
+    'settings.auto': 'স্বয়ংক্রিয় আপডেট', 'settings.auto.enable': 'পটভূমিতে ব্যালেন্স অটো-আপডেট',
     'settings.auto.freq': 'প্রতি',
     'settings.data': 'মিটারের তথ্য', 'settings.data.note': 'আপনার মিটারগুলো শুধু এই ব্রাউজারে (localStorage) থাকে এবং কোনো সার্ভারে পাঠানো হয় না — শুধু সরকারি ডেসকো পোর্টাল API-তে।',
     'settings.clear': 'সব মিটার মুছে রিসেট করুন', 'settings.cleared': 'সব তথ্য মুছে ফেলা হয়েছে।',
@@ -998,7 +998,9 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
-    <p style="text-align:center;font-size:11px;color:var(--text-2);margin-top:24px;opacity:.6">Meter Manager v1.0.10</p>
+    <div style="text-align:center;margin-top:64px;padding:16px 0;border-top:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.11 (build 36)</span>
+    </div>
   `;
 }
 let dragId = null;
