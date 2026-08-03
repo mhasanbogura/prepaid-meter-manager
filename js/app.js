@@ -547,7 +547,7 @@ function showImportExport() {
       <button class="btn secondary" onclick="ieExport()">Export to file</button>
       <button class="btn secondary" onclick="ieImport()">Import from file</button>
       <button class="btn secondary" onclick="navigator.clipboard.writeText($('#ieText').value).then(() => toast('Copied')).catch(()=>{})">Copy</button>
-      <button class="btn" onclick="importMetersFromText($('#ieText').value);closeDialog()">Save</button>
+      <button class="btn secondary" onclick="importMetersFromText($('#ieText').value);closeDialog()">Save</button>
     </div>`, []);
   $('#dlgTitle').style.textAlign = 'center';
 }
@@ -1016,7 +1016,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.35 (build 108)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.36 (build 111)</span>
       </div>`;
     return;
   }
@@ -1062,7 +1062,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.35 (build 108)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.36 (build 111)</span>
     </div>
   `;
 }
