@@ -481,9 +481,15 @@ async function uploadMetersTxt(file) {
       const parts = line.split(/\s+/);
       let nickname = '', prov = '', num = '';
       if (parts.length >= 3) {
-        nickname = parts.slice(0, parts.length - 2).join(' ');
         prov = parts[parts.length - 2].toLowerCase();
         num = parts[parts.length - 1].replace(/[\s\-]/g, '');
+        if (prov !== 'desco' && prov !== 'nesco') {
+          prov = parts[0].toLowerCase();
+          num = parts[1].replace(/[\s\-]/g, '');
+          nickname = parts.slice(2).join(' ');
+        } else {
+          nickname = parts.slice(0, parts.length - 2).join(' ');
+        }
       } else if (parts.length === 2) {
         prov = parts[0].toLowerCase();
         num = parts[1].replace(/[\s\-]/g, '');
@@ -507,7 +513,7 @@ async function uploadMetersTxt(file) {
         }
         state.meters.push(meter); added++;
         refreshMeter(meter, { silent: true });
-      } catch (e) { failed++; }
+      } catch (e) { console.error('Upload add error:', line, e); failed++; }
     }
     saveMeters(); renderHome();
     toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}`);
