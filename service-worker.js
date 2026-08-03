@@ -1,5 +1,5 @@
 /* Meter Manager — offline shell service worker (network-first, cache fallback) */
-const CACHE = 'metermanager-v13';
+const CACHE = 'metermanager-v15';
 const ASSETS = [
   './',
   './index.html',

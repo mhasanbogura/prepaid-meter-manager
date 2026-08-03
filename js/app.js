@@ -344,79 +344,89 @@ function nescoAvgDailyCost(history) {
 async function refreshMeter(meter, opts = {}) {
   meter.loading = true;
   if (!opts.silent) renderHome();
-  try {
-    if (meter.provider === 'desco') {
-      if (!meter.info) {
-        const p = await probeSystemType(meter.accountNo, meter.meterNo);
-        if (!p) {
-          meter.err = t('add.notfound');
-          meter.balance = null;
-          return;
-        }
-        meter.sys = p.sys;
-        meter.info = p.info;
-      }
-      if (meter.info) {
-        meter.accountNo = meter.info.accountNo || meter.accountNo;
-        meter.meterNo = meter.info.meterNo || meter.meterNo;
-      }
-      const params = { accountNo: meter.accountNo || undefined, meterNo: meter.meterNo || undefined };
-      const [balR, dailyR] = await Promise.all([
-        apiGet(`${DESCO}/api/${meter.sys}/customer/getBalance`, params)
-          .catch(() => ({ code: -1 })),
-        apiGet(`${DESCO}/api/${meter.sys}/customer/getCustomerDailyConsumption`,
-          Object.assign({}, params, { dateFrom: todayStr(13), dateTo: todayStr(0) }))
-          .catch(() => ({ data: [] }))
-      ]);
-      if (dailyR.code === 200 && Array.isArray(dailyR.data)) {
-        meter.avgDailyCost = avgDailyCost(normalizeDaily(dailyR.data));
-        meter.dailyData = dailyR.data;
-      }
-      const balOk = balR.code === 200 && balR.data && balR.data.balance !== undefined && balR.data.balance !== null;
-      if (!balOk && meter.sys) {
-        const alt = meter.sys === 'tkdes' ? 'unified' : 'tkdes';
-        const altR = await apiGet(`${DESCO}/api/${alt}/customer/getBalance`, params).catch(() => ({ code: -1 }));
-        if (altR.code === 200 && altR.data && altR.data.balance !== undefined && altR.data.balance !== null) {
-          meter.sys = alt;
-          balR.code = 200; balR.data = altR.data;
-        }
-      }
-      if (balOk || (balR.code === 200 && balR.data && balR.data.balance !== undefined && balR.data.balance !== null)) {
-        meter.balance = balR.data.balance;
-        meter.readingTime = balR.data.readingTime || meter.readingTime;
-        meter.err = null;
-      } else if (balR.code === 16001) {
-        meter.balance = null;
-        meter.err = balR.desc || t('add.notfound');
-      } else {
-        meter.balance = null;
-        meter.err = t('err.server');
-      }
-    } else if (meter.provider === 'nesco') {
-      const r = await nescoQuery(meter.consumerNo);
-      if (!r.ok) throw new Error(r.error || t('nesco.no_data'));
-      meter.info = Object.assign({}, meter.info, r.info);
-      meter.history = r.history || [];
-      meter.avgDailyCost = nescoAvgDailyCost(meter.history);
-      const bal = Number(r.info.balance);
-      if (!isNaN(bal)) { meter.balance = bal; }
-      meter.readingTime = new Date().toISOString();
-      meter.consumerNo = r.info.consumerNo || meter.consumerNo;
-      meter.err = null;
+  const maxTries = opts.tries ?? 3;
+  for (let t = 1; t <= maxTries; t++) {
+    try {
+      await refreshMeterOnce(meter);
+      break;
+    } catch (e) {
+      meter.err = t('err.network');
+      if (t < maxTries) await new Promise(r => setTimeout(r, 2000 * t));
     }
-  } catch (e) {
-    if (!meter.err) meter.err = t('err.network');
-  } finally {
-    meter.updatedAt = Date.now();
-    meter.loading = false;
-    if (!opts.silent) { renderHome(); if (currentView === 'meter' && currentMeterId === meter.id) renderMeterDetail(); }
+  }
+  meter.updatedAt = Date.now();
+  meter.loading = false;
+  if (!opts.silent) { renderHome(); if (currentView === 'meter' && currentMeterId === meter.id) renderMeterDetail(); }
+}
+
+async function refreshMeterOnce(meter) {
+  if (meter.provider === 'desco') {
+    if (!meter.info) {
+      const p = await probeSystemType(meter.accountNo, meter.meterNo);
+      if (!p) {
+        meter.err = t('add.notfound');
+        meter.balance = null;
+        return;
+      }
+      meter.sys = p.sys;
+      meter.info = p.info;
+    }
+    if (meter.info) {
+      meter.accountNo = meter.info.accountNo || meter.accountNo;
+      meter.meterNo = meter.info.meterNo || meter.meterNo;
+    }
+    const params = { accountNo: meter.accountNo || undefined, meterNo: meter.meterNo || undefined };
+    const [balR, dailyR] = await Promise.all([
+      apiGet(`${DESCO}/api/${meter.sys}/customer/getBalance`, params)
+        .catch(() => ({ code: -1 })),
+      apiGet(`${DESCO}/api/${meter.sys}/customer/getCustomerDailyConsumption`,
+        Object.assign({}, params, { dateFrom: todayStr(13), dateTo: todayStr(0) }))
+        .catch(() => ({ data: [] }))
+    ]);
+    if (dailyR.code === 200 && Array.isArray(dailyR.data)) {
+      meter.avgDailyCost = avgDailyCost(normalizeDaily(dailyR.data));
+      meter.dailyData = dailyR.data;
+    }
+    const balOk = balR.code === 200 && balR.data && balR.data.balance !== undefined && balR.data.balance !== null;
+    if (!balOk && meter.sys) {
+      const alt = meter.sys === 'tkdes' ? 'unified' : 'tkdes';
+      const altR = await apiGet(`${DESCO}/api/${alt}/customer/getBalance`, params).catch(() => ({ code: -1 }));
+      if (altR.code === 200 && altR.data && altR.data.balance !== undefined && altR.data.balance !== null) {
+        meter.sys = alt;
+        balR.code = 200; balR.data = altR.data;
+      }
+    }
+    if (balOk || (balR.code === 200 && balR.data && balR.data.balance !== undefined && balR.data.balance !== null)) {
+      meter.balance = balR.data.balance;
+      meter.readingTime = balR.data.readingTime || meter.readingTime;
+      meter.err = null;
+    } else if (balR.code === 16001) {
+      meter.balance = null;
+      meter.err = balR.desc || t('add.notfound');
+    } else if (balR.code === -1) {
+      throw new Error('network');
+    } else {
+      meter.balance = null;
+      meter.err = t('err.server');
+    }
+  } else if (meter.provider === 'nesco') {
+    const r = await nescoQuery(meter.consumerNo);
+    if (!r.ok) throw new Error(r.error || t('nesco.no_data'));
+    meter.info = Object.assign({}, meter.info, r.info);
+    meter.history = r.history || [];
+    meter.avgDailyCost = nescoAvgDailyCost(meter.history);
+    const bal = Number(r.info.balance);
+    if (!isNaN(bal)) { meter.balance = bal; }
+    meter.readingTime = new Date().toISOString();
+    meter.consumerNo = r.info.consumerNo || meter.consumerNo;
+    meter.err = null;
   }
 }
 
 async function refreshAllMeters() {
   for (const m of state.meters) {
     await refreshMeter(m, { silent: true });
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 2000));
   }
 }
 
@@ -638,12 +648,23 @@ async function findNescoBase() {
 }
 
 /* ================= meter detail ================= */
+function scrollToTop() {
+  try {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const v = document.getElementById('view-home');
+    if (v) v.scrollTop = 0;
+  } catch (e) { /* ignore */ }
+}
 function openMeter(id) {
   currentMeterId = id;
   currentView = 'meter';
   history.pushState({ view: 'meter', id }, '', '');
+  scrollToTop();
   renderMeterDetail();
-  window.scrollTo(0, 0);
+  requestAnimationFrame(scrollToTop);
+  setTimeout(scrollToTop, 100);
 }
 function currentMeter() { return state.meters.find(m => m.id === currentMeterId); }
 
@@ -964,7 +985,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.24 (build 75)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.26 (build 81)</span>
       </div>`;
     return;
   }
@@ -1010,7 +1031,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.24 (build 75)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.26 (build 81)</span>
     </div>
   `;
 }
@@ -1145,7 +1166,7 @@ function showView(name) {
   currentView = name;
   if (name === 'home') { currentMeterId = null; renderHome(); }
   if (name === 'meter') renderMeterDetail();
-  window.scrollTo(0, 0);
+  scrollToTop();
 }
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
@@ -1249,6 +1270,8 @@ async function boot() {
   initUi();
   registerSw();
   showView('home');
+  state.meters.forEach(m => { m.loading = true; m.err = null; });
+  renderHome();
   await refreshAllMeters();
   renderHome();
   scheduleAlerts();
