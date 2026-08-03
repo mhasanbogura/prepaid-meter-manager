@@ -479,10 +479,16 @@ async function uploadMetersTxt(file) {
     for (const line of lines) {
       if (state.meters.length >= MAX_METERS) { skipped++; continue; }
       const parts = line.split(/\s+/);
-      if (parts.length < 3) { failed++; continue; }
-      const nickname = parts.slice(0, parts.length - 2).join(' ');
-      const prov = parts[parts.length - 2].toLowerCase();
-      const num = parts[parts.length - 1].replace(/[\s\-]/g, '');
+      let nickname = '', prov = '', num = '';
+      if (parts.length >= 3) {
+        nickname = parts.slice(0, parts.length - 2).join(' ');
+        prov = parts[parts.length - 2].toLowerCase();
+        num = parts[parts.length - 1].replace(/[\s\-]/g, '');
+      } else if (parts.length === 2) {
+        prov = parts[0].toLowerCase();
+        num = parts[1].replace(/[\s\-]/g, '');
+        nickname = '';
+      } else { failed++; continue; }
       if (prov !== 'desco' && prov !== 'nesco') { failed++; continue; }
       if (state.meters.some(m => m.consumerNo === num || m.accountNo === num || m.meterNo === num)) { skipped++; continue; }
       try {
@@ -491,13 +497,13 @@ async function uploadMetersTxt(file) {
           if (!/^\d{8,11}$/.test(num)) { failed++; continue; }
           const r = await nescoQuery(num);
           if (!r.ok) throw new Error(r.error);
-          meter = { id: 'm' + Date.now() + added, provider: 'nesco', consumerNo: num, nickname, info: r.info, history: r.history || [], balance: null, readingTime: new Date().toISOString(), updatedAt: null, err: null, loading: true };
+          meter = { id: 'm' + Date.now() + added, provider: 'nesco', consumerNo: num, nickname: nickname || r.info?.name || '', info: r.info, history: r.history || [], balance: null, readingTime: new Date().toISOString(), updatedAt: null, err: null, loading: true };
         } else {
           if (!/^\d{8,12}$/.test(num)) { failed++; continue; }
           const isAccount = num.length === 8;
           const probe = await probeSystemType(isAccount ? num : undefined, isAccount ? undefined : num);
           if (!probe) { failed++; continue; }
-          meter = { id: 'm' + Date.now() + added, provider: 'desco', sys: probe.sys, accountNo: probe.info.accountNo, meterNo: probe.info.meterNo, nickname, info: probe.info, balance: null, readingTime: null, updatedAt: null, err: null, loading: true };
+          meter = { id: 'm' + Date.now() + added, provider: 'desco', sys: probe.sys, accountNo: probe.info.accountNo, meterNo: probe.info.meterNo, nickname: nickname || probe.info?.customerName || '', info: probe.info, balance: null, readingTime: null, updatedAt: null, err: null, loading: true };
         }
         state.meters.push(meter); added++;
         refreshMeter(meter, { silent: true });
