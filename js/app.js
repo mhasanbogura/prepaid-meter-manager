@@ -998,6 +998,7 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
+    <p style="text-align:center;font-size:11px;color:var(--text-2);margin-top:24px;opacity:.6">Meter Manager v1.0.10</p>
   `;
 }
 let dragId = null;
