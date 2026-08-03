@@ -425,7 +425,10 @@ async function refreshMeterOnce(meter) {
 
 async function refreshAllMeters() {
   for (const m of state.meters) {
+    m.loading = true;
+    renderHome();
     await refreshMeter(m, { silent: true });
+    renderHome();
     await new Promise(r => setTimeout(r, 2000));
   }
 }
@@ -981,7 +984,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.30 (build 93)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.31 (build 96)</span>
       </div>`;
     return;
   }
@@ -1027,7 +1030,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.30 (build 93)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.31 (build 96)</span>
     </div>
   `;
 }
