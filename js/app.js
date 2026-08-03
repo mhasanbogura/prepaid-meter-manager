@@ -14,7 +14,7 @@ const I18N = {
     'hero.live': 'Live balance & meter info', 'hero.cost': 'Average cost per day', 'hero.history': 'Total use of this month & last month', 'hero.consumption': 'Daily & monthly consumption', 'hero.recharge': 'Recharge history',
     'home.reorder': 'Drag to reorder', 'home.avg_day': 'Average cost per day: {v}',
     'home.desc': 'Your prepaid meter balances and usage, pulled live from DESCO and NESCO Server.',
-    'home.last_updated': 'Updated {t}', 'home.updated_never': 'Not updated yet', 'home.low': 'Low balance',
+    'home.last_updated': 'Refreshed {t}', 'home.updated_never': 'Not refreshed yet', 'home.low': 'Low balance',
     'home.refreshing': 'Refreshing…', 'home.max': 'Maximum 5 meters allowed.',
     'meter.desco': 'DESCO', 'meter.nesco': 'NESCO',
     'meter.remove_q': 'Remove this meter?', 'meter.remove_text': 'The meter will be removed from this device only.',
@@ -81,7 +81,7 @@ const I18N = {
     'hero.live': 'লাইভ ব্যালেন্স ও মিটারের তথ্য', 'hero.cost': 'গড় দৈনিক খরচ', 'hero.history': 'এই মাস ও গত মাসের মোট ব্যবহার', 'hero.consumption': 'দৈনিক ও মাসিক ব্যবহার', 'hero.recharge': 'রিচার্জ ইতিহাস',
     'home.reorder': 'সাজাতে টেনে আনুন', 'home.avg_day': 'গড় খরচ প্রতিদিন: {v}',
     'home.desc': 'ডেসকো ও নেসকো সার্ভার থেকে সরাসরি আনা আপনার প্রিপেইড মিটারের ব্যালেন্স ও ব্যবহার।',
-    'home.last_updated': 'আপডেট হয়েছে {t}', 'home.updated_never': 'এখনো আপডেট হয়নি', 'home.low': 'ব্যালেন্স কম',
+    'home.last_updated': 'রিফ্রেশ হয়েছে {t}', 'home.updated_never': 'এখনো রিফ্রেশ হয়নি', 'home.low': 'ব্যালেন্স কম',
     'home.refreshing': 'রিফ্রেশ হচ্ছে…', 'home.max': 'সর্বোচ্চ ৫টি মিটার যোগ করা যাবে।',
     'meter.desco': 'ডেসকো', 'meter.nesco': 'নেসকো',
     'meter.remove_q': 'এই মিটারটি মুছে ফেলবেন?', 'meter.remove_text': 'মিটারটি শুধু এই ডিভাইস থেকে সরানো হবে।',
@@ -1120,14 +1120,6 @@ function showView(name) {
 }
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
-  $('#btnUpdateAll').onclick = async () => {
-    if (!state.meters.length) { toast(t('home.empty.title')); return; }
-    const el = $('#refreshIcon'); el.parentElement.classList.add('spinning');
-    await Promise.all(state.meters.map(m => refreshMeter(m, { silent: true })));
-    saveMeters(); el.parentElement.classList.remove('spinning');
-    if (currentView === 'home') renderHome(); else if (currentView === 'meter') renderMeterDetail();
-    toast(t('home.last_updated', { t: t('time.just') }));
-  };
   $('#btnUpload').onclick = () => {
     const inp = document.createElement('input');
     inp.type = 'file'; inp.accept = '.txt,text/plain';
