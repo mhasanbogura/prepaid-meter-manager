@@ -470,40 +470,42 @@ function showAddMeter() {
 }
 
 async function uploadMetersTxt(file) {
-  if (!file) return;
-  const text = await file.text();
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-  if (!lines.length) { toast('No valid lines found in file.', true); return; }
-  let added = 0, skipped = 0, failed = 0;
-  for (const line of lines) {
-    const parts = line.split(/\s+/);
-    if (parts.length < 3) { failed++; continue; }
-    const nickname = parts.slice(0, parts.length - 2).join(' ');
-    const prov = parts[parts.length - 2].toLowerCase();
-    const num = parts[parts.length - 1].replace(/[\s\-]/g, '');
-    if (prov !== 'desco' && prov !== 'nesco') { failed++; continue; }
-    if (state.meters.some(m => m.consumerNo === num || m.accountNo === num || m.meterNo === num)) { skipped++; continue; }
-    if (state.meters.length >= MAX_METERS) { skipped++; continue; }
-    try {
-      let meter;
-      if (prov === 'nesco') {
-        if (!/^\d{8,11}$/.test(num)) { failed++; continue; }
-        const r = await nescoQuery(num);
-        if (!r.ok) throw new Error(r.error);
-        meter = { id: 'm' + Date.now() + added, provider: 'nesco', consumerNo: num, nickname, info: r.info, history: r.history || [], balance: null, readingTime: new Date().toISOString(), updatedAt: null, err: null, loading: true };
-      } else {
-        if (!/^\d{8,12}$/.test(num)) { failed++; continue; }
-        const isAccount = num.length === 8;
-        const probe = await probeSystemType(isAccount ? num : undefined, isAccount ? undefined : num);
-        if (!probe) { failed++; continue; }
-        meter = { id: 'm' + Date.now() + added, provider: 'desco', sys: probe.sys, accountNo: probe.info.accountNo, meterNo: probe.info.meterNo, nickname, info: probe.info, balance: null, readingTime: null, updatedAt: null, err: null, loading: true };
-      }
-      state.meters.push(meter); added++;
-      refreshMeter(meter, { silent: true });
-    } catch { failed++; }
-  }
-  saveMeters(); renderHome();
-  toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}`);
+  if (!file) { toast('No file selected.', true); return; }
+  try {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+    if (!lines.length) { toast('No valid lines found in file.', true); return; }
+    let added = 0, skipped = 0, failed = 0;
+    for (const line of lines) {
+      if (state.meters.length >= MAX_METERS) { skipped++; continue; }
+      const parts = line.split(/\s+/);
+      if (parts.length < 3) { failed++; continue; }
+      const nickname = parts.slice(0, parts.length - 2).join(' ');
+      const prov = parts[parts.length - 2].toLowerCase();
+      const num = parts[parts.length - 1].replace(/[\s\-]/g, '');
+      if (prov !== 'desco' && prov !== 'nesco') { failed++; continue; }
+      if (state.meters.some(m => m.consumerNo === num || m.accountNo === num || m.meterNo === num)) { skipped++; continue; }
+      try {
+        let meter;
+        if (prov === 'nesco') {
+          if (!/^\d{8,11}$/.test(num)) { failed++; continue; }
+          const r = await nescoQuery(num);
+          if (!r.ok) throw new Error(r.error);
+          meter = { id: 'm' + Date.now() + added, provider: 'nesco', consumerNo: num, nickname, info: r.info, history: r.history || [], balance: null, readingTime: new Date().toISOString(), updatedAt: null, err: null, loading: true };
+        } else {
+          if (!/^\d{8,12}$/.test(num)) { failed++; continue; }
+          const isAccount = num.length === 8;
+          const probe = await probeSystemType(isAccount ? num : undefined, isAccount ? undefined : num);
+          if (!probe) { failed++; continue; }
+          meter = { id: 'm' + Date.now() + added, provider: 'desco', sys: probe.sys, accountNo: probe.info.accountNo, meterNo: probe.info.meterNo, nickname, info: probe.info, balance: null, readingTime: null, updatedAt: null, err: null, loading: true };
+        }
+        state.meters.push(meter); added++;
+        refreshMeter(meter, { silent: true });
+      } catch (e) { failed++; }
+    }
+    saveMeters(); renderHome();
+    toast(`Added: ${added}, Skipped: ${skipped}, Failed: ${failed}`);
+  } catch (e) { toast('Error reading file: ' + e.message, true); }
 }
 
 async function doAddMeter(prov) {
