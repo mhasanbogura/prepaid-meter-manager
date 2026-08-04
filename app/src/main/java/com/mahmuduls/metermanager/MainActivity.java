@@ -34,7 +34,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setStatusBarColor(0xFF0B3D91);
         getWindow().setDecorFitsSystemWindows(true);
 
         webView = new WebView(this);
@@ -67,17 +66,10 @@ public class MainActivity extends Activity {
     }
 
     private void injectOverrides() {
-        int statusBarHeight = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) statusBarHeight = (int) (getResources().getDimension(resourceId) / getResources().getDisplayMetrics().density);
-
         String js =
             "(function(){" +
             "  if(window.__mm_injected) return;" +
             "  window.__mm_injected=true;" +
-            "  var style=document.createElement('style');" +
-            "  style.textContent='body{padding-top:" + statusBarHeight + "px !important;margin-top:0 !important}';" +
-            "  document.head.appendChild(style);" +
             "  var origFetch=window.fetch;" +
             "  window.fetch=function(url,opts){" +
             "    if(typeof url==='string' && url.indexOf('/nesco')>=0){" +

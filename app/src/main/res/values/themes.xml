@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:statusBarColor">#00000000</item>
-        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">#FF0B3D91</item>
         <item name="android:navigationBarColor">#FFFFFFFF</item>
     </style>
 </resources>
