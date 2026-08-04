@@ -92,7 +92,6 @@ def deployTo = { File dist ->
 
 task deployApk(dependsOn: 'assembleDebug') {
     doLast {
-        deployTo(file('..'))
         deployTo(file('C:/Google Drive/Apps/My Drive/Apk Store/Android'))
     }
 }
