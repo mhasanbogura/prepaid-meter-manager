@@ -546,11 +546,36 @@ function showImportExport() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
       <button class="btn secondary" onclick="ieExport()" style="white-space:nowrap">Export to file</button>
       <button class="btn secondary" onclick="ieImport()" style="white-space:nowrap">Import from file</button>
-      <button class="btn secondary" onclick="navigator.clipboard.writeText($('#ieText').value).then(() => toast('Copied')).catch(()=>{})">Copy</button>
-      <button class="btn secondary" onclick="importMetersFromText($('#ieText').value);closeDialog()">Save</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+      <button class="btn secondary" onclick="ieCopy()" style="white-space:nowrap">Copy</button>
+      <button class="btn secondary" onclick="iePaste()" style="white-space:nowrap">Paste</button>
+      <button class="btn secondary" onclick="ieSave()" style="white-space:nowrap">Save</button>
     </div>`, []);
   $('#dlgTitle').style.textAlign = 'center';
 }
+window.ieCopy = () => {
+  navigator.clipboard.writeText($('#ieText').value).then(() => toast('Copied')).catch(() => toast('Copy failed', true));
+};
+window.iePaste = async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    $('#ieText').value = text;
+    toast('Pasted');
+  } catch (e) {
+    toast('Paste failed – check clipboard permission', true);
+  }
+};
+window.ieSave = () => {
+  const text = $('#ieText').value.trim();
+  if (!text) { toast('Nothing to save', true); return; }
+  const current = exportMetersTxt().trim();
+  if (text === current) { toast('No changes'); closeDialog(); return; }
+  state.meters = [];
+  saveMeters();
+  importMetersFromText(text);
+  closeDialog();
+};
 window.ieExport = async () => {
   const text = $('#ieText').value;
   try {
@@ -1048,7 +1073,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.61 (build 186)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.62 (build 189)</span>
       </div>`;
     return;
   }
@@ -1094,7 +1119,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.61 (build 186)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.62 (build 189)</span>
     </div>
   `;
 }
