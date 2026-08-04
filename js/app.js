@@ -183,6 +183,12 @@ function fmtNum(n) {
 }
 function fmtBdt(n) { return '৳' + fmtNum(n); }
 function fmtUnits(n) { n = Number(n); if (!isNaN(n)) return fmtNum(n) + ' kWh'; return '–'; }
+function fmtToken(s) {
+  if (!s) return '';
+  const digits = s.replace(/\D/g, '');
+  if (!digits) return s;
+  return digits.replace(/(.{4})/g, '$1-').replace(/-$/, '');
+}
 function descoTakaToKwh(taka) {
   if (taka <= 0) return 0;
   const tiers = [
@@ -831,7 +837,7 @@ function renderNescoHistory(m) {
         ${rows.map(r => {
           const total = Number(r.rechargeAmount) || 0;
           const ea = Number(r.electricityAmount) || 0;
-          return `<tr><td>${esc(r.rechargeDate || '')}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${(r.tokenNo || r.orderId || '').replace(/,?\s*&lt;br&gt;\s*/g, ', ').replace(/,\s*$/, '')}</td><td style="text-align:right;font-weight:600">${fmtBdt(total)}</td><td style="text-align:right">${fmtBdt(ea)}</td><td style="text-align:right">${fmtUnits(r.energyUnit)}</td><td style="text-align:right">${fmtBdt(total - ea)}</td></tr>`;
+          return `<tr><td>${esc(r.rechargeDate || '')}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${esc(fmtToken(r.tokenNo || r.orderId || ''))}</td><td style="text-align:right;font-weight:600">${fmtBdt(total)}</td><td style="text-align:right">${fmtBdt(ea)}</td><td style="text-align:right">${fmtUnits(r.energyUnit)}</td><td style="text-align:right">${fmtBdt(total - ea)}</td></tr>`;
         }).join('')}
       </tbody></table></div>`
       : `<p class="muted">${esc(t('detail.recharge_empty'))}</p>`}
@@ -1073,7 +1079,7 @@ function renderHistory(hist) {
           const ea = Number(r.energyAmount) || 0;
           const tokens = (r.chargeItems || []).map(c => c.tokenNo || c.token || '').filter(Boolean).join(', ');
           const tokenDisplay = tokens || r.tokenNo || r.token || r.orderID || '';
-          return `<tr><td>${esc(fmtDate(r.rechargeDate))}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${esc(tokenDisplay)}</td><td style="text-align:right;font-weight:600">${fmtBdt(total)}</td><td style="text-align:right">${fmtBdt(ea)}</td><td style="text-align:right">${fmtUnits(descoTakaToKwh(ea))}</td><td style="text-align:right">${fmtBdt(total - ea)}</td></tr>`;
+          return `<tr><td>${esc(fmtDate(r.rechargeDate))}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${esc(fmtToken(tokenDisplay))}</td><td style="text-align:right;font-weight:600">${fmtBdt(total)}</td><td style="text-align:right">${fmtBdt(ea)}</td><td style="text-align:right">${fmtUnits(descoTakaToKwh(ea))}</td><td style="text-align:right">${fmtBdt(total - ea)}</td></tr>`;
         }).join('')}
       </tbody></table></div>`
       : `<p class="muted">${esc(t('detail.recharge_empty'))}</p>`}
@@ -1108,7 +1114,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.81 (build 246)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.82 (build 249)</span>
       </div>`;
     return;
   }
@@ -1154,7 +1160,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.81 (build 246)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.82 (build 249)</span>
     </div>
   `;
 }
