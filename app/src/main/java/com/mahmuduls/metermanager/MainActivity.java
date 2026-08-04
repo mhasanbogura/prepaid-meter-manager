@@ -110,8 +110,7 @@ public class MainActivity extends Activity {
         );
     }
 
-    @JavascriptInterface
-    public String nescoLookupSync(String cust) {
+    private String nescoLookupImpl(String cust) {
         try {
             cust = cust.replaceAll("\\D", "");
             if (cust.length() > 11) cust = cust.substring(0, 11);
@@ -304,6 +303,11 @@ public class MainActivity extends Activity {
     }
 
     class NescoBridge {
+        @JavascriptInterface
+        public String nescoLookupSync(String cust) {
+            return nescoLookupImpl(cust);
+        }
+
         @JavascriptInterface
         public void saveFileWithPicker(String content, String defaultName) {
             mainHandler.post(() -> {
