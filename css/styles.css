@@ -27,6 +27,7 @@
   --shadow: 0 1px 3px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
   --shadow-lg: 0 8px 30px rgba(0,0,0,.5);
 }
+[data-theme="dark"] .btn.secondary:active, [data-theme="dark"] .btn.secondary.pressed { background: #1a2030; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -123,13 +124,12 @@ input[type="text"].wide { width: 100%; min-width: 0; margin-top: 8px; }
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   background: var(--primary); color: #fff; border: 0; border-radius: 11px;
   padding: 12px 18px; font-size: 15px; font-weight: 600;
-  transition: background .15s, border-color .15s; text-decoration: none;
+  transition: background .1s; text-decoration: none;
   -webkit-tap-highlight-color: transparent; user-select: none;
 }
-.btn:hover { filter: brightness(1.1); }
-.btn:active, .btn.pressed { filter: brightness(1.15); }
-.btn.secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 11px; }
-.btn.secondary:active, .btn.secondary.pressed { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--surface-2)); }
+.btn:active, .btn.pressed { filter: brightness(.85); }
+.btn.secondary { background: var(--surface-2); color: var(--text); border: 0.3px solid var(--border); border-radius: 11px; }
+.btn.secondary:active, .btn.secondary.pressed { background: #c8ccd2; }
 .btn.danger { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 .btn.block { width: 100%; }
 .btn.sm { padding: 8px 13px; font-size: 13px; border-radius: 9px; }
