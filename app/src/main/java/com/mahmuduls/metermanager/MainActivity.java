@@ -448,11 +448,17 @@ public class MainActivity extends Activity {
                         getContentResolver().openInputStream(uri)));
                     StringBuilder sb = new StringBuilder();
                     String line;
-                    while ((line = br.readLine()) != null) sb.append(line);
+                    boolean first = true;
+                    while ((line = br.readLine()) != null) {
+                        if (!first) sb.append("\n");
+                        sb.append(line);
+                        first = false;
+                    }
                     br.close();
-                    String content = sb.toString().replace("'", "\\'").replace("\n", "\\n");
+                    String content = sb.toString();
+                    String escaped = content.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "");
                     webView.evaluateJavascript(
-                        "(function(){if(window._onFileLoaded)window._onFileLoaded('" + content + "');})()", null);
+                        "(function(){if(window._onFileLoaded)window._onFileLoaded('" + escaped + "');})()", null);
                 } catch (Exception e) {
                     Log.e(TAG, "File read error", e);
                 }
