@@ -8,22 +8,17 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,15 +28,14 @@ public class MainActivity extends Activity {
     private static final String WEB_URL = "https://mhasanbogura.github.io/prepaid-meter-manager/";
     private static final String PANEL = "https://customer.nesco.gov.bd/pre/panel";
     private static final String SUBMIT_HISTORY = "\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF";
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setStatusBarColor(0x00000000);
-        getWindow().setDecorFitsSystemWindows(false);
+        getWindow().setStatusBarColor(0xFF0B3D91);
+        getWindow().setDecorFitsSystemWindows(true);
 
         webView = new WebView(this);
         setContentView(webView);
@@ -58,37 +52,9 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                if (url.contains("/nesco")) {
-                    try {
-                        Uri uri = Uri.parse(url);
-                        String probe = uri.getQueryParameter("probe");
-                        String cust = uri.getQueryParameter("cust");
-
-                        if ("1".equals(probe)) {
-                            String json = "{\"ok\":true,\"probe\":true}";
-                            return new WebResourceResponse("application/json", "UTF-8",
-                                new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-                        }
-
-                        if (cust != null && !cust.isEmpty()) {
-                            String result = nescoLookupSync(cust);
-                            return new WebResourceResponse("application/json", "UTF-8",
-                                new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
-                        }
-
-                        String err = "{\"ok\":false,\"error\":\"missing cust parameter\"}";
-                        return new WebResourceResponse("application/json", "UTF-8",
-                            new ByteArrayInputStream(err.getBytes(StandardCharsets.UTF_8)));
-                    } catch (Exception e) {
-                        Log.e(TAG, "intercept error", e);
-                        String err = "{\"ok\":false,\"error\":\"" + e.getMessage().replace("\"", "'") + "\"}";
-                        return new WebResourceResponse("application/json", "UTF-8",
-                            new ByteArrayInputStream(err.getBytes(StandardCharsets.UTF_8)));
-                    }
-                }
-                return super.shouldInterceptRequest(view, request);
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                injectOverrides();
             }
 
             @Override
@@ -100,61 +66,78 @@ public class MainActivity extends Activity {
         webView.loadUrl(WEB_URL);
     }
 
-    @Override
-    public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            webView.evaluateJavascript(
-                "(function() { " +
-                "  if (typeof currentView !== 'undefined' && currentView !== 'home') { " +
-                "    window.currentView = 'home'; window.currentMeterId = null; " +
-                "    if (typeof renderHome === 'function') renderHome(); " +
-                "    return 'handled'; " +
-                "  } " +
-                "  return 'exit'; " +
-                "})()",
-                value -> {
-                    String v = value != null ? value.replace("\"", "") : "exit";
-                    if (!"handled".equals(v)) {
-                        finish();
-                    }
-                }
-            );
-        }
+    private void injectOverrides() {
+        String js =
+            "(function(){" +
+            "  if(window.__mm_injected) return;" +
+            "  window.__mm_injected=true;" +
+            "  var origFetch=window.fetch;" +
+            "  window.fetch=function(url,opts){" +
+            "    if(typeof url==='string' && url.indexOf('/nesco')>=0){" +
+            "      try{" +
+            "        var u=new URL(url,location.href);" +
+            "        var probe=u.searchParams.get('probe');" +
+            "        var cust=u.searchParams.get('cust');" +
+            "        if(probe==='1') return Promise.resolve(new Response(JSON.stringify({ok:true,probe:true}),{status:200,headers:{'Content-Type':'application/json'}}));" +
+            "        if(cust){" +
+            "          var result=NescoBridge.nescoLookupSync(cust);" +
+            "          return Promise.resolve(new Response(result,{status:200,headers:{'Content-Type':'application/json'}}));" +
+            "        }" +
+            "      }catch(e){}" +
+            "    }" +
+            "    return origFetch.call(this,url,opts);" +
+            "};" +
+            "})();";
+        webView.evaluateJavascript(js, null);
     }
 
-    private String nescoLookupSync(String cust) {
+    @Override
+    public void onBackPressed() {
+        webView.evaluateJavascript(
+            "(function(){" +
+            "  if(typeof currentView!=='undefined' && currentView!=='home'){" +
+            "    currentMeterId=null; showView('home');" +
+            "    return 'handled';" +
+            "  }" +
+            "  return 'exit';" +
+            "})()",
+            value -> {
+                String v = value != null ? value.replace("\"", "") : "exit";
+                if (!"handled".equals(v)) {
+                    finish();
+                }
+            }
+        );
+    }
+
+    @JavascriptInterface
+    public String nescoLookupSync(String cust) {
         try {
             cust = cust.replaceAll("\\D", "");
             if (cust.length() > 11) cust = cust.substring(0, 11);
             if (cust.isEmpty()) return "{\"ok\":false,\"error\":\"missing customer number\"}";
 
-            // Step 1: GET the panel page to get CSRF token and session cookie
             HttpsResult panelGet = httpGet(PANEL);
-            if (panelGet.code != 200) return "{\"ok\":false,\"error\":\"portal returned HTTP " + panelGet.code + "\"}";
+            if (panelGet.code != 200) return "{\"ok\":false,\"error\":\"portal HTTP " + panelGet.code + "\"}";
 
             String token = extractToken(panelGet.body);
-            if (token == null) return "{\"ok\":false,\"error\":\"no csrf token found\"}";
+            if (token == null) return "{\"ok\":false,\"error\":\"no csrf token\"}";
 
             String cookie = sessionCookie(panelGet.setCookie);
             if (cookie == null || cookie.isEmpty()) return "{\"ok\":false,\"error\":\"no session cookie\"}";
 
-            // Step 2: POST the form
             String form = "_token=" + URLEncoder.encode(token, "UTF-8") +
                 "&cust_no=" + URLEncoder.encode(cust, "UTF-8") +
                 "&submit=" + URLEncoder.encode(SUBMIT_HISTORY, "UTF-8");
 
             HttpsResult postResult = httpPost(PANEL, cookie, form);
-            if (postResult.code != 200) return "{\"ok\":false,\"error\":\"portal returned HTTP " + postResult.code + "\"}";
+            if (postResult.code != 200) return "{\"ok\":false,\"error\":\"portal HTTP " + postResult.code + "\"}";
 
-            // Step 3: Parse HTML into JSON
-            String json = parseNescoHtml(postResult.body);
-            return json;
+            return parseNescoHtml(postResult.body);
 
         } catch (Exception e) {
             Log.e(TAG, "nescoLookupSync error", e);
-            return "{\"ok\":false,\"error\":\"" + e.getMessage().replace("\"", "'") + "\"}";
+            return "{\"ok\":false,\"error\":\"" + esc(e.getMessage()) + "\"}";
         }
     }
 
@@ -188,7 +171,6 @@ public class MainActivity extends Activity {
         if (end < 0) end = html.length();
         String seg = html.substring(start, end);
 
-        // Extract readonly inputs (customer data fields)
         Pattern inputPat = Pattern.compile("<input[^>]*readonly[^>]*value=\"([^\"]*)\"");
         Matcher inputMat = inputPat.matcher(seg);
         java.util.List<String> inputs = new java.util.ArrayList<>();
@@ -215,7 +197,6 @@ public class MainActivity extends Activity {
         info.append(",\"balance\":\"").append(esc(take(inputs, 14))).append("\"");
         info.append("}");
 
-        // Parse recharge history
         Pattern rowPat = Pattern.compile("<[^>]*?consumerRechargeData[^>]*>");
         Matcher rowMat = rowPat.matcher(html);
         StringBuilder hist = new StringBuilder();

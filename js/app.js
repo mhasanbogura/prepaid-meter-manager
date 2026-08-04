@@ -149,9 +149,9 @@ const WHATSAPP = 'https://wa.me/8801721665453';
 const DESCO = 'https://prepaid.desco.org.bd';
 const NESCO_API = '/nesco';
 
-let state = { meters: [], settings: null };
-let currentView = 'home';
-let currentMeterId = null;
+var state = { meters: [], settings: null };
+var currentView = 'home';
+var currentMeterId = null;
 let langs = I18N.en;
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -673,8 +673,8 @@ async function nescoQuery(custNo) {
 
 /* Find a working NESCO proxy endpoint: same-origin /nesco first, then the
    bundled local server on 127.0.0.1/localhost:3000. The winner is cached. */
-let nescoBase = null;
-let nescoBaseChecked = false;
+var nescoBase = null;
+var nescoBaseChecked = false;
 async function findNescoBase() {
   if (nescoBaseChecked) return nescoBase;
   nescoBaseChecked = true;
@@ -1039,7 +1039,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.53 (build 162)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.54 (build 165)</span>
       </div>`;
     return;
   }
@@ -1085,7 +1085,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.53 (build 162)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.54 (build 165)</span>
     </div>
   `;
 }
