@@ -1,0 +1,127 @@
+apply plugin: 'com.android.application'
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+def versionPropsFile = file('version.properties')
+def props = new Properties()
+if (versionPropsFile.exists()) {
+    props.load(new FileInputStream(versionPropsFile))
+}
+def vc = (props.getProperty('versionCode', '3') as int)
+def vn = props.getProperty('versionName', '1')
+def vnParts = vn.split('\\.')
+def major = vnParts.length > 0 ? vnParts[0] as int : 1
+def minor = vnParts.length > 1 ? vnParts[1] as int : 0
+def patch = vnParts.length > 2 ? vnParts[2] as int : 0
+patch += 1
+if (patch > 99) { patch = 0; minor += 1 }
+if (minor > 99) { minor = 0; major += 1 }
+def newVn = "${major}.${minor}.${patch}"
+def newVc = vc + 3
+
+android {
+    namespace 'com.mahmuduls.metermanager'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.mahmuduls.metermanager"
+        minSdk 24
+        targetSdk 34
+        versionCode newVc
+        versionName newVn
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.webkit:webkit:1.8.0'
+}
+
+task updateVersionProperties {
+    doLast {
+        props.setProperty('versionCode', newVc.toString())
+        props.setProperty('versionName', newVn)
+        props.store(new FileOutputStream(versionPropsFile), null)
+    }
+}
+
+task updateWebVersion {
+    doLast {
+        def webJsFile = file("../js/app.js")
+        if (webJsFile.exists()) {
+            def content = webJsFile.text
+            content = content.replaceAll('Version \\d+\\.\\d+\\.\\d+ \\(build \\d+\\)', "Version ${newVn} (build ${newVc})")
+            webJsFile.text = content
+            println "Updated web version footer to Version ${newVn} (build ${newVc})"
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith('assemble')) {
+        task.dependsOn updateVersionProperties
+        task.dependsOn updateWebVersion
+    }
+}
+
+def deployTo = { File dist ->
+    if (!dist.exists()) dist.mkdirs()
+    def pattern = ~/Meter Manager_com\.mahmuduls\.metermanager_v.*\.apk/
+    dist.listFiles().findAll { it.isFile() && pattern.matcher(it.name).matches() }.each { it.delete() }
+    copy {
+        from layout.buildDirectory.file('outputs/apk/debug/Meter Manager-debug.apk')
+        into dist
+        rename { "Meter Manager_com.mahmuduls.metermanager_v${newVn}_build_${newVc}.apk" }
+    }
+    println "Deployed Meter Manager_com.mahmuduls.metermanager_v${newVn}_build_${newVc}.apk to ${dist}"
+}
+
+task deployApk(dependsOn: 'assembleDebug') {
+    doLast {
+        deployTo(file('..'))
+        deployTo(file('C:/Google Drive/Apps/My Drive/Apk Store/Android'))
+    }
+}
+
+task uploadToGitHub {
+    doLast {
+        def out = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'status', '--porcelain'
+            workingDir = file('..')
+            standardOutput = out
+            ignoreExitValue true
+        }
+        if (!out.toString().trim()) {
+            println 'GitHub: nothing to upload'
+            return
+        }
+        exec { commandLine 'git', 'add', '-A'; workingDir = file('..') }
+        exec {
+            commandLine 'git', 'commit', '-m', "Meter Manager v${newVn} (build ${newVc})"
+            workingDir = file('..')
+            ignoreExitValue true
+        }
+        exec { commandLine 'git', 'push', 'origin', 'main'; workingDir = file('..') }
+        println "GitHub: pushed (v${newVn} build ${newVc})"
+    }
+}
+
+afterEvaluate {
+    assembleDebug.finalizedBy deployApk
+    assembleDebug.finalizedBy uploadToGitHub
+}
