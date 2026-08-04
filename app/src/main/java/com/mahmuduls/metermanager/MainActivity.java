@@ -177,11 +177,16 @@ public class MainActivity extends Activity {
 
     private String parseNescoHtml(String html) {
         int start = html.indexOf("id=\"con_info_div\"");
+        if (start < 0) {
+            int alt = html.indexOf("con_info_div");
+            if (alt >= 0) start = alt;
+        }
         if (start < 0) return "{\"ok\":false,\"error\":\"customer data not found\"}";
 
         int end = html.indexOf("consumerRechargeData", start);
         if (end < 0) end = html.indexOf("arrear_notice_div", start);
-        if (end < 0) end = html.length();
+        if (end < 0) end = html.indexOf("class=\"row\"", start + 100);
+        if (end < 0) end = Math.min(start + 5000, html.length());
         String seg = html.substring(start, end);
 
         Pattern inputPat = Pattern.compile("<input[^>]*readonly[^>]*value=\"([^\"]*)\"");
@@ -189,6 +194,15 @@ public class MainActivity extends Activity {
         java.util.List<String> inputs = new java.util.ArrayList<>();
         while (inputMat.find()) {
             inputs.add(inputMat.group(1).trim());
+        }
+
+        if (inputs.isEmpty()) {
+            Pattern anyInput = Pattern.compile("<input[^>]*value=\"([^\"]+)\"");
+            inputMat = anyInput.matcher(seg);
+            while (inputMat.find()) {
+                String val = inputMat.group(1).trim();
+                if (!val.isEmpty() && !val.startsWith("#")) inputs.add(val);
+            }
         }
 
         StringBuilder info = new StringBuilder();
@@ -215,6 +229,10 @@ public class MainActivity extends Activity {
         StringBuilder hist = new StringBuilder();
         hist.append("[");
         boolean first = true;
+        String firstCustomerName = "";
+        String firstMeterNo = "";
+        String firstTariff = "";
+        String firstOrg = "";
         String[] keys = {"order", "token", "seq", "rent", "demandcharge", "tax", "pfc", "subsidyamount",
             "purchaseamount", "totalamount", "purchaseenergy", "salename", "purchasedate",
             "debtamount", "paidamount", "meterno", "customerno", "customername", "tariff", "organization"};
@@ -232,10 +250,48 @@ public class MainActivity extends Activity {
                 hist.append("\"").append(outKeys[k]).append("\":\"").append(esc(val)).append("\"");
             }
             hist.append("}");
+            if (firstCustomerName.isEmpty()) firstCustomerName = attr(tag, "data-customername");
+            if (firstMeterNo.isEmpty()) firstMeterNo = attr(tag, "data-meterno");
+            if (firstTariff.isEmpty()) firstTariff = attr(tag, "data-tariff");
+            if (firstOrg.isEmpty()) firstOrg = attr(tag, "data-organization");
         }
         hist.append("]");
 
-        return "{\"ok\":true,\"info\":" + info.toString() + ",\"history\":" + hist.toString() + "}";
+        String infoStr = info.toString();
+        String infoBalance = take(inputs, 14);
+
+        if (infoBalance.isEmpty() || "0".equals(infoBalance)) {
+            Pattern balPat = Pattern.compile("balance[\"']?\\s*[>:]+\\s*[৳Tk]*\\s*([\\d,.]+)", Pattern.CASE_INSENSITIVE);
+            Matcher balMat = balPat.matcher(html);
+            if (balMat.find()) infoBalance = balMat.group(1).trim();
+        }
+        if (infoBalance.isEmpty() || "0".equals(infoBalance)) {
+            Pattern balPat2 = Pattern.compile("id=\"status_label\"[^>]*>([^<]*)", Pattern.CASE_INSENSITIVE);
+            Matcher balMat2 = balPat2.matcher(html);
+            if (balMat2.find()) {
+                String t = balMat2.group(1).replaceAll("[^\\d.]", "").trim();
+                if (!t.isEmpty()) infoBalance = t;
+            }
+        }
+
+        if (!infoBalance.isEmpty()) {
+            infoStr = infoStr.replaceFirst("\"balance\":\"[^\"]*\"", "\"balance\":\"" + esc(infoBalance) + "\"");
+        }
+
+        if (firstCustomerName.isEmpty() && !firstMeterNo.isEmpty()) {
+            infoStr = infoStr.replaceFirst("\"name\":\"\"", "\"name\":\"" + esc(firstMeterNo) + "\"");
+        }
+        if (infoStr.contains("\"customerName\":\"\"") && !firstCustomerName.isEmpty()) {
+            infoStr = infoStr.replaceFirst("\"name\":\"\"", "\"name\":\"" + esc(firstCustomerName) + "\"");
+        }
+        if (infoStr.contains("\"tariff\":\"\"") && !firstTariff.isEmpty()) {
+            infoStr = infoStr.replaceFirst("\"tariff\":\"\"", "\"tariff\":\"" + esc(firstTariff) + "\"");
+        }
+        if (infoStr.contains("\"meterNo\":\"\"") && !firstMeterNo.isEmpty()) {
+            infoStr = infoStr.replaceFirst("\"meterNo\":\"\"", "\"meterNo\":\"" + esc(firstMeterNo) + "\"");
+        }
+
+        return "{\"ok\":true,\"info\":" + infoStr + ",\"history\":" + hist.toString() + "}";
     }
 
     private String attr(String tag, String attrName) {
