@@ -398,8 +398,13 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public String loadFileWithPicker() {
-            return null;
+        public void loadFileWithPicker() {
+            mainHandler.post(() -> {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("text/plain");
+                startActivityForResult(intent, 1002);
+            });
         }
 
         @JavascriptInterface

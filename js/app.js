@@ -627,10 +627,18 @@ window.ieExport = async () => {
   }
 };
 window.ieImport = () => {
-  const inp = document.createElement('input');
-  inp.type = 'file'; inp.accept = '.txt,text/plain';
-  inp.onchange = async () => { const f = inp.files[0]; if (f) { const t = await f.text(); $('#ieText').value = t; } };
-  inp.click();
+  if (window.NescoBridge && NescoBridge.loadFileWithPicker) {
+    window._onFileLoaded = (content) => {
+      $('#ieText').value = content.replace(/\\n/g, '\n');
+      delete window._onFileLoaded;
+    };
+    NescoBridge.loadFileWithPicker();
+  } else {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.txt,text/plain';
+    inp.onchange = async () => { const f = inp.files[0]; if (f) { const t = await f.text(); $('#ieText').value = t; } };
+    inp.click();
+  }
 };
 
 async function doAddMeter(prov) {
@@ -1090,7 +1098,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.73 (build 222)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.74 (build 225)</span>
       </div>`;
     return;
   }
@@ -1136,7 +1144,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.73 (build 222)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.74 (build 225)</span>
     </div>
   `;
 }
