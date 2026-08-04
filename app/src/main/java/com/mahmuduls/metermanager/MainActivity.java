@@ -2,15 +2,19 @@ package com.mahmuduls.metermanager;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -35,10 +39,15 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         getWindow().setStatusBarColor(0xFF0B3D91);
-        getWindow().setDecorFitsSystemWindows(true);
+
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.parseColor("#0B3D91"));
 
         webView = new WebView(this);
-        setContentView(webView);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        root.addView(webView, lp);
+        setContentView(root);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -95,6 +104,11 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         webView.evaluateJavascript(
             "(function(){" +
+            "  var d=document.getElementById('dlg');" +
+            "  if(d && !d.hidden){" +
+            "    if(typeof closeDialog==='function') closeDialog();" +
+            "    return 'dialog';" +
+            "  }" +
             "  if(typeof currentView!=='undefined' && currentView!=='home'){" +
             "    currentMeterId=null; showView('home');" +
             "    return 'handled';" +
@@ -103,7 +117,7 @@ public class MainActivity extends Activity {
             "})()",
             value -> {
                 String v = value != null ? value.replace("\"", "") : "exit";
-                if (!"handled".equals(v)) {
+                if ("exit".equals(v)) {
                     finish();
                 }
             }
