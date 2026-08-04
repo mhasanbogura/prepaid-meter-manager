@@ -83,7 +83,7 @@ def deployTo = { File dist ->
     def pattern = ~/Meter Manager_com\.mahmuduls\.metermanager_v.*\.apk/
     dist.listFiles().findAll { it.isFile() && pattern.matcher(it.name).matches() }.each { it.delete() }
     copy {
-        from layout.buildDirectory.file('outputs/apk/debug/Meter Manager-debug.apk')
+        from layout.buildDirectory.file('outputs/apk/debug/app-debug.apk')
         into dist
         rename { "Meter Manager_com.mahmuduls.metermanager_v${newVn}_build_${newVc}.apk" }
     }
