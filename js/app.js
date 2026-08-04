@@ -820,7 +820,7 @@ function renderNescoHistory(m) {
     <h3>${esc(t('detail.recharge_history'))}</h3>
     ${rows.length
       ? `<div class="tbl-scroll"><table class="list"><thead><tr><th>${esc(t('detail.date'))}</th><th>${esc(t('detail.token'))}</th><th style="text-align:center">${esc(t('detail.total'))}</th><th style="text-align:center">Energy<br>Amount</th><th style="text-align:center">Energy<br>(kWh)</th><th style="text-align:center">${esc(t('detail.vat'))}</th><th>${esc(t('detail.method'))}</th></tr></thead><tbody>
-        ${rows.map(r => `<tr><td>${esc(r.rechargeDate || '')}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${(r.tokenNo || r.orderId || '').replace(/,?\s*&lt;br&gt;\s*/g, ', ').replace(/,\s*$/, '')}</td><td style="text-align:right;font-weight:600">${fmtBdt(r.rechargeAmount)}</td><td style="text-align:right">${fmtBdt((Number(r.rechargeAmount) || 0) - (Number(r.vat) || 0))}</td><td style="text-align:right">${fmtUnits(r.energyUnit)}</td><td style="text-align:right">${fmtBdt(r.vat)}</td><td>${esc(r.method || '')}</td></tr>`).join('')}
+        ${rows.map(r => `<tr><td>${esc(r.rechargeDate || '')}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${(r.tokenNo || r.orderId || '').replace(/,?\s*&lt;br&gt;\s*/g, ', ').replace(/,\s*$/, '')}</td><td style="text-align:right;font-weight:600">${fmtBdt(r.rechargeAmount)}</td><td style="text-align:right">${fmtBdt(r.electricityAmount)}</td><td style="text-align:right">${fmtUnits(r.energyUnit)}</td><td style="text-align:right">${fmtBdt(r.vat)}</td><td>${esc(r.method || '')}</td></tr>`).join('')}
       </tbody></table></div>`
       : `<p class="muted">${esc(t('detail.recharge_empty'))}</p>`}
   </section>`;
@@ -1090,7 +1090,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.72 (build 219)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.73 (build 222)</span>
       </div>`;
     return;
   }
@@ -1136,7 +1136,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.72 (build 219)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.73 (build 222)</span>
     </div>
   `;
 }
