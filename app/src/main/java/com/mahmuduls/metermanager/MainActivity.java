@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
     private static final String PANEL = "https://customer.nesco.gov.bd/pre/panel";
     private static final String SUBMIT_HISTORY = "\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF";
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private String pendingSaveContent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -388,6 +389,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void saveFileWithPicker(String content, String defaultName) {
+            pendingSaveContent = content;
             mainHandler.post(() -> {
                 Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -424,7 +426,21 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1002 && resultCode == RESULT_OK && data != null) {
+        if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null && pendingSaveContent != null) {
+                try {
+                    OutputStream os = getContentResolver().openOutputStream(uri);
+                    if (os != null) {
+                        os.write(pendingSaveContent.getBytes("UTF-8"));
+                        os.close();
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "File write error", e);
+                }
+                pendingSaveContent = null;
+            }
+        } else if (requestCode == 1002 && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null) {
                 try {
