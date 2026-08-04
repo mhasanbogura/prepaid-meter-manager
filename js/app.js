@@ -606,7 +606,7 @@ async function doAddMeter(prov) {
     if (!/^\d{8,11}$/.test(raw)) { status.textContent = 'NESCO consumer number is 8 to 11 digits.'; return; }
   } else if (!/^\d{8,12}$/.test(raw)) { status.textContent = t('add.number.hint'); return; }
   if (state.meters.length >= MAX_METERS) { toast(t('home.max')); return; }
-  if (state.meters.some(m => m.consumerNo === raw || m.accountNo === raw || m.meterNo === raw)) {
+  if (state.meters.some(m => m.provider === prov && (m.consumerNo === raw || m.accountNo === raw || m.meterNo === raw))) {
     toast(t('add.exists')); return;
   }
   btn.disabled = true; btn.style.opacity = .6;
@@ -616,6 +616,9 @@ async function doAddMeter(prov) {
     if (prov === 'nesco') {
       const r = await nescoQuery(raw);
       if (!r.ok) throw new Error(r.error || t('nesco.no_data'));
+      if (!r.info || (!r.info.name && !r.info.consumerNo && !r.info.meterNo && (!r.history || r.history.length === 0))) {
+        throw new Error('Not found in the NESCO database. Check the number and try again.');
+      }
       meter = {
         id: 'm' + Date.now(), provider: 'nesco',
         consumerNo: raw, nickname: nickname || '',
@@ -1045,7 +1048,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.59 (build 180)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.60 (build 183)</span>
       </div>`;
     return;
   }
@@ -1091,7 +1094,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.59 (build 180)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.60 (build 183)</span>
     </div>
   `;
 }
