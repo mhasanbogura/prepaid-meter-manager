@@ -1071,7 +1071,8 @@ function renderHistory(hist) {
         ${rows.map(r => {
           const total = Number(r.totalAmount) || 0;
           const ea = Number(r.energyAmount) || 0;
-          return `<tr><td>${esc(fmtDate(r.rechargeDate))}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${esc(r.orderID)}</td><td style="text-align:right;font-weight:600">${fmtBdt(total)}</td><td style="text-align:right">${fmtBdt(ea)}</td><td style="text-align:right">${fmtUnits(descoTakaToKwh(ea))}</td><td style="text-align:right">${fmtBdt(total - ea)}</td></tr>`;
+          const tokens = (r.chargeItems || []).map(c => c.tokenNo || c.token || '').filter(Boolean).join(', ');
+          return `<tr><td>${esc(fmtDate(r.rechargeDate))}</td><td style="color:var(--text-2);white-space:normal;word-break:break-all;max-width:140px">${esc(tokens || r.orderID || '')}</td><td style="text-align:right;font-weight:600">${fmtBdt(total)}</td><td style="text-align:right">${fmtBdt(ea)}</td><td style="text-align:right">${fmtUnits(descoTakaToKwh(ea))}</td><td style="text-align:right">${fmtBdt(total - ea)}</td></tr>`;
         }).join('')}
       </tbody></table></div>`
       : `<p class="muted">${esc(t('detail.recharge_empty'))}</p>`}
@@ -1106,7 +1107,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.78 (build 237)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.79 (build 240)</span>
       </div>`;
     return;
   }
@@ -1152,7 +1153,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.78 (build 237)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.79 (build 240)</span>
     </div>
   `;
 }
