@@ -369,6 +369,24 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String clipboardRead() {
+            android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            android.content.ClipData clip = cm.getPrimaryClip();
+            if (clip != null && clip.getItemCount() > 0) {
+                CharSequence text = clip.getItemAt(0).getText();
+                return text != null ? text.toString() : "";
+            }
+            return "";
+        }
+
+        @JavascriptInterface
+        public void clipboardWrite(String text) {
+            android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            android.content.ClipData clip = android.content.ClipData.newPlainText("Meter Manager", text);
+            cm.setPrimaryClip(clip);
+        }
+
+        @JavascriptInterface
         public void saveFileWithPicker(String content, String defaultName) {
             mainHandler.post(() -> {
                 Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);

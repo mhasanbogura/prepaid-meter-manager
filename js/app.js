@@ -555,15 +555,27 @@ function showImportExport() {
   $('#dlgTitle').style.textAlign = 'center';
 }
 window.ieCopy = () => {
-  navigator.clipboard.writeText($('#ieText').value).then(() => toast('Copied')).catch(() => toast('Copy failed', true));
+  const text = $('#ieText').value;
+  if (window.NescoBridge && NescoBridge.clipboardWrite) {
+    NescoBridge.clipboardWrite(text);
+    toast('Copied');
+  } else {
+    navigator.clipboard.writeText(text).then(() => toast('Copied')).catch(() => toast('Copy failed', true));
+  }
 };
 window.iePaste = async () => {
-  try {
-    const text = await navigator.clipboard.readText();
-    $('#ieText').value = text;
-    toast('Pasted');
-  } catch (e) {
-    toast('Paste failed – check clipboard permission', true);
+  if (window.NescoBridge && NescoBridge.clipboardRead) {
+    const text = NescoBridge.clipboardRead();
+    if (text) { $('#ieText').value = text; toast('Pasted'); }
+    else toast('Clipboard is empty', true);
+  } else {
+    try {
+      const text = await navigator.clipboard.readText();
+      $('#ieText').value = text;
+      toast('Pasted');
+    } catch (e) {
+      toast('Paste failed – check clipboard permission', true);
+    }
   }
 };
 window.ieSave = () => {
@@ -1073,7 +1085,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.62 (build 189)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.63 (build 192)</span>
       </div>`;
     return;
   }
@@ -1119,7 +1131,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.62 (build 189)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.63 (build 192)</span>
     </div>
   `;
 }
