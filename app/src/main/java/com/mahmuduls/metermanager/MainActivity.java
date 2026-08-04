@@ -189,7 +189,7 @@ public class MainActivity extends Activity {
         if (end < 0) end = Math.min(start + 5000, html.length());
         String seg = html.substring(start, end);
 
-        Pattern inputPat = Pattern.compile("<input[^>]*readonly[^>]*value=\"([^\"]*)\"");
+        Pattern inputPat = Pattern.compile("<input[^>]*(?:readonly|disabled)[^>]*value=\"([^\"]*)\"", Pattern.CASE_INSENSITIVE);
         Matcher inputMat = inputPat.matcher(seg);
         java.util.List<String> inputs = new java.util.ArrayList<>();
         while (inputMat.find()) {
