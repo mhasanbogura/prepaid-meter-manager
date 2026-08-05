@@ -204,9 +204,14 @@ function t(key, vars) {
   return s;
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+const BN_DIGITS = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+function toBangla(n) {
+  return String(n).replace(/[0-9]/g, d => BN_DIGITS[Number(d)]);
+}
 function fmtNum(n) {
   n = Number(n); if (!isFinite(n)) return '–';
-  return n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  const s = n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  return (state.settings.lang === 'bn') ? toBangla(s) : s;
 }
 function fmtBdt(n) { return '৳' + fmtNum(n); }
 function fmtUnits(n) { n = Number(n); if (!isNaN(n)) return fmtNum(n) + ' kWh'; return '–'; }
@@ -214,7 +219,8 @@ function fmtToken(s) {
   if (!s) return '';
   const digits = s.replace(/\D/g, '');
   if (!digits) return s;
-  return digits.replace(/(.{4})/g, '$1<br>').replace(/<br>$/, '');
+  const formatted = digits.replace(/(.{4})/g, '$1<br>').replace(/<br>$/, '');
+  return (state.settings.lang === 'bn') ? toBangla(formatted) : formatted;
 }
 function descoTakaToKwh(taka) {
   if (taka <= 0) return 0;
@@ -1511,6 +1517,7 @@ window._settingsContact = async function(el) {
 function applyLang() {
   langs = I18N[state.settings.lang] || I18N.en;
   document.documentElement.lang = state.settings.lang;
+  document.body.style.fontFamily = state.settings.lang === 'bn' ? '"Kalpurush", "SolaimanLipi", sans-serif' : '"Times New Roman", serif';
   document.title = t('app.name');
   $$('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
   renderHome();
