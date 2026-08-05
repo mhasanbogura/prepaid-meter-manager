@@ -109,6 +109,8 @@ input, select { font-family: inherit; }
 .card h3 { font-size: 15px; margin-bottom: 12px; text-align: center; }
 .settings-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; text-align: center; font-weight: 700; font-size: 14px; color: var(--primary); cursor: pointer; transition: background .15s; -webkit-tap-highlight-color: transparent; }
 .settings-box:active { background: var(--surface-2); }
+[data-theme="dark"] .settings-box { background: var(--surface); border-color: var(--border); }
+[data-theme="dark"] .settings-box:active { background: var(--surface-2); }
 .body-text { font-size: 14px; line-height: 1.6; color: var(--text); }
 .muted { color: var(--text-2); font-size: 13px; line-height: 1.55; }
 .hint { color: var(--text-2); font-size: 12.5px; line-height: 1.5; margin-top: 8px; }

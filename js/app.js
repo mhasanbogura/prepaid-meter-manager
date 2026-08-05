@@ -1297,11 +1297,21 @@ function showView(name) {
 /* ================= Google Drive helpers ================= */
 const DRIVE_FOLDER_ID = '1PBrhSIvDk0QrgNS6XeTeA1RDLFPeTqKV';
 const DRIVE_API_KEY = 'AIzaSyA4ymjFIbuGVhFsKjxVV46RT-qWqNHNiY4';
-const DRIVE_ANDROID_FOLDER = 'Android';
 
-async function driveSearchFiles(nameContains, mimeType) {
+async function driveFindSubfolderId(parentId, folderName) {
   try {
-    let q = `'${DRIVE_FOLDER_ID}' in parents and trashed=false`;
+    const q = `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
+    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&key=${DRIVE_API_KEY}&fields=files(id)`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.files && json.files.length ? json.files[0].id : null;
+  } catch { return null; }
+}
+
+async function driveSearchFiles(folderId, nameContains, mimeType) {
+  try {
+    let q = `'${folderId}' in parents and trashed=false`;
     if (nameContains) q += ` and name contains '${nameContains}'`;
     if (mimeType) q += ` and mimeType='${mimeType}'`;
     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType,size)&orderBy=name desc`;
@@ -1310,19 +1320,6 @@ async function driveSearchFiles(nameContains, mimeType) {
     const json = await res.json();
     return json.files || [];
   } catch { return []; }
-}
-
-async function driveFetchMdByName(fileName) {
-  try {
-    const query = `'${DRIVE_FOLDER_ID}' in parents and name='${fileName}' and trashed=false`;
-    const listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&key=${DRIVE_API_KEY}&fields=files(id)`;
-    const res = await fetch(listUrl);
-    if (!res.ok) return null;
-    const json = await res.json();
-    const files = json.files;
-    if (!files || !files.length) return null;
-    return await driveFetchMdContent(files[0].id);
-  } catch { return null; }
 }
 
 async function driveFetchMdContent(fileId) {
@@ -1335,12 +1332,30 @@ async function driveFetchMdContent(fileId) {
 }
 
 async function driveFindLatestApk() {
-  const files = await driveSearchFiles('Meter Manager_com.mahmuduls.metermanager', 'application/vnd.android.package-archive');
+  let files = await driveSearchFiles(DRIVE_FOLDER_ID, 'Meter Manager_com.mahmuduls.metermanager', 'application/vnd.android.package-archive');
+  if (!files.length) {
+    const androidId = await driveFindSubfolderId(DRIVE_FOLDER_ID, 'Android');
+    if (androidId) files = await driveSearchFiles(androidId, 'Meter Manager_com.mahmuduls.metermanager', 'application/vnd.android.package-archive');
+  }
   return files.length ? files[0] : null;
 }
 
 async function driveFindAboutMd() {
-  const files = await driveSearchFiles('Meter Manager_com.mahmuduls.metermanager.md');
+  let files = await driveSearchFiles(DRIVE_FOLDER_ID, 'Meter Manager_com.mahmuduls.metermanager.md');
+  if (!files.length) {
+    const androidId = await driveFindSubfolderId(DRIVE_FOLDER_ID, 'Android');
+    if (androidId) files = await driveSearchFiles(androidId, 'Meter Manager_com.mahmuduls.metermanager.md');
+  }
+  if (!files.length) return null;
+  return await driveFetchMdContent(files[0].id);
+}
+
+async function driveFetchMdByName(fileName) {
+  let files = await driveSearchFiles(DRIVE_FOLDER_ID, fileName);
+  if (!files.length) {
+    const androidId = await driveFindSubfolderId(DRIVE_FOLDER_ID, 'Android');
+    if (androidId) files = await driveSearchFiles(androidId, fileName);
+  }
   if (!files.length) return null;
   return await driveFetchMdContent(files[0].id);
 }
@@ -1439,8 +1454,8 @@ function renderSettings() {
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
       <div class="settings-box" id="btnUpdate" onclick="window._settingsUpdate(this)">Update</div>
       <div class="settings-box" onclick="window._settingsShare()">Share</div>
-      <button class="btn secondary" onclick="showImportExport()" style="width:100%">Import / Export</button>
-      <button class="btn secondary" onclick="window._settingsDeleteAll()" style="width:100%;color:var(--danger)">Delete All Meters</button>
+      <div class="settings-box" onclick="showImportExport()">Import / Export</div>
+      <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">Delete All Meters</div>
       <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">About App</div>
       <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">Contact Developer</div>
     </div>
