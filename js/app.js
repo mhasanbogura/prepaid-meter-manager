@@ -23,6 +23,7 @@ const I18N = {
     'btn.copy': 'Copy token', 'btn.check': 'Check payment status', 'btn.done': 'Done',
     'add.title': 'Add meter', 'add.provider': 'Provider',
     'add.number': 'Account or meter number', 'add.number.hint': 'Enter the 8-digit account number or 12-digit meter number printed on your bill.',
+    'add.number.placeholder': 'e.g. 12345678',
     'add.search': 'Search', 'add.search_desc': 'Search in DESCO database', 'add.search_nes': 'Search in NESCO database',
     'add.found': 'Meter found!', 'add.checking': 'Searching…',
     'add.nickname': 'Nickname (optional)', 'add.nickname_hint': 'e.g. Home, Office',
@@ -99,6 +100,7 @@ const I18N = {
     'btn.copy': 'টোকেন কপি', 'btn.check': 'পেমেন্ট স্ট্যাটাস দেখুন', 'btn.done': 'সম্পন্ন',
     'add.title': 'মিটার যোগ করুন', 'add.provider': 'প্রোভাইডার',
     'add.number': 'অ্যাকাউন্ট বা মিটার নম্বর', 'add.number.hint': 'বিলে লেখা ৮ সংখ্যার অ্যাকাউন্ট নম্বর বা ১২ সংখ্যার মিটার নম্বর দিন।',
+    'add.number.placeholder': 'যেমন: ১২৩৪৫৬৭৮',
     'add.search': 'খুঁজুন', 'add.search_desc': 'ডেসকো ডাটাবেজে খুঁজুন', 'add.search_nes': 'নেসকো ডাটাবেজে খুঁজুন',
     'add.found': 'মিটার পাওয়া গেছে!', 'add.checking': 'খোঁজা হচ্ছে…',
     'add.nickname': 'ডাকনাম (ঐচ্ছিক)', 'add.nickname_hint': 'যেমন: বাসা, অফিস',
@@ -526,7 +528,7 @@ function showAddMeter() {
       <button type="button" class="btn secondary sm prov-btn" data-prov="nesco" style="flex:1">${esc(t('meter.nesco'))}</button>
     </div>
     <label>${esc(t('add.number'))}</label>
-    <input type="text" id="dlgMeterNo" inputmode="numeric" maxlength="14" placeholder="e.g. 12345678" autocomplete="off">
+    <input type="text" id="dlgMeterNo" inputmode="numeric" maxlength="14" placeholder="${esc(t('add.number.placeholder'))}" autocomplete="off">
     <div class="hint" id="addHint">${esc(t('add.number.hint'))}</div>
     <label>${esc(t('add.nickname'))}</label>
     <input type="text" id="dlgNickname" placeholder="${esc(t('add.nickname_hint'))}" maxlength="30" autocomplete="off">
@@ -1548,7 +1550,7 @@ window._settingsContact = async function(el) {
     html += `<a href="${esc(href)}" target="_blank" rel="noopener" class="settings-box" style="text-decoration:none;display:flex;align-items:center;gap:10px"><span style="display:flex;align-items:center">${iconKey ? icons[iconKey] : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>'}</span><span>${esc(label)}</span></a>`;
   }
   html += '</div>';
-  openDialog('', html, [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]);
+  openDialog('', html, []);
 };
 function applyLang() {
   langs = I18N[state.settings.lang] || I18N.en;
