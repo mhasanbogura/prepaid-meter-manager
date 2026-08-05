@@ -53,6 +53,7 @@ const I18N = {
     'settings.language': 'Language', 'settings.low_threshold': 'Low balance threshold', 'settings.low_threshold_hint': 'Default threshold (BDT)',
     'settings.share': 'Share', 'settings.import_export': 'Import / Export', 'settings.delete_all': 'Delete All Meters',
     'settings.about': 'About App', 'settings.contact': 'Contact Developer',
+    'settings.no_desc': 'No description available.', 'settings.no_contact': 'No contact information available.',
     'detail.energy_amount': 'Energy Amount', 'detail.energy_kwh': 'Energy (kWh)', 'detail.vat_other': 'VAT & Other Charges',
     'home.low': 'Low balance',
     'add.nesco_hint': 'Enter your 8 to 11 digit NESCO consumer / customer number.',
@@ -130,6 +131,7 @@ const I18N = {
     'settings.language': 'ভাষা', 'settings.low_threshold': 'কম ব্যালেন্স সীমা', 'settings.low_threshold_hint': 'ডিফল্ট সীমা (টাকায়)',
     'settings.share': 'শেয়ার', 'settings.import_export': 'ইমপোর্ট / এক্সপোর্ট', 'settings.delete_all': 'সমস্ত মিটার মুছে ফেলুন',
     'settings.about': 'অ্যাপ সম্পর্কে', 'settings.contact': 'ডেভেলপারের সাথে যোগাযোগ করুন',
+    'settings.no_desc': 'কোনো বর্ণনা পাওয়া যায়নি।', 'settings.no_contact': 'কোনো যোগাযোগের তথ্য পাওয়া যায়নি।',
     'detail.energy_amount': 'এনার্জি অ্যামাউন্ট', 'detail.energy_kwh': 'এনার্জি (kWh)', 'detail.vat_other': 'ভ্যাট ও অন্যান্য চার্জ',
     'home.low': 'ব্যালেন্স কম',
     'add.nesco_hint': 'আপনার ৮ থেকে ১১ ডিজিটের নেসকো কনজিউমার / কাস্টমার নম্বরটি প্রবেশ করান।',
@@ -199,6 +201,19 @@ async function driveFetchMdByName(fileName) {
     let listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&key=${DRIVE_API_KEY}&fields=files(id)`;
     let listRes = await fetch(listUrl);
     let listData = listRes.ok ? await listRes.json() : { files: [] };
+    if (!listData.files || !listData.files.length) {
+      const subQ = encodeURIComponent(`name='Android' and trashed=false`);
+      const subUrl = `https://www.googleapis.com/drive/v3/files?q=${subQ}&key=${DRIVE_API_KEY}&fields=files(id)`;
+      const subRes = await fetch(subUrl);
+      const subData = subRes.ok ? await subRes.json() : { files: [] };
+      if (subData.files && subData.files.length) {
+        const subId = subData.files[0].id;
+        q = encodeURIComponent(`'${subId}' in parents and name='${fileName}' and trashed=false`);
+        listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&key=${DRIVE_API_KEY}&fields=files(id)`;
+        listRes = await fetch(listUrl);
+        listData = listRes.ok ? await listRes.json() : { files: [] };
+      }
+    }
     if (!listData.files || !listData.files.length) {
       q = encodeURIComponent(`name='${fileName}' and trashed=false`);
       listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&key=${DRIVE_API_KEY}&fields=files(id)`;
@@ -1487,11 +1502,11 @@ window._settingsDeleteAll = function() {
   ]);
 };
 window._settingsAbout = async function(el) {
-  el.textContent = 'Loading...';
+  el.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
   let md = localStorage.getItem('cached_about_md');
-  if (!md) md = await driveFetchCached('cached_about_md', 'About.md');
-  el.textContent = 'About App';
-  if (!md) { openDialog('About App', '<p class="body-text">No description available.</p>', [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]); return; }
+  if (!md) md = await driveFetchCached('cached_about_md', 'Meter Manager_com.mahmuduls.metermanager.md');
+  el.textContent = t('settings.about');
+  if (!md) { openDialog(t('settings.about'), '<p class="body-text">' + esc(t('settings.no_desc')) + '</p>', []); return; }
   let html = '<div style="text-align:center;margin-bottom:12px"><img src="icons/icon-512.png" class="about-logo" style="width:80px;height:80px;border-radius:20px"><div style="font-weight:700;font-size:16px;margin-top:4px">Meter Manager</div></div>';
   for (const line of md.split('\n')) {
     const trimmed = line.trim();
@@ -1505,11 +1520,11 @@ window._settingsAbout = async function(el) {
   openDialog('', html, [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]);
 };
 window._settingsContact = async function(el) {
-  el.textContent = 'Loading...';
+  el.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
   let md = localStorage.getItem('cached_contact_md');
   if (!md) md = await driveFetchCached('cached_contact_md', 'Contact.md');
-  el.textContent = 'Contact Developer';
-  if (!md) { openDialog('Contact Developer', '<p class="body-text">No contact information available.</p>', [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]); return; }
+  el.textContent = t('settings.contact');
+  if (!md) { openDialog(t('settings.contact'), '<p class="body-text">' + esc(t('settings.no_contact')) + '</p>', []); return; }
   let developerName = 'Developer';
   const entries = [];
   for (const line of md.split('\n')) {
@@ -1528,8 +1543,10 @@ window._settingsContact = async function(el) {
     email: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',
     github: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 002 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>',
     facebook: '<svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+    instagram: '<svg width="18" height="18" viewBox="0 0 24 24" fill="url(#ig)"><defs><linearGradient id="ig" x1="0" y1="24" x2="24" y2="0"><stop offset="0%" stop-color="#feda75"/><stop offset="25%" stop-color="#fa7e1e"/><stop offset="50%" stop-color="#d62976"/><stop offset="75%" stop-color="#962fbf"/><stop offset="100%" stop-color="#4f5bd5"/></linearGradient></defs><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>',
     telegram: '<svg width="18" height="18" viewBox="0 0 24 24" fill="#0088cc"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>',
     twitter: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    mobile: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>',
     phone: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>',
     website: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>'
   };
@@ -1541,13 +1558,14 @@ window._settingsContact = async function(el) {
     else if (lower.includes('messenger')) href = 'https://m.me/' + value.replace(/^https?:\/\/(www\.)?(m\.me|facebook\.com\/messages)\//, '');
     else if (lower.includes('email') || lower.includes('mail')) href = 'mailto:' + value;
     else if (lower.includes('github')) href = 'https://github.com/' + value.replace(/^https?:\/\/github\.com\//, '');
-    else if (lower.includes('facebook') && !lower.includes('messenger')) href = 'https://facebook.com/' + value.replace(/^https?:\/\/(www\.)?facebook\.com\//, '');
+    else if (lower.includes('instagram')) href = 'https://instagram.com/' + value.replace(/^https?:\/\/(www\.)?instagram\.com\//, '');
+    else if (lower.includes('facebook')) href = 'https://facebook.com/' + value.replace(/^https?:\/\/(www\.)?facebook\.com\//, '');
     else if (lower.includes('telegram')) href = 'https://t.me/' + value.replace(/^https?:\/\/t\.me\//, '');
-    else if (lower.includes('twitter') || lower.includes('x')) href = 'https://x.com/' + value.replace(/^https?:\/\/(www\.)?(twitter|x)\.com\//, '');
-    else if (lower.includes('phone')) href = 'tel:' + value.replace(/[^0-9+]/g, '');
+    else if (lower.includes('twitter') || lower === 'x') href = 'https://x.com/' + value.replace(/^https?:\/\/(www\.)?(twitter|x)\.com\//, '');
+    else if (lower.includes('phone') || lower.includes('mobile') || lower.includes('মোবাইল')) href = 'tel:' + value.replace(/[^0-9+]/g, '');
     else if (lower.includes('website') || lower.includes('url')) href = value.startsWith('http') ? value : 'https://' + value;
-    const iconKey = lower.includes('messenger') ? 'messenger' : Object.keys(icons).find(k => lower.includes(k));
-    html += `<a href="${esc(href)}" target="_blank" rel="noopener" class="settings-box" style="text-decoration:none;display:flex;align-items:center;gap:10px"><span style="display:flex;align-items:center">${iconKey ? icons[iconKey] : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>'}</span><span>${esc(label)}</span></a>`;
+    const iconKey = lower.includes('messenger') ? 'messenger' : lower.includes('mobile') || lower.includes('মোবাইল') ? 'mobile' : lower.includes('instagram') ? 'instagram' : Object.keys(icons).find(k => lower.includes(k));
+    html += `<a href="${esc(href)}" target="_blank" rel="noopener" class="settings-box" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px"><span style="display:flex;align-items:center">${iconKey ? icons[iconKey] : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>'}</span><span style="text-align:center">${esc(label)}</span></a>`;
   }
   html += '</div>';
   openDialog('', html, []);
