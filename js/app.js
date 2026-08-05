@@ -598,6 +598,8 @@ window.ieSave = () => {
   saveMeters();
   importMetersFromText(text);
   closeDialog();
+  showView('home');
+  renderHome();
 };
 window.ieExport = async () => {
   const text = $('#ieText').value;
@@ -1426,7 +1428,7 @@ function renderSettings() {
       <div id="notifOptions" style="display:${notifEnabled ? '' : 'none'}">
         <div class="notif-row">
           <label>Start time</label>
-          <input type="time" id="notifTime" value="${String(notifHour).padStart(2,'0')}:${String(notifMinute).padStart(2,'0')}">
+          <select id="notifHour">${[12,1,2,3,4,5,6,7,8,9,10,11].map(h => `<option value="${h}" ${((notifHour % 12) || 12) === h ? 'selected' : ''}>${h}:00 ${h >= 8 && h < 12 || h === 12 ? 'AM' : 'PM'}</option>`).join('')}</select>
           <label>Repeat</label>
           <select id="notifInterval">
             <option value="1" ${notifInterval===1?'selected':''}>1 hour</option>
@@ -1482,9 +1484,10 @@ function renderSettings() {
     $('#notifOptions').style.display = e.target.checked ? '' : 'none';
     _syncNotifToJava();
   };
-  $('#notifTime').onchange = (e) => {
-    const [h, m] = e.target.value.split(':').map(Number);
-    state.settings.notifHour = h; state.settings.notifMinute = m;
+  $('#notifHour').onchange = (e) => {
+    const h = Number(e.target.value);
+    state.settings.notifHour = h;
+    state.settings.notifMinute = 0;
     saveSettings(); _syncNotifToJava();
   };
   $('#notifInterval').onchange = (e) => {
@@ -1531,18 +1534,27 @@ window._settingsAbout = async (el) => {
   const md = await driveFindAboutMd();
   el.textContent = 'About App';
   if (!md) {
-    openDialog('About', `<p class="body-text">Meter Manager helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p>`, [
+    openDialog('About', `<div style="text-align:center;margin-bottom:16px"><img src="icons/icon-electricity.svg" style="width:72px;height:72px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.15)"><h3 style="margin-top:10px">Meter Manager</h3></div><p class="body-text">Helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p>`, [
       { key: 'ok', label: 'OK', fn: closeDialog }
     ]);
     return;
   }
-  let html = '';
+  let html = '<div style="text-align:center;margin-bottom:16px"><img src="icons/icon-electricity.svg" style="width:72px;height:72px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.15)"><h3 style="margin-top:10px">Meter Manager</h3></div>';
   for (const line of md.split('\n')) {
     const t2 = line.trim();
-    if (!t2) { html += '<br>'; continue; }
-    if (t2.startsWith('## ')) { html += `<h3 style="margin:8px 0 4px;color:var(--primary)">${esc(t2.slice(3))}</h3>`; }
-    else if (t2.startsWith('- ')) { html += `<p style="margin:2px 0 2px 12px">• ${esc(t2.slice(2))}</p>`; }
-    else { html += `<p style="margin:4px 0">${esc(t2)}</p>`; }
+    if (!t2) { html += '<div style="height:8px"></div>'; continue; }
+    if (t2.startsWith('## ')) {
+      html += `<h3 style="margin:10px 0 6px;color:var(--primary);font-size:15px;text-align:left">${esc(t2.slice(3))}</h3>`;
+    } else if (t2.startsWith('# ')) {
+      html += `<h2 style="margin:12px 0 6px;color:var(--text);font-size:17px;text-align:left">${esc(t2.slice(2))}</h2>`;
+    } else if (t2.startsWith('- ') || t2.startsWith('* ')) {
+      const bullet = t2.slice(2);
+      const formatted = bullet.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>');
+      html += `<div style="display:flex;gap:8px;margin:3px 0;font-size:13.5px;line-height:1.5;text-align:left"><span style="color:var(--primary);font-weight:700;flex-shrink:0">•</span><span>${formatted}</span></div>`;
+    } else {
+      const formatted = t2.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>');
+      html += `<p style="margin:4px 0;font-size:13.5px;line-height:1.6;text-align:left">${formatted}</p>`;
+    }
   }
   openDialog('About', html, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
 };
@@ -1571,7 +1583,7 @@ window._settingsContact = async (el) => {
   }
   const svgIcons = {
     whatsapp: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
-    messenger: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0084FF"><path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.2 5.42 3.15 7.2V22l2.91-1.6c.8.22 1.64.34 2.5.34.17 0 .34-.01.5-.02a6.13 6.13 0 01-.16-1.46c0-4.19 3.75-7.59 8.37-7.59.27 0 .54.02.81.04C19.68 7.14 16.21 2 12 2zm-2.76 6.78l2.52-2.65c.54-.56 1.42-.56 1.96 0l2.52 2.65c.32.34.32.88 0 1.22l-2.52 2.65c-.54.56-1.42.56-1.96 0L9.24 8c-.32-.34-.32-.88 0-1.22z"/></svg>`,
+    messenger: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0084FF"><path d="M12 2C6.48 2 2 6.21 2 11.5c0 2.91 1.2 5.42 3.15 7.2V22l3.04-1.67c.8.22 1.64.34 2.5.34h.31C17.52 20.67 22 16.46 22 11.17V11c0-.28-.02-.56-.06-.83-.14-.98-1.08-2.67-3.36-3.67A7.49 7.49 0 0012 4c-3.04 0-5.63 1.72-6.92 4.21C6.22 7.57 8.72 6.5 11.5 6.5c.98 0 1.91.13 2.77.38-.63-.73-1.54-1.2-2.57-1.2H8.7v3.8h3.1c.28.54.7 1.01 1.22 1.33L11.2 15l2.4-1.43c.14.07.29.12.44.17 2.69.86 5.33-.34 5.86-3.02.38-1.92-.18-3.88-1.53-5.26C16.6 3.66 14.43 2 12 2z"/><path d="M8.7 13.5v3.47l2.53-1.4 1.82 1.05c.55.12 1.12.2 1.71.2 3.31 0 6-2.39 6-5.38 0-3.31-2.69-5.69-6-5.69-3.31 0-6 2.39-6 5.69 0 1.55.72 2.94 1.85 3.96l.01-.01v.01z" fill="#fff"/></svg>`,
     instagram: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`,
     github: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M12 2A10 10 0 002 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>`,
     facebook: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
@@ -1606,28 +1618,49 @@ window._settingsContact = async (el) => {
 
 window._settingsUpdate = async (el) => {
   el.textContent = 'Checking for update...';
+  el.style.pointerEvents = 'none';
   try {
     const apk = await driveFindLatestApk();
-    if (!apk) { el.textContent = 'Update'; openDialog('Update', '<p class="body-text">No update available.</p>', [{ key: 'ok', label: 'OK', fn: closeDialog }]); return; }
+    if (!apk) {
+      el.textContent = 'Update';
+      el.style.pointerEvents = '';
+      openDialog('Update', `<div style="text-align:center"><svg width="48" height="48" viewBox="0 0 24 24" fill="var(--success)" style="margin-bottom:8px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><p style="font-size:15px;font-weight:600">You are up to date!</p><p class="muted" style="margin-top:6px">No update information available.</p></div>`, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
+      return;
+    }
     const remoteName = apk.name || '';
     const verMatch = remoteName.match(/v([\d.]+)/);
     const buildMatch = remoteName.match(/build_(\d+)/);
-    const remoteVer = verMatch ? verMatch[1] : '';
+    const remoteVer = verMatch ? verMatch[1] : '?';
     const remoteBuild = buildMatch ? parseInt(buildMatch[1]) : 0;
-    const curBuild = 261;
+    const curBuild = 270;
     const hasUpdate = remoteBuild > curBuild;
-    if (!hasUpdate) { el.textContent = 'Update'; openDialog('Update', `<p class="body-text">You are running the latest version.<br><br><strong>${esc(remoteName)}</strong></p>`, [{ key: 'ok', label: 'OK', fn: closeDialog }]); return; }
-    openDialog('Update Available', `<p class="body-text">A new version is available:<br><strong>${esc(remoteName)}</strong></p>`, [
+    if (!hasUpdate) {
+      el.textContent = 'Latest version already installed';
+      el.style.pointerEvents = '';
+      el.style.color = 'var(--success)';
+      openDialog('Update', `<div style="text-align:center"><svg width="48" height="48" viewBox="0 0 24 24" fill="var(--success)" style="margin-bottom:8px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><p style="font-size:15px;font-weight:600">You are up to date!</p><p class="muted" style="margin-top:6px">Version ${esc(remoteVer)} (build ${remoteBuild})</p></div>`, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
+      return;
+    }
+    el.textContent = 'Update Available';
+    el.style.pointerEvents = '';
+    el.style.color = 'var(--primary)';
+    const apkSize = apk.size ? (apk.size / 1024 / 1024).toFixed(1) + ' MB' : '';
+    openDialog('Update Available', `<div style="text-align:center"><div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-2));display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><svg width="32" height="32" viewBox="0 0 24 24" fill="#fff"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></div><p style="font-size:15px;font-weight:600">A new version is available</p><p class="muted" style="margin-top:4px">Version ${esc(remoteVer)} (build ${remoteBuild})${apkSize ? ' · ' + apkSize : ''}</p></div>`, [
       { key: 'cancel', label: 'Later', cls: 'secondary', fn: closeDialog },
-      { key: 'install', label: 'Download & Install', cls: 'primary', fn: () => {
+      { key: 'install', label: 'Install Update', cls: 'primary', fn: () => {
+        el.textContent = 'Downloading...';
+        el.style.pointerEvents = 'none';
         const link = `https://drive.google.com/uc?export=download&id=${apk.id}`;
         if (window.NescoBridge && window.NescoBridge.downloadAndInstall) window.NescoBridge.downloadAndInstall(link);
         else window.open(link, '_blank');
         closeDialog();
+        setTimeout(() => { el.textContent = 'Update'; el.style.pointerEvents = ''; el.style.color = ''; }, 3000);
       }}
     ]);
+  } catch {
     el.textContent = 'Update';
-  } catch { el.textContent = 'Update'; }
+    el.style.pointerEvents = '';
+  }
 };
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
