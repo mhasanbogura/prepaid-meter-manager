@@ -1114,7 +1114,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.84 (build 255)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
       </div>`;
     return;
   }
@@ -1160,7 +1160,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.84 (build 255)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
     </div>
   `;
 }
@@ -1366,7 +1366,7 @@ window._settingsShare = async () => {
   } catch {}
 };
 window._settingsAbout = () => {
-  openDialog('About', `<p class="body-text">Meter Manager helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p><p class="muted" style="margin-top:10px">Version 1.0.84 (build 255)</p>`, [
+  openDialog('About', `<p class="body-text">Meter Manager helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p><p class="muted" style="margin-top:10px">Version 1.0.85 (build 258)</p>`, [
     { key: 'ok', label: 'OK', fn: closeDialog }
   ]);
 };
