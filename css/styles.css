@@ -317,11 +317,11 @@ table.list tr:last-child td { border-bottom: 0; }
   box-shadow: 2px 2px 4px rgba(0,0,0,.4), -1px -1px 3px rgba(255,255,255,.05);
 }
 .lang-toggle[data-lang="bn"] .lt-slider { transform: translateX(3px); }
-.lang-toggle[data-lang="en"] .lt-slider { transform: translateX(calc(100% + 3px)); }
+.lang-toggle[data-lang="en"] .lt-slider { transform: translateX(calc(50% - 2px)); }
 .lang-toggle .lt-label {
-  position: relative; z-index: 1; padding: 0 12px; font-size: 13px; font-weight: 700;
+  position: relative; z-index: 1; padding: 0 14px; font-size: 13px; font-weight: 700;
   line-height: 30px; color: var(--text-2); transition: color .2s; white-space: nowrap;
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; justify-content: center; flex: 1;
 }
 .lang-toggle .lt-label.active { color: var(--primary); }
 .lang-toggle .lt-flag {
