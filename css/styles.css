@@ -61,14 +61,22 @@ input, select { font-family: inherit; }
   color: #fff;
   box-shadow: var(--shadow);
 }
+[data-theme="dark"] .topbar, [data-theme="oled"] .topbar {
+  background: linear-gradient(135deg, var(--surface-2), var(--surface));
+  color: var(--text);
+}
 .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .brand-logo { width: 34px; height: 34px; border-radius: 9px; object-fit: cover; }
 .brand-text strong { display: block; font-size: 16px; line-height: 1.2; }
 .brand-text small { opacity: .85; font-size: 11px; }
 .icon-btn {
   background: rgba(255,255,255,.14); border: 0; border-radius: 10px;
-  width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center;
-  color: inherit; transition: background .2s;
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  color: #fff; cursor: pointer; flex-shrink: 0;
+}
+[data-theme="dark"] .icon-btn, [data-theme="oled"] .icon-btn {
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--border);
 }
 .icon-btn:hover { background: rgba(255,255,255,.26); }
 .icon-btn.spinning svg { animation: spin 1s linear infinite; }
