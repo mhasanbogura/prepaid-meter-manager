@@ -1297,6 +1297,20 @@ function showView(name) {
 /* ================= Google Drive helpers ================= */
 const DRIVE_FOLDER_ID = '1PBrhSIvDk0QrgNS6XeTeA1RDLFPeTqKV';
 const DRIVE_API_KEY = 'AIzaSyA4ymjFIbuGVhFsKjxVV46RT-qWqNHNiY4';
+const DRIVE_ANDROID_FOLDER = 'Android';
+
+async function driveSearchFiles(nameContains, mimeType) {
+  try {
+    let q = `'${DRIVE_FOLDER_ID}' in parents and trashed=false`;
+    if (nameContains) q += ` and name contains '${nameContains}'`;
+    if (mimeType) q += ` and mimeType='${mimeType}'`;
+    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType,size)&orderBy=name desc`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.files || [];
+  } catch { return []; }
+}
 
 async function driveFetchMdByName(fileName) {
   try {
@@ -1320,11 +1334,29 @@ async function driveFetchMdContent(fileId) {
   } catch { return null; }
 }
 
+async function driveFindLatestApk() {
+  const files = await driveSearchFiles('Meter Manager_com.mahmuduls.metermanager', 'application/vnd.android.package-archive');
+  return files.length ? files[0] : null;
+}
+
+async function driveFindAboutMd() {
+  const files = await driveSearchFiles('Meter Manager_com.mahmuduls.metermanager.md');
+  if (!files.length) return null;
+  return await driveFetchMdContent(files[0].id);
+}
+
 /* ================= settings ================= */
 function renderSettings() {
   const isDark = document.documentElement.dataset.theme === 'dark';
-  const version = '1.0.85';
-  const build = '258';
+  const version = '1.0.86';
+  const build = '261';
+  const lang = state.settings.lang || 'en';
+  const notifEnabled = state.settings.notifEnabled !== false;
+  const notifHour = state.settings.notifHour ?? 8;
+  const notifMinute = state.settings.notifMinute ?? 0;
+  const notifInterval = state.settings.notifInterval ?? 24;
+  const threshold = state.settings.alertThreshold ?? 200;
+
   $('#settingsContent').innerHTML = `
     <h2 class="section-title" style="margin-bottom:4px">Settings</h2>
     <p class="muted" style="margin-bottom:16px">Manage preferences and theme settings.</p>
@@ -1347,21 +1379,70 @@ function renderSettings() {
         <div style="display:flex;align-items:center;gap:12px;flex:1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
           <div>
-            <div style="font-weight:600">Dark Theme</div>
-            <div class="hint" style="margin:0">Use dark backdrop for eye comfort</div>
+            <div style="font-weight:600">OLED Theme</div>
+            <div class="hint" style="margin:0">Use OLED black backdrop for eye comfort</div>
           </div>
         </div>
         <label class="toggle"><input type="checkbox" id="settDarkTheme" ${isDark ? 'checked' : ''}><span class="toggle-slider"></span></label>
       </div>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+          <div style="font-weight:600">Language</div>
+        </div>
+        <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
+          <div class="lt-slider"></div>
+          <span class="lt-label ${lang === 'bn' ? 'active' : ''}">বাংলা</span>
+          <span class="lt-label ${lang === 'en' ? 'active' : ''}">English</span>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+          <div>
+            <div style="font-weight:600">Update Notifications</div>
+            <div class="hint" style="margin:0">Check for app updates periodically</div>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="settNotifEnabled" ${notifEnabled ? 'checked' : ''}><span class="toggle-slider"></span></label>
+      </div>
+      <div id="notifOptions" style="display:${notifEnabled ? '' : 'none'}">
+        <div class="notif-row">
+          <label>Start time</label>
+          <input type="time" id="notifTime" value="${String(notifHour).padStart(2,'0')}:${String(notifMinute).padStart(2,'0')}">
+          <label>Repeat</label>
+          <select id="notifInterval">
+            <option value="1" ${notifInterval===1?'selected':''}>1 hour</option>
+            <option value="4" ${notifInterval===4?'selected':''}>4 hours</option>
+            <option value="8" ${notifInterval===8?'selected':''}>8 hours</option>
+            <option value="12" ${notifInterval===12?'selected':''}>12 hours</option>
+            <option value="24" ${notifInterval===24?'selected':''}>24 hours</option>
+            <option value="48" ${notifInterval===48?'selected':''}>48 hours</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <div>
+            <div style="font-weight:600">Low Balance Alert</div>
+            <div class="hint" style="margin:0">Default alert threshold (BDT)</div>
+          </div>
+        </div>
+        <input type="number" id="settThreshold" value="${threshold}" min="0" max="99999" step="50" inputmode="numeric" style="width:80px;text-align:right">
+      </div>
     </section>
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
-      <div class="settings-box" onclick="window._settingsUpdate(this)">Update</div>
+      <div class="settings-box" id="btnUpdate" onclick="window._settingsUpdate(this)">Update</div>
       <div class="settings-box" onclick="window._settingsShare()">Share</div>
-      <div class="settings-box" onclick="window._settingsAbout(this)">About App</div>
-      <div class="settings-box" onclick="window._settingsContact(this)">Contact Developer</div>
       <button class="btn secondary" onclick="showImportExport()" style="width:100%">Import / Export</button>
       <button class="btn secondary" onclick="window._settingsDeleteAll()" style="width:100%;color:var(--danger)">Delete All Meters</button>
+      <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">About App</div>
+      <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">Contact Developer</div>
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
@@ -1376,6 +1457,41 @@ function renderSettings() {
     state.settings.theme = e.target.checked ? 'dark' : (state.settings.theme === 'dark' ? 'light' : state.settings.theme);
     saveSettings(); applyTheme();
   };
+  $('#settLangToggle').onclick = () => {
+    state.settings.lang = state.settings.lang === 'bn' ? 'en' : 'bn';
+    saveSettings(); renderSettings(); applyLang();
+  };
+  $('#settNotifEnabled').onchange = (e) => {
+    state.settings.notifEnabled = e.target.checked;
+    saveSettings();
+    $('#notifOptions').style.display = e.target.checked ? '' : 'none';
+    _syncNotifToJava();
+  };
+  $('#notifTime').onchange = (e) => {
+    const [h, m] = e.target.value.split(':').map(Number);
+    state.settings.notifHour = h; state.settings.notifMinute = m;
+    saveSettings(); _syncNotifToJava();
+  };
+  $('#notifInterval').onchange = (e) => {
+    state.settings.notifInterval = Number(e.target.value);
+    saveSettings(); _syncNotifToJava();
+  };
+  $('#settThreshold').onchange = (e) => {
+    const v = Number(e.target.value);
+    state.settings.alertThreshold = isNaN(v) ? 200 : v;
+    saveSettings();
+  };
+}
+
+function _syncNotifToJava() {
+  if (window.NescoBridge && window.NescoBridge.scheduleNotification) {
+    window.NescoBridge.scheduleNotification(
+      state.settings.notifEnabled !== false,
+      state.settings.notifHour ?? 8,
+      state.settings.notifMinute ?? 0,
+      state.settings.notifInterval ?? 24
+    );
+  }
 }
 
 window._settingsDeleteAll = () => {
@@ -1387,14 +1503,17 @@ window._settingsDeleteAll = () => {
 };
 
 window._settingsShare = async () => {
+  const apk = await driveFindLatestApk();
+  const link = apk ? `https://drive.google.com/uc?export=download&id=${apk.id}` : location.href;
   try {
-    if (navigator.share) await navigator.share({ title: 'Meter Manager', text: 'Check out Meter Manager - track your DESCO/NESCO prepaid meter', url: location.href });
+    if (navigator.share) await navigator.share({ title: 'Meter Manager', text: 'Check out Meter Manager - track your DESCO/NESCO prepaid meter', url: link });
+    else { window.NescoBridge?.clipboardWrite(link); toast('Link copied!'); }
   } catch {}
 };
 
 window._settingsAbout = async (el) => {
   el.textContent = 'Loading...';
-  const md = await driveFetchMdByName('About.md');
+  const md = await driveFindAboutMd();
   el.textContent = 'About App';
   if (!md) {
     openDialog('About', `<p class="body-text">Meter Manager helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p>`, [
@@ -1404,11 +1523,11 @@ window._settingsAbout = async (el) => {
   }
   let html = '';
   for (const line of md.split('\n')) {
-    const t = line.trim();
-    if (!t) { html += '<br>'; continue; }
-    if (t.startsWith('## ')) { html += `<h3 style="margin:8px 0 4px;color:var(--primary)">${esc(t.slice(3))}</h3>`; }
-    else if (t.startsWith('- ')) { html += `<p style="margin:2px 0 2px 12px">• ${esc(t.slice(2))}</p>`; }
-    else { html += `<p style="margin:4px 0">${esc(t)}</p>`; }
+    const t2 = line.trim();
+    if (!t2) { html += '<br>'; continue; }
+    if (t2.startsWith('## ')) { html += `<h3 style="margin:8px 0 4px;color:var(--primary)">${esc(t2.slice(3))}</h3>`; }
+    else if (t2.startsWith('- ')) { html += `<p style="margin:2px 0 2px 12px">• ${esc(t2.slice(2))}</p>`; }
+    else { html += `<p style="margin:4px 0">${esc(t2)}</p>`; }
   }
   openDialog('About', html, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
 };
@@ -1435,21 +1554,35 @@ window._settingsContact = async (el) => {
     if (ll === 'name' || ll === 'developer') { devName = value; continue; }
     entries.push({ label: label.trim(), value, ll });
   }
+  const svgIcons = {
+    whatsapp: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
+    messenger: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0084FF"><path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.2 5.42 3.15 7.2V22l2.91-1.6c.8.22 1.64.34 2.5.34.17 0 .34-.01.5-.02a6.13 6.13 0 01-.16-1.46c0-4.19 3.75-7.59 8.37-7.59.27 0 .54.02.81.04C19.68 7.14 16.21 2 12 2zm-2.76 6.78l2.52-2.65c.54-.56 1.42-.56 1.96 0l2.52 2.65c.32.34.32.88 0 1.22l-2.52 2.65c-.54.56-1.42.56-1.96 0L9.24 8c-.32-.34-.32-.88 0-1.22z"/></svg>`,
+    instagram: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`,
+    github: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M12 2A10 10 0 002 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>`,
+    facebook: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
+    telegram: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0088CC"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>`,
+    email: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#EA4335"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>`,
+    phone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`,
+    website: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
+    location: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>`,
+    twitter: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#1DA1F2"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+    default: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`
+  };
   const contactButtons = entries.map(e => {
-    let icon = '🔗', url = '#';
-    if (e.ll.includes('whatsapp')) { icon = '💬'; url = `https://wa.me/${e.value.replace(/[^0-9+]/g, '')}`; }
-    else if (e.ll.includes('messenger')) { icon = '💬'; url = `https://m.me/${e.value}`; }
-    else if (e.ll.includes('instagram')) { icon = '📷'; url = `https://instagram.com/${e.value}`; }
-    else if (e.ll.includes('github')) { icon = '🐙'; url = `https://github.com/${e.value}`; }
-    else if (e.ll.includes('facebook')) { icon = '📘'; url = `https://facebook.com/${e.value}`; }
-    else if (e.ll.includes('telegram')) { icon = '✈️'; url = `https://t.me/${e.value}`; }
-    else if (e.ll.includes('email') || e.ll.includes('mail')) { icon = '📧'; url = `mailto:${e.value}`; }
-    else if (e.ll.includes('twitter') || e.ll === 'x') { icon = '🐦'; url = `https://x.com/${e.value}`; }
-    else if (e.ll.includes('mobile') || e.ll.includes('phone') || e.ll.includes('call')) { icon = '📞'; url = `tel:${e.value}`; }
-    else if (e.ll.includes('website') || e.ll.includes('web')) { icon = '🌐'; url = e.value.startsWith('http') ? e.value : `https://${e.value}`; }
-    else if (e.ll.includes('location') || e.ll.includes('address')) { icon = '📍'; url = `geo:0,0?q=${encodeURIComponent(e.value)}`; }
-    return `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);font-weight:500;font-size:14px">
-      <span style="font-size:20px">${icon}</span><span>${esc(e.label)}</span></a>`;
+    let iconKey = 'default', url = '#';
+    if (e.ll.includes('whatsapp')) { iconKey = 'whatsapp'; url = `https://wa.me/${e.value.replace(/[^0-9+]/g, '')}`; }
+    else if (e.ll.includes('messenger')) { iconKey = 'messenger'; url = `https://m.me/${e.value}`; }
+    else if (e.ll.includes('instagram')) { iconKey = 'instagram'; url = `https://instagram.com/${e.value}`; }
+    else if (e.ll.includes('github')) { iconKey = 'github'; url = `https://github.com/${e.value}`; }
+    else if (e.ll.includes('facebook')) { iconKey = 'facebook'; url = `https://facebook.com/${e.value}`; }
+    else if (e.ll.includes('telegram')) { iconKey = 'telegram'; url = `https://t.me/${e.value}`; }
+    else if (e.ll.includes('email') || e.ll.includes('mail')) { iconKey = 'email'; url = `mailto:${e.value}`; }
+    else if (e.ll.includes('twitter') || e.ll === 'x') { iconKey = 'twitter'; url = `https://x.com/${e.value}`; }
+    else if (e.ll.includes('mobile') || e.ll.includes('phone') || e.ll.includes('call')) { iconKey = 'phone'; url = `tel:${e.value}`; }
+    else if (e.ll.includes('website') || e.ll.includes('web')) { iconKey = 'website'; url = e.value.startsWith('http') ? e.value : `https://${e.value}`; }
+    else if (e.ll.includes('location') || e.ll.includes('address')) { iconKey = 'location'; url = `geo:0,0?q=${encodeURIComponent(e.value)}`; }
+    return `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);font-weight:500;font-size:14px">
+      ${svgIcons[iconKey] || svgIcons.default}<span>${esc(e.label)}</span></a>`;
   }).join('');
   openDialog(devName, `<div style="display:flex;flex-direction:column;gap:8px">${contactButtons}</div>`, [
     { key: 'ok', label: 'Close', fn: closeDialog }
@@ -1459,18 +1592,26 @@ window._settingsContact = async (el) => {
 window._settingsUpdate = async (el) => {
   el.textContent = 'Checking for update...';
   try {
-    const md = await driveFetchMdByName('Update.md');
+    const apk = await driveFindLatestApk();
+    if (!apk) { el.textContent = 'Update'; openDialog('Update', '<p class="body-text">No update available.</p>', [{ key: 'ok', label: 'OK', fn: closeDialog }]); return; }
+    const remoteName = apk.name || '';
+    const verMatch = remoteName.match(/v([\d.]+)/);
+    const buildMatch = remoteName.match(/build_(\d+)/);
+    const remoteVer = verMatch ? verMatch[1] : '';
+    const remoteBuild = buildMatch ? parseInt(buildMatch[1]) : 0;
+    const curBuild = 261;
+    const hasUpdate = remoteBuild > curBuild;
+    if (!hasUpdate) { el.textContent = 'Update'; openDialog('Update', `<p class="body-text">You are running the latest version.<br><br><strong>${esc(remoteName)}</strong></p>`, [{ key: 'ok', label: 'OK', fn: closeDialog }]); return; }
+    openDialog('Update Available', `<p class="body-text">A new version is available:<br><strong>${esc(remoteName)}</strong></p>`, [
+      { key: 'cancel', label: 'Later', cls: 'secondary', fn: closeDialog },
+      { key: 'install', label: 'Download & Install', cls: 'primary', fn: () => {
+        const link = `https://drive.google.com/uc?export=download&id=${apk.id}`;
+        if (window.NescoBridge && window.NescoBridge.downloadAndInstall) window.NescoBridge.downloadAndInstall(link);
+        else window.open(link, '_blank');
+        closeDialog();
+      }}
+    ]);
     el.textContent = 'Update';
-    if (!md) { openDialog('Update', '<p class="body-text">No update information available.</p>', [{ key: 'ok', label: 'OK', fn: closeDialog }]); return; }
-    let html = '';
-    for (const line of md.split('\n')) {
-      const t = line.trim();
-      if (!t) { html += '<br>'; continue; }
-      if (t.startsWith('## ')) { html += `<h3 style="margin:8px 0 4px;color:var(--primary)">${esc(t.slice(3))}</h3>`; }
-      else if (t.startsWith('- ')) { html += `<p style="margin:2px 0 2px 12px">• ${esc(t.slice(2))}</p>`; }
-      else { html += `<p style="margin:4px 0">${esc(t)}</p>`; }
-    }
-    openDialog('Update', html, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
   } catch { el.textContent = 'Update'; }
 };
 function initUi() {
@@ -1510,7 +1651,7 @@ function applyTheme() {
     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     : state.settings.theme;
   document.documentElement.dataset.theme = t1;
-  document.querySelector('meta[name="theme-color"]').content = t1 === 'dark' ? '#0f1218' : '#0b3d91';
+  document.querySelector('meta[name="theme-color"]').content = t1 === 'dark' ? '#000000' : '#0b3d91';
 }
 async function enableNotifications() {
   if (!('Notification' in window)) { toast(t('alerts.perm'), true); return; }

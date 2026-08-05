@@ -421,6 +421,58 @@ public class MainActivity extends Activity {
                 return "";
             }
         }
+
+        @JavascriptInterface
+        public int getVersionCode() {
+            try {
+                android.content.pm.PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+                return android.os.Build.VERSION.SDK_INT >= 28 ? (int) info.getLongVersionCode() : info.versionCode;
+            } catch (Exception e) { return 0; }
+        }
+
+        @JavascriptInterface
+        public String getVersionName() {
+            try {
+                return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            } catch (Exception e) { return ""; }
+        }
+
+        @JavascriptInterface
+        public void downloadAndInstall(String url) {
+            mainHandler.post(() -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "downloadAndInstall error", e);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void scheduleNotification(boolean enabled, int hour, int minute, int intervalHours) {
+            android.content.SharedPreferences prefs = getSharedPreferences("meter_manager_prefs", MODE_PRIVATE);
+            prefs.edit()
+                .putBoolean("notif_enabled", enabled)
+                .putInt("notif_hour", hour)
+                .putInt("notif_minute", minute)
+                .putInt("notif_interval_hours", intervalHours)
+                .apply();
+        }
+
+        @JavascriptInterface
+        public String getNotificationSettings() {
+            android.content.SharedPreferences prefs = getSharedPreferences("meter_manager_prefs", MODE_PRIVATE);
+            try {
+                org.json.JSONObject obj = new org.json.JSONObject();
+                obj.put("enabled", prefs.getBoolean("notif_enabled", true));
+                obj.put("hour", prefs.getInt("notif_hour", 8));
+                obj.put("minute", prefs.getInt("notif_minute", 0));
+                obj.put("intervalHours", prefs.getInt("notif_interval_hours", 24));
+                return obj.toString();
+            } catch (Exception e) { return "{}"; }
+        }
     }
 
     @Override

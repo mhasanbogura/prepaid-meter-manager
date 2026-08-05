@@ -16,18 +16,19 @@
   --topbar-h: 60px;
 }
 [data-theme="dark"] {
-  --bg: #0f1218;
-  --surface: #1a1f2a;
-  --surface-2: #232a38;
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --surface-2: #141414;
   --text: #e8ebf1;
   --text-2: #9aa4b5;
   --primary: #3b7bdd;
   --primary-2: #5c93e8;
-  --border: #2c3547;
-  --shadow: 0 1px 3px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.35);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,.5);
+  --border: #1e1e1e;
+  --shadow: 0 1px 3px rgba(0,0,0,.6), 0 4px 14px rgba(0,0,0,.55);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,.7);
 }
-[data-theme="dark"] .btn.secondary:active, [data-theme="dark"] .btn.secondary.pressed { background: #1a2030; }
+[data-theme="dark"] .btn.secondary:active, [data-theme="dark"] .btn.secondary.pressed { background: #1a1a1a; }
+[data-theme="dark"] .settings-box:active { background: #141414; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -285,3 +286,31 @@ table.list tr:last-child td { border-bottom: 0; }
 }
 .toggle input:checked + .toggle-slider { background: var(--primary); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+/* ---------- language toggle ---------- */
+.lang-toggle {
+  position: relative; display: inline-flex; align-items: center; width: 110px; height: 32px;
+  background: var(--border); border-radius: 16px; cursor: pointer; flex-shrink: 0; overflow: hidden;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.lang-toggle .lt-slider {
+  position: absolute; width: 50%; height: 26px; top: 3px; left: 3px;
+  background: var(--primary); border-radius: 13px; transition: transform .25s; z-index: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.lang-toggle[data-lang="en"] .lt-slider { transform: translateX(104%); }
+.lang-toggle .lt-label {
+  flex: 1; text-align: center; font-size: 12px; font-weight: 600; z-index: 2;
+  color: var(--text-2); transition: color .2s; pointer-events: none;
+}
+.lang-toggle .lt-label.active { color: #fff; }
+
+/* ---------- notification picker ---------- */
+.notif-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.notif-row label { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.notif-row input[type="time"], .notif-row select {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 8px; font-size: 13px;
+}
+.notif-row input[type="time"] { width: 90px; }
+.notif-row select { min-width: 0; }
