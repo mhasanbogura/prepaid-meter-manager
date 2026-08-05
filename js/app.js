@@ -1506,7 +1506,7 @@ window._settingsAbout = async function(el) {
   let md = localStorage.getItem('cached_about_md');
   if (!md) md = await driveFetchCached('cached_about_md', 'Meter Manager_com.mahmuduls.metermanager.md');
   el.textContent = t('settings.about');
-  if (!md) { openDialog(t('settings.about'), '<p class="body-text">' + esc(t('settings.no_desc')) + '</p>', []); return; }
+  if (!md) md = '## Overview\n\nMeter Manager is a web-based electricity meter management app that helps users monitor and track their DESCO and NESCO prepaid electricity meters. It provides live meter information, usage statistics, average daily costs, and recharge history in one convenient place.\n\n## Features\n\n- Check live prepaid meter balance\n- View meter information\n- Monitor average electricity cost per day\n- View total electricity usage for the current month\n- Compare usage with the previous month\n- Track daily electricity consumption\n- Track monthly electricity consumption\n- View recharge history\n- Monitor electricity usage trends\n- Simple and convenient web-based interface\n\n## Best for\n\nDESCO and NESCO prepaid electricity meter users who want to conveniently check their live balance, monitor daily and monthly electricity consumption, track average daily costs, compare usage, and review recharge history from one place.';
   let html = '<div style="text-align:center;margin-bottom:12px"><img src="icons/icon-512.png" class="about-logo" style="width:80px;height:80px;border-radius:20px"><div style="font-weight:700;font-size:16px;margin-top:4px">Meter Manager</div></div>';
   for (const line of md.split('\n')) {
     const trimmed = line.trim();
@@ -1564,8 +1564,9 @@ window._settingsContact = async function(el) {
     else if (lower.includes('twitter') || lower === 'x') href = 'https://x.com/' + value.replace(/^https?:\/\/(www\.)?(twitter|x)\.com\//, '');
     else if (lower.includes('phone') || lower.includes('mobile') || lower.includes('মোবাইল')) href = 'tel:' + value.replace(/[^0-9+]/g, '');
     else if (lower.includes('website') || lower.includes('url')) href = value.startsWith('http') ? value : 'https://' + value;
-    const iconKey = lower.includes('messenger') ? 'messenger' : lower.includes('mobile') || lower.includes('মোবাইল') ? 'mobile' : lower.includes('instagram') ? 'instagram' : Object.keys(icons).find(k => lower.includes(k));
-    html += `<a href="${esc(href)}" target="_blank" rel="noopener" class="settings-box" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px"><span style="display:flex;align-items:center">${iconKey ? icons[iconKey] : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>'}</span><span style="text-align:center">${esc(label)}</span></a>`;
+    const isPhone = lower.includes('phone') || lower.includes('mobile') || lower.includes('মোবাইল');
+    const iconKey = lower.includes('messenger') ? 'messenger' : isPhone ? 'mobile' : lower.includes('instagram') ? 'instagram' : Object.keys(icons).find(k => lower.includes(k));
+    html += `<a href="${esc(href)}" ${isPhone ? '' : 'target="_blank" rel="noopener"'} class="settings-box" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px"><span style="display:flex;align-items:center">${iconKey ? icons[iconKey] : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>'}</span><span style="text-align:center">${esc(label)}</span></a>`;
   }
   html += '</div>';
   openDialog('', html, []);
