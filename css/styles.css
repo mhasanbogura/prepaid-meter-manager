@@ -269,9 +269,9 @@ table.list tr:last-child td { border-bottom: 0; }
 .settings-section:last-child { margin-bottom: 0; }
 .settings-section h4 { font-size: 14px; margin-bottom: 8px; color: var(--text); }
 .settings-box {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-  padding: 13px 14px; font-size: 15px; color: var(--primary); cursor: pointer;
-  transition: transform .12s, opacity .12s;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px;
+  padding: 13px 14px; font-size: 15px; font-weight: 600; color: var(--primary); cursor: pointer;
+  text-align: center; transition: transform .12s, opacity .12s;
 }
 .settings-box:active { transform: scale(.97); opacity: .8; }
 .toggle { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
@@ -302,8 +302,9 @@ table.list tr:last-child td { border-bottom: 0; }
 .lang-toggle .lt-label.active { color: #fff; }
 .brand-sub { font-size: 10px; color: var(--text-2); margin-top: -2px; }
 .card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow);
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px;
+  padding: 16px; margin-bottom: 14px;
 }
-.card h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; }
+.card h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; text-align: center; color: var(--primary); }
 .muted { font-size: 13px; color: var(--text-2); margin: 0; }
+.about-logo { border-radius: 20px; box-shadow: var(--shadow-lg); }

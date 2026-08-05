@@ -170,6 +170,33 @@ function loadState() {
 function saveMeters() { localStorage.setItem(LS_METERS, JSON.stringify(state.meters)); }
 function saveSettings() { localStorage.setItem(LS_SETTINGS, JSON.stringify(state.settings)); }
 
+const DRIVE_FOLDER_ID = '1PBrhSIvDk0QrgNS6XeTeA1RDLFPeTqKV';
+const DRIVE_API_KEY = 'AIzaSyA4ymjFIbuGVhFsKjxVV46RT-qWqNHNiY4';
+
+async function driveFetchMdByName(fileName) {
+  try {
+    const q = encodeURIComponent(`'${DRIVE_FOLDER_ID}' in parents and name='${fileName}' and trashed=false`);
+    const listUrl = `https://www.googleapis.com/drive/v3/files?q=${q}&key=${DRIVE_API_KEY}&fields=files(id)`;
+    const listRes = await fetch(listUrl);
+    if (!listRes.ok) return null;
+    const listData = await listRes.json();
+    if (!listData.files || !listData.files.length) return null;
+    const fileId = listData.files[0].id;
+    const contentUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${DRIVE_API_KEY}`;
+    const contentRes = await fetch(contentUrl);
+    if (!contentRes.ok) return null;
+    return (await contentRes.text()).trim();
+  } catch { return null; }
+}
+
+async function driveFetchCached(key, fileName) {
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+  const content = await driveFetchMdByName(fileName);
+  if (content) localStorage.setItem(key, content);
+  return content;
+}
+
 /* ================= helpers ================= */
 function t(key, vars) {
   let s = langs[key] ?? I18N.en[key] ?? key;
@@ -1114,7 +1141,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.86 (build 261)</span>
       </div>`;
     return;
   }
@@ -1160,7 +1187,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.86 (build 261)</span>
     </div>
   `;
 }
@@ -1415,15 +1442,58 @@ window._settingsDeleteAll = function() {
     { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); renderHome(); toast(t('settings.cleared')); } }
   ]);
 };
-window._settingsAbout = function(el) {
-  openDialog('About App', '<p class="body-text"><strong>Meter Manager</strong> is a lightweight Android app for tracking DESCO prepaid electricity meters in Bangladesh. Check balances, view recharge history, and manage multiple meters from one place.</p><p class="body-text" style="margin-top:8px">Built with care by <strong>Mahmudul Hasan</strong>.</p>', [
-    { key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }
-  ]);
+window._settingsAbout = async function(el) {
+  el.textContent = 'Loading...';
+  const md = await driveFetchCached('cached_about_md', 'About.md');
+  el.textContent = 'About App';
+  if (!md) { openDialog('About App', '<p class="body-text">No description available.</p>', [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]); return; }
+  let html = '<div style="text-align:center;margin-bottom:12px"><img src="icons/icon-512.png" class="about-logo" style="width:80px;height:80px;border-radius:20px"><div style="font-weight:700;font-size:16px;margin-top:4px">Meter Manager</div></div>';
+  for (const line of md.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) { html += '<br>'; continue; }
+    if (trimmed.startsWith('## ')) { html += `<div style="font-weight:700;font-size:14px;color:var(--primary);margin:8px 0 4px">${esc(trimmed.slice(3))}</div>`; }
+    else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      const txt = trimmed.slice(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html += `<div style="font-size:13px;line-height:1.6;margin-left:8px">• ${txt}</div>`;
+    } else { html += `<div style="font-size:13px;line-height:1.6">${trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px">$1</code>')}</div>`; }
+  }
+  openDialog('', html, [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]);
 };
-window._settingsContact = function(el) {
-  openDialog('Contact Developer', '<p class="body-text">Have questions, feedback, or need help? Reach out through any of these channels:</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:12px"><a href="https://wa.me/8801712345678" target="_blank" class="settings-box" style="text-decoration:none">WhatsApp</a><a href="https://m.me/mahmudul.hasan" target="_blank" class="settings-box" style="text-decoration:none">Facebook Messenger</a><a href="https://github.com/mhasanbogura" target="_blank" class="settings-box" style="text-decoration:none">GitHub</a></div>', [
-    { key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }
-  ]);
+window._settingsContact = async function(el) {
+  el.textContent = 'Loading...';
+  const md = await driveFetchCached('cached_contact_md', 'Contact.md');
+  el.textContent = 'Contact Developer';
+  if (!md) { openDialog('Contact Developer', '<p class="body-text">No contact information available.</p>', [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]); return; }
+  let developerName = 'Developer';
+  const entries = [];
+  for (const line of md.split('\n')) {
+    const trimmed = line.trim().replace(/^[-*]\s*/, '');
+    if (!trimmed.includes(':')) continue;
+    const idx = trimmed.indexOf(':');
+    const label = trimmed.slice(0, idx).trim();
+    const value = trimmed.slice(idx + 1).trim();
+    if (!label || !value) continue;
+    if (label.toLowerCase() === 'name') { developerName = value; continue; }
+    entries.push({ label, value });
+  }
+  const icons = { whatsapp: '💬', email: '📧', github: '🐙', facebook: '📘', telegram: '✈️', twitter: '🐦', phone: '📞', website: '🌐' };
+  let html = `<div style="text-align:center;margin-bottom:12px"><div style="font-weight:700;font-size:16px">${esc(developerName)}</div></div><div style="display:flex;flex-direction:column;gap:8px">`;
+  for (const { label, value } of entries) {
+    const lower = label.toLowerCase();
+    let href = value;
+    if (lower.includes('whatsapp')) href = 'https://wa.me/' + value.replace(/[^0-9]/g, '');
+    else if (lower.includes('email') || lower.includes('mail')) href = 'mailto:' + value;
+    else if (lower.includes('github')) href = 'https://github.com/' + value.replace(/^https?:\/\/github\.com\//, '');
+    else if (lower.includes('facebook') && !lower.includes('messenger')) href = 'https://facebook.com/' + value.replace(/^https?:\/\/(www\.)?facebook\.com\//, '');
+    else if (lower.includes('telegram')) href = 'https://t.me/' + value.replace(/^https?:\/\/t\.me\//, '');
+    else if (lower.includes('twitter') || lower.includes('x')) href = 'https://x.com/' + value.replace(/^https?:\/\/(www\.)?(twitter|x)\.com\//, '');
+    else if (lower.includes('phone')) href = 'tel:' + value.replace(/[^0-9+]/g, '');
+    else if (lower.includes('website') || lower.includes('url')) href = value.startsWith('http') ? value : 'https://' + value;
+    const icon = Object.entries(icons).find(([k]) => lower.includes(k));
+    html += `<a href="${esc(href)}" target="_blank" rel="noopener" class="settings-box" style="text-decoration:none;display:flex;align-items:center;gap:10px"><span style="font-size:18px">${icon ? icon[1] : '🔗'}</span><span>${esc(label)}</span></a>`;
+  }
+  html += '</div>';
+  openDialog('', html, [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]);
 };
 function applyLang() {
   langs = I18N[state.settings.lang] || I18N.en;
