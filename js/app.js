@@ -1521,7 +1521,7 @@ function applyTheme() {
     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light')
     : state.settings.theme;
   document.documentElement.dataset.theme = t1;
-  document.querySelector('meta[name="theme-color"]').content = (t1 === 'dark' || t1 === 'oled') ? (t1 === 'oled' ? '#000000' : '#0f1218') : '#0b3d91';
+  document.querySelector('meta[name="theme-color"]').content = t1 === 'oled' ? '#0a0a0a' : t1 === 'dark' ? '#1a1f2a' : '#e8ebf0';
 }
 async function enableNotifications() {
   if (!('Notification' in window)) { toast(t('alerts.perm'), true); return; }

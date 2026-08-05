@@ -57,26 +57,32 @@ input, select { font-family: inherit; }
   height: var(--topbar-h);
   display: flex; align-items: center; gap: 6px;
   padding: 0 12px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
+  background: #e8ebf0;
+  color: #14181f;
   box-shadow: var(--shadow);
 }
-[data-theme="dark"] .topbar, [data-theme="oled"] .topbar {
-  background: linear-gradient(135deg, var(--surface-2), var(--surface));
-  color: var(--text);
+[data-theme="dark"] .topbar {
+  background: #1a1f2a;
+  color: #e8ebf1;
+}
+[data-theme="oled"] .topbar {
+  background: #0a0a0a;
+  color: #e8ebf1;
 }
 .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .brand-logo { width: 34px; height: 34px; border-radius: 9px; object-fit: cover; }
 .brand-text strong { display: block; font-size: 16px; line-height: 1.2; }
 .brand-text small { opacity: .85; font-size: 11px; }
 .icon-btn {
-  background: rgba(255,255,255,.14); border: 0; border-radius: 10px;
+  background: rgba(0,0,0,.08); border: 0; border-radius: 10px;
   width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-  color: #fff; cursor: pointer; flex-shrink: 0;
+  color: #14181f; cursor: pointer; flex-shrink: 0;
 }
-[data-theme="dark"] .icon-btn, [data-theme="oled"] .icon-btn {
-  background: var(--surface-2); color: var(--text);
-  border: 1px solid var(--border);
+[data-theme="dark"] .icon-btn {
+  background: rgba(255,255,255,.1); color: #e8ebf1;
+}
+[data-theme="oled"] .icon-btn {
+  background: rgba(255,255,255,.08); color: #e8ebf1;
 }
 .icon-btn:hover { background: rgba(255,255,255,.26); }
 .icon-btn.spinning svg { animation: spin 1s linear infinite; }
