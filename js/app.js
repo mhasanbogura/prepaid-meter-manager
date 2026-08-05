@@ -343,7 +343,7 @@ async function probeSystemType(accountNo, meterNo) {
   return null;
 }
 function balanceOf(meter) { return meter.balance !== null && meter.balance !== undefined ? Number(meter.balance) : null; }
-function lowBalance(meter) { const b = balanceOf(meter); return b !== null && b < (meter.lowThreshold ?? LOW_BALANCE); }
+function lowBalance(meter) { const b = balanceOf(meter); return b !== null && b < (meter.lowThreshold ?? state.settings.alertThreshold ?? LOW_BALANCE); }
 function median(arr) {
   if (!arr.length) return 0;
   const s = [...arr].sort((a, b) => a - b);
@@ -1247,12 +1247,12 @@ window.ppEditMeter = id => {
     <label>${esc(t('edit.nickname'))}</label>
     <input type="text" id="dlgEditNick" value="${esc(m.nickname || '')}" placeholder="${esc(t('edit.nickname_hint'))}" maxlength="30" autocomplete="off">
     <label style="margin-top:12px">${esc(t('edit.low_threshold'))}</label>
-    <input type="number" id="dlgEditLow" value="${m.lowThreshold ?? LOW_BALANCE}" min="0" max="99999" step="1" inputmode="numeric">`, [
+    <input type="number" id="dlgEditLow" value="${m.lowThreshold ?? state.settings.alertThreshold ?? LOW_BALANCE}" min="0" max="99999" step="1" inputmode="numeric">`, [
     { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
     { key: 'save', label: t('btn.ok'), cls: 'primary', fn: () => {
       m.nickname = $('#dlgEditNick').value.trim();
       const newLow = Number($('#dlgEditLow').value);
-      m.lowThreshold = isNaN(newLow) ? LOW_BALANCE : newLow;
+      m.lowThreshold = isNaN(newLow) ? (state.settings.alertThreshold ?? LOW_BALANCE) : newLow;
       saveMeters(); closeDialog(); renderHome();
     }}
   ]);
