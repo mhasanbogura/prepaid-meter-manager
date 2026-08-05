@@ -45,7 +45,7 @@ const I18N = {
     'detail.meter_type': 'Meter type', 'detail.father': 'Father/Husband', 'detail.feed': 'Feeder',
     'detail.total_use': 'Total use', 'detail.this_month': 'This month', 'detail.last_month': 'Last month',
     'detail.units': 'Units', 'detail.install_date': 'Install date', 'detail.min_recharge': 'Min. recharge', 'detail.method': 'Method',
-    'edit.title': 'Edit meter', 'edit.nickname': 'Nickname', 'edit.nickname_hint': 'e.g. Home, Office', 'edit.low_threshold': 'Low balance alert threshold',
+    'edit.title': 'Edit meter', 'edit.nickname': 'Nickname', 'edit.nickname_hint': 'e.g. Home, Office', 'edit.low_threshold': 'Low balance threshold',
     'nesco.needs_server': 'NESCO needs the local server running. Start it with `node server.js`.',
     'nesco.no_data': 'Not found in the NESCO database. Check the number and try again.',
     'alerts.title': 'Balance alert', 'alerts.body': 'Meter {n} balance fell to {b}. Recharge soon to avoid disconnection.',
@@ -112,7 +112,7 @@ const I18N = {
     'detail.meter_type': 'মিটারের ধরন', 'detail.father': 'বাবা/স্বামীর নাম', 'detail.feed': 'ফিডার',
     'detail.total_use': 'মোট ব্যবহার', 'detail.this_month': 'এই মাস', 'detail.last_month': 'গত মাস',
     'detail.units': 'ইউনিট', 'detail.install_date': 'ইনস্টল তারিখ', 'detail.min_recharge': 'সর্বনিম্ন রিচার্জ', 'detail.method': 'পদ্ধতি',
-    'edit.title': 'মিটার সম্পাদনা', 'edit.nickname': 'ডাকনাম', 'edit.nickname_hint': 'যেমন: বাসা, অফিস', 'edit.low_threshold': 'কম ব্যালেন্স সতর্কতা সীমা',
+    'edit.title': 'মিটার সম্পাদনা', 'edit.nickname': 'ডাকনাম', 'edit.nickname_hint': 'যেমন: বাসা, অফিস', 'edit.low_threshold': 'কম ব্যালেন্স সীমা',
     'nesco.needs_server': 'নেসকোর জন্য লোকাল সার্ভার দরকার। `node server.js` দিয়ে চালু করুন।',
     'nesco.no_data': 'নেসকো ডাটাবেজে পাওয়া যায়নি। নম্বর মিলিয়ে দেখুন।',
     'alerts.title': 'ব্যালেন্স অ্যালার্ট', 'alerts.body': 'মিটার {n} এর ব্যালেন্স {b} এ নেমে এসেছে। সংযোগ বিচ্ছিন্ন হওয়ার আগে রিচার্জ করুন।',
@@ -1391,8 +1391,8 @@ function renderSettings() {
         <div style="display:flex;align-items:center;gap:12px;flex:1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
           <div>
-            <div style="font-weight:600">Low balance alert threshold</div>
-            <div class="hint" style="margin:0">Default alert threshold (BDT)</div>
+            <div style="font-weight:600">Low balance threshold</div>
+            <div class="hint" style="margin:0">Default threshold (BDT)</div>
           </div>
         </div>
         <input type="number" id="settThreshold" value="${threshold}" min="0" max="99999" step="50" inputmode="numeric" style="width:80px;text-align:right">
