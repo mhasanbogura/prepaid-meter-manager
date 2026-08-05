@@ -1400,7 +1400,7 @@ function renderSettings() {
             <div class="hint" style="margin:0">Use OLED black backdrop for eye comfort</div>
           </div>
         </div>
-        <label class="toggle"><input type="checkbox" id="settDarkTheme" ${isDark ? 'checked' : ''}><span class="toggle-slider"></span></label>
+        <label class="toggle"><input type="checkbox" id="settDarkTheme" ${state.settings.theme === 'dark' ? 'checked' : ''}><span class="toggle-slider"></span></label>
       </div>
 
       <div class="row" style="justify-content:space-between;gap:12px">
@@ -1452,12 +1452,21 @@ function renderSettings() {
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
-    state.settings.theme = e.target.checked ? 'system' : (document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
-    saveSettings(); applyTheme();
+    if (e.target.checked) {
+      state.settings.theme = 'system';
+    } else {
+      const resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      state.settings.theme = resolved;
+    }
+    saveSettings(); applyTheme(); renderSettings();
   };
   $('#settDarkTheme').onchange = (e) => {
-    state.settings.theme = e.target.checked ? 'dark' : (state.settings.theme === 'dark' ? 'light' : state.settings.theme);
-    saveSettings(); applyTheme();
+    if (e.target.checked) {
+      state.settings.theme = 'dark';
+    } else {
+      state.settings.theme = 'light';
+    }
+    saveSettings(); applyTheme(); renderSettings();
   };
   $('#settLangToggle').onclick = () => {
     state.settings.lang = state.settings.lang === 'bn' ? 'en' : 'bn';
