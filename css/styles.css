@@ -301,19 +301,33 @@ table.list tr:last-child td { border-bottom: 0; }
 .toggle input:checked + .toggle-slider { background: var(--primary); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
 .lang-toggle {
-  position: relative; display: inline-flex; background: var(--surface-2); border-radius: 20px;
-  border: 1px solid var(--border); overflow: hidden; cursor: pointer; height: 32px;
+  position: relative; display: inline-flex; background: var(--surface-2); border-radius: 30px;
+  border: 1px solid var(--border); overflow: hidden; cursor: pointer; height: 36px;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,.08), inset -2px -2px 4px rgba(255,255,255,.6);
+}
+[data-theme="dark"] .lang-toggle, [data-theme="oled"] .lang-toggle {
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,.3), inset -2px -2px 4px rgba(255,255,255,.05);
 }
 .lang-toggle .lt-slider {
-  position: absolute; top: 2px; bottom: 2px; width: calc(50% - 2px); background: var(--primary);
-  border-radius: 18px; transition: transform .25s; z-index: 0;
+  position: absolute; top: 3px; bottom: 3px; width: 30px; background: var(--surface);
+  border-radius: 50%; transition: transform .25s; z-index: 2;
+  box-shadow: 2px 2px 4px rgba(0,0,0,.12), -1px -1px 3px rgba(255,255,255,.5);
 }
-.lang-toggle[data-lang="en"] .lt-slider { transform: translateX(calc(100% + 2px)); }
+[data-theme="dark"] .lang-toggle .lt-slider, [data-theme="oled"] .lang-toggle .lt-slider {
+  box-shadow: 2px 2px 4px rgba(0,0,0,.4), -1px -1px 3px rgba(255,255,255,.05);
+}
+.lang-toggle[data-lang="bn"] .lt-slider { transform: translateX(3px); }
+.lang-toggle[data-lang="en"] .lt-slider { transform: translateX(calc(100% + 3px)); }
 .lang-toggle .lt-label {
-  position: relative; z-index: 1; padding: 0 14px; font-size: 13px; font-weight: 600;
-  line-height: 28px; color: var(--text-2); transition: color .2s; white-space: nowrap;
+  position: relative; z-index: 1; padding: 0 12px; font-size: 13px; font-weight: 700;
+  line-height: 30px; color: var(--text-2); transition: color .2s; white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
 }
-.lang-toggle .lt-label.active { color: #fff; }
+.lang-toggle .lt-label.active { color: var(--primary); }
+.lang-toggle .lt-flag {
+  width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1;
+}
 .brand-sub { font-size: 10px; color: var(--text-2); margin-top: -2px; }
 .card {
   background: var(--surface-2); border: 1px solid var(--border); border-radius: 16px;

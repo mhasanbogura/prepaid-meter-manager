@@ -1428,8 +1428,8 @@ function renderSettings() {
         </div>
         <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
           <div class="lt-slider"></div>
-          <span class="lt-label ${lang === 'bn' ? 'active' : ''}">বাংলা</span>
-          <span class="lt-label ${lang === 'en' ? 'active' : ''}">English</span>
+          <span class="lt-label ${lang === 'bn' ? 'active' : ''}"><span class="lt-flag">🇧🇩</span>বাংলা</span>
+          <span class="lt-label ${lang === 'en' ? 'active' : ''}"><span class="lt-flag">🇬🇧</span>English</span>
         </div>
       </div>
 
@@ -1517,7 +1517,7 @@ window._settingsAbout = async function(el) {
       html += `<div style="font-size:13px;line-height:1.6;margin-left:8px">• ${txt}</div>`;
     } else { html += `<div style="font-size:13px;line-height:1.6">${trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px">$1</code>')}</div>`; }
   }
-  openDialog('', html, [{ key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }]);
+  openDialog('', html, []);
 };
 window._settingsContact = async function(el) {
   el.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
