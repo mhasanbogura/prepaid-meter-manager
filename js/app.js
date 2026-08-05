@@ -46,11 +46,20 @@ const I18N = {
     'detail.total_use': 'Total use', 'detail.this_month': 'This month', 'detail.last_month': 'Last month',
     'detail.units': 'Units', 'detail.install_date': 'Install date', 'detail.min_recharge': 'Min. recharge', 'detail.method': 'Method',
     'edit.title': 'Edit meter', 'edit.nickname': 'Nickname', 'edit.nickname_hint': 'e.g. Home, Office', 'edit.low_threshold': 'Low balance threshold',
+    'settings.title': 'Settings', 'settings.subtitle': 'Manage preferences and theme settings.',
+    'settings.general': 'General Settings', 'settings.device_theme': 'Device Theme', 'settings.device_theme_hint': 'Automatically switch theme based on system',
+    'settings.oled_theme': 'OLED Theme', 'settings.oled_theme_hint': 'Use OLED black backdrop for eye comfort',
+    'settings.language': 'Language', 'settings.low_threshold': 'Low balance threshold', 'settings.low_threshold_hint': 'Default threshold (BDT)',
+    'settings.share': 'Share', 'settings.import_export': 'Import / Export', 'settings.delete_all': 'Delete All Meters',
+    'settings.about': 'About App', 'settings.contact': 'Contact Developer',
+    'detail.energy_amount': 'Energy Amount', 'detail.energy_kwh': 'Energy (kWh)', 'detail.vat_other': 'VAT & Other Charges',
+    'home.low': 'Low balance',
+    'add.nesco_hint': 'Enter your 8 to 11 digit NESCO consumer / customer number.',
     'nesco.needs_server': 'NESCO needs the local server running. Start it with `node server.js`.',
     'nesco.no_data': 'Not found in the NESCO database. Check the number and try again.',
     'alerts.title': 'Balance alert', 'alerts.body': 'Meter {n} balance fell to {b}. Recharge soon to avoid disconnection.',
     'alerts.perm': 'Notifications are blocked. Enable them in your browser settings.',
-    'settings.language': 'Language / ভাষা', 'settings.theme': 'Theme',
+    'settings.theme': 'Theme',
     'settings.alerts': 'Balance alerts', 'settings.alerts.enable': 'Low-balance & recharge notifications',
     'settings.alerts.threshold': 'Alert when balance falls below (BDT)', 'settings.alerts.freq': 'Check every',
     'settings.alerts.note': 'Alerts need notification permission. On mobile, install this page (PWA) and keep it open to receive them.',
@@ -113,11 +122,20 @@ const I18N = {
     'detail.total_use': 'মোট ব্যবহার', 'detail.this_month': 'এই মাস', 'detail.last_month': 'গত মাস',
     'detail.units': 'ইউনিট', 'detail.install_date': 'ইনস্টল তারিখ', 'detail.min_recharge': 'সর্বনিম্ন রিচার্জ', 'detail.method': 'পদ্ধতি',
     'edit.title': 'মিটার সম্পাদনা', 'edit.nickname': 'ডাকনাম', 'edit.nickname_hint': 'যেমন: বাসা, অফিস', 'edit.low_threshold': 'কম ব্যালেন্স সীমা',
+    'settings.title': 'সেটিংস', 'settings.subtitle': 'প্রয়োজন অনুযায়ী সেটিংস ও থিম পরিবর্তন করুন।',
+    'settings.general': 'সাধারণ সেটিংস', 'settings.device_theme': 'ডিভাইস থিম', 'settings.device_theme_hint': 'সিস্টেমের উপর ভিত্তি করে স্বয়ংক্রিয়ভাবে থিম পরিবর্তন করুন',
+    'settings.oled_theme': 'OLED থিম', 'settings.oled_theme_hint': 'চোখের আরামের জন্য OLED কালো ব্যাকড্রপ ব্যবহার করুন।',
+    'settings.language': 'ভাষা', 'settings.low_threshold': 'কম ব্যালেন্স সীমা', 'settings.low_threshold_hint': 'ডিফল্ট সীমা (টাকায়)',
+    'settings.share': 'শেয়ার', 'settings.import_export': 'ইমপোর্ট / এক্সপোর্ট', 'settings.delete_all': 'সমস্ত মিটার মুছে ফেলুন',
+    'settings.about': 'অ্যাপ সম্পর্কে', 'settings.contact': 'ডেভেলপারের সাথে যোগাযোগ করুন',
+    'detail.energy_amount': 'এনার্জি অ্যামাউন্ট', 'detail.energy_kwh': 'এনার্জি (kWh)', 'detail.vat_other': 'ভ্যাট ও অন্যান্য চার্জ',
+    'home.low': 'ব্যালেন্স কম',
+    'add.nesco_hint': 'আপনার ৮ থেকে ১১ ডিজিটের নেসকো কনজিউমার / কাস্টমার নম্বরটি প্রবেশ করান।',
     'nesco.needs_server': 'নেসকোর জন্য লোকাল সার্ভার দরকার। `node server.js` দিয়ে চালু করুন।',
     'nesco.no_data': 'নেসকো ডাটাবেজে পাওয়া যায়নি। নম্বর মিলিয়ে দেখুন।',
     'alerts.title': 'ব্যালেন্স অ্যালার্ট', 'alerts.body': 'মিটার {n} এর ব্যালেন্স {b} এ নেমে এসেছে। সংযোগ বিচ্ছিন্ন হওয়ার আগে রিচার্জ করুন।',
     'alerts.perm': 'নোটিফিকেশন ব্লক করা আছে। ব্রাউজার সেটিংস থেকে অনুমতি দিন।',
-    'settings.language': 'ভাষা / Language', 'settings.theme': 'থিম',
+    'settings.theme': 'থিম',
     'settings.alerts': 'ব্যালেন্স অ্যালার্ট', 'settings.alerts.enable': 'কম ব্যালেন্স ও রিচার্জ নোটিফিকেশন',
     'settings.alerts.threshold': 'কত টাকার নিচে নেমে গেলে অ্যালার্ট দেবে', 'settings.alerts.freq': 'প্রতি',
     'settings.alerts.note': 'অ্যালার্টের জন্য নোটিফিকেশন অনুমতি প্রয়োজন। মোবাইলে এই পৃষ্ঠাটি (PWA) ইনস্টল করে খোলা রাখুন।',
@@ -517,7 +535,7 @@ function showAddMeter() {
       prov = b.dataset.prov;
       $$('#addProvider .prov-btn').forEach(x => x.style.outline = x === b ? '3px solid var(--primary)' : '');
       $('#addHint').textContent = prov === 'nesco'
-        ? 'Enter your 8 to 11 digit NESCO consumer / customer number.'
+        ? t('add.nesco_hint')
         : t('add.number.hint');
       $('#dlgActions [data-act="search"]').textContent = prov === 'nesco' ? t('add.search_nes') : t('add.search_desc');
     };
@@ -833,7 +851,7 @@ async function renderMeterDetail() {
     </div>
     <div class="balance-hero">
       <div class="bh-label"><span>${esc(t('detail.balance'))}</span><span>${m.provider === 'nesco' ? 'NESCO' : 'DESCO'} · ${esc(m.info?.accountNo || m.accountNo || m.consumerNo || '')}</span></div>
-      <div class="bh-amount"${lowBalance(m) && m.balance != null ? ' style="color:#ff6b6b"' : ''}>${m.balance === null ? '––' : fmtBdt(m.balance)}${lowBalance(m) ? ' <span style="font-size:13px;font-weight:700;color:#ff6b6b">Low balance</span>' : ''}</div>
+      <div class="bh-amount"${lowBalance(m) && m.balance != null ? ' style="color:#ff6b6b"' : ''}>${m.balance === null ? '––' : fmtBdt(m.balance)}${lowBalance(m) ? ' <span style="font-size:13px;font-weight:700;color:#ff6b6b">' + esc(t('home.low')) + '</span>' : ''}</div>
       <div class="bh-meta">
         <span>${esc(t('detail.meter'))}: ${esc(m.info?.meterNo || m.meterNo || m.consumerNo || '–')}</span>
         ${m.avgDailyCost != null ? `<span>${esc(t('home.avg_day', { v: fmtBdt(m.avgDailyCost) }))}</span>` : ''}
@@ -869,7 +887,7 @@ function renderNescoHistory(m) {
   return `<section class="card">
     <h3>${esc(t('detail.recharge_history'))}</h3>
     ${rows.length
-      ? `<div class="tbl-scroll"><table class="list"><thead><tr><th>${esc(t('detail.date'))}</th><th>${esc(t('detail.token'))}</th><th style="text-align:center">${esc(t('detail.total'))}</th><th style="text-align:center">Energy<br>Amount</th><th style="text-align:center">Energy<br>(kWh)</th><th style="text-align:center">VAT &<br>Other Charges</th></tr></thead><tbody>
+      ? `<div class="tbl-scroll"><table class="list"><thead><tr><th>${esc(t('detail.date'))}</th><th>${esc(t('detail.token'))}</th><th style="text-align:center">${esc(t('detail.total'))}</th><th style="text-align:center">${esc(t('detail.energy_amount'))}</th><th style="text-align:center">${esc(t('detail.energy_kwh'))}</th><th style="text-align:center">${esc(t('detail.vat_other'))}</th></tr></thead><tbody>
         ${rows.map(r => {
           const total = Number(r.rechargeAmount) || 0;
           const ea = Number(r.electricityAmount) || 0;
@@ -1109,7 +1127,7 @@ function renderHistory(hist) {
   return `<section class="card">
     <h3>${esc(t('detail.recharge_history'))}</h3>
     ${rows.length
-      ? `<div class="tbl-scroll"><table class="list"><thead><tr><th>${esc(t('detail.date'))}</th><th>${esc(t('detail.token'))}</th><th style="text-align:center">${esc(t('detail.total'))}</th><th style="text-align:center">Energy<br>Amount</th><th style="text-align:center">Energy<br>(kWh)</th><th style="text-align:center">VAT &<br>Other Charges</th></tr></thead><tbody>
+      ? `<div class="tbl-scroll"><table class="list"><thead><tr><th>${esc(t('detail.date'))}</th><th>${esc(t('detail.token'))}</th><th style="text-align:center">${esc(t('detail.total'))}</th><th style="text-align:center">${esc(t('detail.energy_amount'))}</th><th style="text-align:center">${esc(t('detail.energy_kwh'))}</th><th style="text-align:center">${esc(t('detail.vat_other'))}</th></tr></thead><tbody>
         ${rows.map(r => {
           const total = Number(r.totalAmount) || 0;
           const ea = Number(r.energyAmount) || 0;
@@ -1175,7 +1193,7 @@ function renderHome() {
         </div>
       </div>
       <div class="mc-number">${esc(m.nickname || m.info?.customerName || m.info?.name || '')}${(m.nickname || m.info?.customerName || m.info?.name) ? '<br>' : ''}${esc(m.accountNo || m.meterNo || m.consumerNo)}</div>
-      <div class="mc-balance ${b !== null && low ? 'low' : ''}" style="${b !== null && low ? 'color:#ff6b6b' : ''}">${b === null ? '––' : fmtBdt(b)}${low ? ' <span style="font-size:12px;font-weight:700;color:#ff6b6b">Low balance</span>' : ''}</div>
+      <div class="mc-balance ${b !== null && low ? 'low' : ''}" style="${b !== null && low ? 'color:#ff6b6b' : ''}">${b === null ? '––' : fmtBdt(b)}${low ? ' <span style="font-size:12px;font-weight:700;color:#ff6b6b">' + esc(t('home.low')) + '</span>' : ''}</div>
       <div class="mc-sub"><span>${avg || ''}</span><span>${m.updatedAt ? esc(t('home.last_updated', { t: timeAgo(m.updatedAt) })) : esc(t('home.updated_never'))}</span>${badge}</div>
     </div>`;
   }).join('');
@@ -1353,18 +1371,18 @@ function renderSettings() {
   const lang = state.settings.lang || 'en';
   const threshold = state.settings.alertThreshold ?? LOW_BALANCE;
   $('#settingsContent').innerHTML = `
-    <h2 class="section-title" style="margin-bottom:0">Settings</h2>
-    <p class="muted" style="margin-bottom:8px">Manage preferences and theme settings.</p>
+    <h2 class="section-title" style="margin-bottom:0">${esc(t('settings.title'))}</h2>
+    <p class="muted" style="margin-bottom:8px">${esc(t('settings.subtitle'))}</p>
 
     <section class="card">
-      <h3 style="text-align:center">General Settings</h3>
+      <h3 style="text-align:center">${esc(t('settings.general'))}</h3>
 
       <div class="row" style="justify-content:space-between;gap:12px">
         <div style="display:flex;align-items:center;gap:12px;flex:1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
           <div>
-            <div style="font-weight:600">Device Theme</div>
-            <div class="hint" style="margin:0">Automatically switch theme based on system</div>
+            <div style="font-weight:600">${esc(t('settings.device_theme'))}</div>
+            <div class="hint" style="margin:0">${esc(t('settings.device_theme_hint'))}</div>
           </div>
         </div>
         <label class="toggle"><input type="checkbox" id="settDeviceTheme" ${state.settings.theme === 'system' ? 'checked' : ''}><span class="toggle-slider"></span></label>
@@ -1374,8 +1392,8 @@ function renderSettings() {
         <div style="display:flex;align-items:center;gap:12px;flex:1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
           <div>
-            <div style="font-weight:600">OLED Theme</div>
-            <div class="hint" style="margin:0">Use OLED black backdrop for eye comfort</div>
+            <div style="font-weight:600">${esc(t('settings.oled_theme'))}</div>
+            <div class="hint" style="margin:0">${esc(t('settings.oled_theme_hint'))}</div>
           </div>
         </div>
         <label class="toggle"><input type="checkbox" id="settDarkTheme" ${state.settings.theme === 'oled' ? 'checked' : ''}><span class="toggle-slider"></span></label>
@@ -1384,7 +1402,7 @@ function renderSettings() {
       <div class="row" style="justify-content:space-between;gap:12px">
         <div style="display:flex;align-items:center;gap:12px;flex:1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-          <div style="font-weight:600">Language</div>
+          <div style="font-weight:600">${esc(t('settings.language'))}</div>
         </div>
         <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
           <div class="lt-slider"></div>
@@ -1397,8 +1415,8 @@ function renderSettings() {
         <div style="display:flex;align-items:center;gap:12px;flex:1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
           <div>
-            <div style="font-weight:600">Low balance threshold</div>
-            <div class="hint" style="margin:0">Default threshold (BDT)</div>
+            <div style="font-weight:600">${esc(t('settings.low_threshold'))}</div>
+            <div class="hint" style="margin:0">${esc(t('settings.low_threshold_hint'))}</div>
           </div>
         </div>
         <input type="number" id="settThreshold" value="${threshold}" min="0" max="99999" step="50" inputmode="numeric" style="width:80px;text-align:right">
@@ -1406,11 +1424,11 @@ function renderSettings() {
     </section>
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
-      <div class="settings-box" onclick="window._settingsShare()">Share</div>
-      <div class="settings-box" onclick="showImportExport()">Import / Export</div>
-      <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">Delete All Meters</div>
-      <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">About App</div>
-      <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">Contact Developer</div>
+      <div class="settings-box" onclick="window._settingsShare()">${esc(t('settings.share'))}</div>
+      <div class="settings-box" onclick="showImportExport()">${esc(t('settings.import_export'))}</div>
+      <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">${esc(t('settings.delete_all'))}</div>
+      <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">${esc(t('settings.about'))}</div>
+      <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">${esc(t('settings.contact'))}</div>
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
