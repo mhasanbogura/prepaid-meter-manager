@@ -185,7 +185,7 @@ function loadState() {
     state.settings = JSON.parse(localStorage.getItem(LS_SETTINGS)) || {};
   } catch { state.settings = {}; }
   state.settings = Object.assign({
-    lang: 'en', theme: 'light', alerts: false, alertThreshold: 200,
+    lang: 'en', theme: 'system', alerts: false, alertThreshold: 200,
     alertFreq: 60, autoRefresh: true, autoFreq: 600
   }, state.settings);
 }
@@ -1488,10 +1488,12 @@ function syncSettingsUi() {
 window._settingsShare = function() {
   const url = 'https://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx';
   const msg = 'Check out Meter Manager – a simple app to track DESCO prepaid electricity meters in Bangladesh!\n\nDownload: ' + url;
-  if (navigator.share) {
-    navigator.share({ title: 'Meter Manager', text: msg }).catch(() => {});
+  if (window.NescoBridge && window.NescoBridge.shareText) {
+    window.NescoBridge.shareText('Meter Manager', msg);
+  } else if (navigator.share) {
+    navigator.share({ title: 'Meter Manager', text: msg, url: url }).catch(() => {});
   } else {
-    navigator.clipboard.writeText(msg).then(() => toast('Link copied to clipboard!')).catch(() => toast('Could not copy link', true));
+    navigator.clipboard.writeText(msg).then(() => toast(t('settings.link_copied') || 'Link copied!')).catch(() => {});
   }
 };
 window._settingsDeleteAll = function() {
