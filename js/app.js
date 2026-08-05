@@ -1114,7 +1114,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.83 (build 252)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.84 (build 255)</span>
       </div>`;
     return;
   }
@@ -1160,7 +1160,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.83 (build 252)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.84 (build 255)</span>
     </div>
   `;
 }
@@ -1293,13 +1293,86 @@ function drawChart(canvas, labels, series) {
 /* ================= views / nav ================= */
 function showView(name) {
   currentView = name;
+  $('#view-home').hidden = name !== 'home';
+  $('#view-settings').hidden = name !== 'settings';
   if (name === 'home') { currentMeterId = null; renderHome(); }
   if (name === 'meter') renderMeterDetail();
+  if (name === 'settings') renderSettings();
   scrollToTop();
 }
+function renderSettings() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const version = '1.0.83';
+  $('#settingsContent').innerHTML = `
+    <h2 class="section-title" style="margin-bottom:4px">Settings</h2>
+    <p class="muted" style="margin-bottom:16px">Manage preferences and theme settings.</p>
+
+    <section class="card">
+      <h3 style="text-align:center">General Settings</h3>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5"/></svg>
+          <div>
+            <div style="font-weight:600">Device Theme</div>
+            <div class="hint" style="margin:0">Automatically switch theme based on system</div>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="settDeviceTheme" ${state.settings.theme === 'system' ? 'checked' : ''}><span class="toggle-slider"></span></label>
+      </div>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
+          <div>
+            <div style="font-weight:600">Dark Theme</div>
+            <div class="hint" style="margin:0">Use dark backdrop for eye comfort</div>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="settDarkTheme" ${isDark ? 'checked' : ''}><span class="toggle-slider"></span></label>
+      </div>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+      <button class="btn secondary" onclick="showImportExport()" style="width:100%">Import / Export</button>
+      <button class="btn secondary" onclick="window._settingsDeleteAll()" style="width:100%;color:var(--danger)">Delete All Meters</button>
+      <button class="btn secondary" onclick="window._settingsShare()" style="width:100%">Share App</button>
+      <button class="btn secondary" onclick="window._settingsAbout()" style="width:100%">About App</button>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${version}</span>
+    </div>`;
+
+  $('#settDeviceTheme').onchange = (e) => {
+    state.settings.theme = e.target.checked ? 'system' : (document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+    saveSettings(); applyTheme();
+  };
+  $('#settDarkTheme').onchange = (e) => {
+    state.settings.theme = e.target.checked ? 'dark' : (state.settings.theme === 'dark' ? 'light' : state.settings.theme);
+    saveSettings(); applyTheme();
+  };
+}
+window._settingsDeleteAll = () => {
+  if (!state.meters.length) { toast(t('home.empty.title')); return; }
+  openDialog(t('settings.clear'), `<p class="body-text">${esc(t('meter.remove_text'))}</p>`, [
+    { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
+    { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); showView('home'); toast(t('settings.cleared')); } }
+  ]);
+};
+window._settingsShare = async () => {
+  try {
+    if (navigator.share) await navigator.share({ title: 'Meter Manager', text: 'Check out Meter Manager - track your DESCO/NESCO prepaid meter', url: location.href });
+  } catch {}
+};
+window._settingsAbout = () => {
+  openDialog('About', `<p class="body-text">Meter Manager helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p><p class="muted" style="margin-top:10px">Version 1.0.84 (build 255)</p>`, [
+    { key: 'ok', label: 'OK', fn: closeDialog }
+  ]);
+};
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
-  $('#btnUpload').onclick = () => showImportExport();
+  $('#btnSettings').onclick = () => { showView('settings'); history.pushState({ view: 'settings' }, '', ''); };
   $('#btnRefreshAll').onclick = async () => {
     const el = $('#refreshIcon'); el.parentElement.classList.add('spinning');
     await refreshAllMeters();
@@ -1309,18 +1382,11 @@ function initUi() {
     else if (currentView === 'meter') renderMeterDetail();
     toast(t('home.last_updated', { t: t('time.just') }));
   };
-  $('#btnClearAll').onclick = () => {
-    if (!state.meters.length) { toast(t('home.empty.title')); return; }
-    openDialog(t('settings.clear'), `<p class="body-text">${esc(t('meter.remove_text'))}</p>`, [
-      { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
-      { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); renderHome(); toast(t('settings.cleared')); } }
-    ]);
-  };
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-back]');
-    if (back) { e.preventDefault(); if (!$('#dlg').hidden) { closeDialog(); return; } currentMeterId = null; showView('home'); return; }
-    if (currentView === 'meter' &&
-      (e.target === $('#homeContent') || e.target === $('#view-home') ||
+    if (back) { e.preventDefault(); if (!$('#dlg').hidden) { closeDialog(); return; } if (currentView === 'meter') { currentMeterId = null; showView('home'); } else if (currentView === 'settings') { showView('home'); } return; }
+    if ((currentView === 'meter' || currentView === 'settings') &&
+      (e.target === $('#homeContent') || e.target === $('#view-home') || e.target === $('#settingsContent') || e.target === $('#view-settings') ||
        (e.target.classList && (e.target.classList.contains('home-content') || e.target.classList.contains('view'))))) {
       currentMeterId = null; showView('home');
     }
