@@ -1428,8 +1428,8 @@ function renderSettings() {
         </div>
         <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
           <div class="lt-slider"></div>
-          <span class="lt-label ${lang === 'bn' ? 'active' : ''}"><span class="lt-flag">🇧🇩</span>বাংলা</span>
-          <span class="lt-label ${lang === 'en' ? 'active' : ''}"><span class="lt-flag">🇬🇧</span>English</span>
+          <span class="lt-label ${lang === 'bn' ? 'active' : ''}">BD</span>
+          <span class="lt-label ${lang === 'en' ? 'active' : ''}">EN</span>
         </div>
       </div>
 
