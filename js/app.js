@@ -1114,7 +1114,7 @@ function renderHome() {
         <p class="muted">${esc(t('home.empty.text'))}</p>
       </div>
       <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.84 (build 255)</span>
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
       </div>`;
     return;
   }
@@ -1160,7 +1160,7 @@ function renderHome() {
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
     <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.84 (build 255)</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
     </div>
   `;
 }
@@ -1298,23 +1298,15 @@ function showView(name) {
   scrollToTop();
 }
 function initUi() {
-  $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
-  $('#btnUpload').onclick = () => showImportExport();
+  $('#btnBrand').onclick = () => { currentView = 'home'; currentMeterId = null; $('#view-home').style.display=''; $('#view-settings').style.display='none'; renderHome(); scrollToTop(); };
+  $('#btnSettings').onclick = () => { currentView = 'settings'; $('#view-home').style.display='none'; $('#view-settings').style.display=''; renderSettings(); scrollToTop(); };
   $('#btnRefreshAll').onclick = async () => {
     const el = $('#refreshIcon'); el.parentElement.classList.add('spinning');
     await refreshAllMeters();
     saveMeters();
     el.parentElement.classList.remove('spinning');
     if (currentView === 'home') renderHome();
-    else if (currentView === 'meter') renderMeterDetail();
     toast(t('home.last_updated', { t: t('time.just') }));
-  };
-  $('#btnClearAll').onclick = () => {
-    if (!state.meters.length) { toast(t('home.empty.title')); return; }
-    openDialog(t('settings.clear'), `<p class="body-text">${esc(t('meter.remove_text'))}</p>`, [
-      { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
-      { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); renderHome(); toast(t('settings.cleared')); } }
-    ]);
   };
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-back]');
@@ -1327,8 +1319,112 @@ function initUi() {
   });
   syncSettingsUi();
 }
+function renderSettings() {
+  const lang = state.settings.lang || 'en';
+  $('#settingsContent').innerHTML = `
+    <h2 class="section-title" style="margin-bottom:4px">Settings</h2>
+    <p class="muted" style="margin-bottom:16px">Manage preferences and theme settings.</p>
+
+    <section class="card">
+      <h3 style="text-align:center">General Settings</h3>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5"/></svg>
+          <div>
+            <div style="font-weight:600">Device Theme</div>
+            <div class="hint" style="margin:0">Automatically switch theme based on system</div>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="settDeviceTheme" ${state.settings.theme === 'system' ? 'checked' : ''}><span class="toggle-slider"></span></label>
+      </div>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
+          <div>
+            <div style="font-weight:600">OLED Theme</div>
+            <div class="hint" style="margin:0">Use OLED black backdrop for eye comfort</div>
+          </div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="settDarkTheme" ${state.settings.theme === 'oled' ? 'checked' : ''}><span class="toggle-slider"></span></label>
+      </div>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+          <div style="font-weight:600">Language</div>
+        </div>
+        <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
+          <div class="lt-slider"></div>
+          <span class="lt-label ${lang === 'bn' ? 'active' : ''}">বাংলা</span>
+          <span class="lt-label ${lang === 'en' ? 'active' : ''}">English</span>
+        </div>
+      </div>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+      <div class="settings-box" onclick="window._settingsShare()">Share</div>
+      <div class="settings-box" onclick="showImportExport()">Import / Export</div>
+      <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">Delete All Meters</div>
+      <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">About App</div>
+      <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">Contact Developer</div>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.0.83'} (build ${state.settings._build || '252'})</span>
+    </div>`;
+
+  $('#settDeviceTheme').onchange = (e) => {
+    if (e.target.checked) {
+      state.settings.theme = 'system';
+    } else {
+      const resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      state.settings.theme = resolved;
+    }
+    saveSettings(); applyTheme(); renderSettings();
+  };
+  $('#settDarkTheme').onchange = (e) => {
+    if (e.target.checked) {
+      state.settings.theme = 'oled';
+    } else {
+      state.settings.theme = 'light';
+    }
+    saveSettings(); applyTheme(); renderSettings();
+  };
+  $('#settLangToggle').onclick = () => {
+    state.settings.lang = state.settings.lang === 'bn' ? 'en' : 'bn';
+    saveSettings(); renderSettings(); applyLang();
+  };
+}
 function syncSettingsUi() {
 }
+window._settingsShare = function() {
+  const url = 'https://github.com/mhasanbogura/prepaid-meter-manager/releases/latest/download/Meter%20Manager_com.mahmuduls.metermanager.apk';
+  const msg = 'Check out Meter Manager – a simple app to track DESCO prepaid electricity meters in Bangladesh!\n\nDownload: ' + url;
+  if (navigator.share) {
+    navigator.share({ title: 'Meter Manager', text: msg }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(msg).then(() => toast('Link copied to clipboard!')).catch(() => toast('Could not copy link', true));
+  }
+};
+window._settingsDeleteAll = function() {
+  if (!state.meters.length) { toast(t('home.empty.title')); return; }
+  openDialog(t('settings.clear'), '<p class="body-text">' + esc(t('meter.remove_text')) + '</p>', [
+    { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
+    { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); renderHome(); toast(t('settings.cleared')); } }
+  ]);
+};
+window._settingsAbout = function(el) {
+  openDialog('About App', '<p class="body-text"><strong>Meter Manager</strong> is a lightweight Android app for tracking DESCO prepaid electricity meters in Bangladesh. Check balances, view recharge history, and manage multiple meters from one place.</p><p class="body-text" style="margin-top:8px">Built with care by <strong>Mahmudul Hasan</strong>.</p>', [
+    { key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }
+  ]);
+};
+window._settingsContact = function(el) {
+  openDialog('Contact Developer', '<p class="body-text">Have questions, feedback, or need help? Reach out through any of these channels:</p><div style="display:flex;flex-direction:column;gap:8px;margin-top:12px"><a href="https://wa.me/8801712345678" target="_blank" class="settings-box" style="text-decoration:none">WhatsApp</a><a href="https://m.me/mahmudul.hasan" target="_blank" class="settings-box" style="text-decoration:none">Facebook Messenger</a><a href="https://github.com/mhasanbogura" target="_blank" class="settings-box" style="text-decoration:none">GitHub</a></div>', [
+    { key: 'ok', label: 'OK', cls: 'primary', fn: closeDialog }
+  ]);
+};
 function applyLang() {
   langs = I18N[state.settings.lang] || I18N.en;
   document.documentElement.lang = state.settings.lang;
@@ -1341,7 +1437,7 @@ function applyTheme() {
     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     : state.settings.theme;
   document.documentElement.dataset.theme = t1;
-  document.querySelector('meta[name="theme-color"]').content = t1 === 'dark' ? '#0f1218' : '#0b3d91';
+  document.querySelector('meta[name="theme-color"]').content = (t1 === 'dark' || t1 === 'oled') ? (t1 === 'oled' ? '#000000' : '#0f1218') : '#0b3d91';
 }
 async function enableNotifications() {
   if (!('Notification' in window)) { toast(t('alerts.perm'), true); return; }
