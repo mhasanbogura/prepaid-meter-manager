@@ -106,6 +106,8 @@ input, select { font-family: inherit; }
   box-shadow: var(--shadow);
 }
 .card h3 { font-size: 15px; margin-bottom: 12px; text-align: center; }
+.settings-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; text-align: center; font-weight: 700; font-size: 14px; color: var(--primary); cursor: pointer; transition: background .15s; -webkit-tap-highlight-color: transparent; }
+.settings-box:active { background: var(--surface-2); }
 .body-text { font-size: 14px; line-height: 1.6; color: var(--text); }
 .muted { color: var(--text-2); font-size: 13px; line-height: 1.55; }
 .hint { color: var(--text-2); font-size: 12.5px; line-height: 1.5; margin-top: 8px; }
@@ -145,39 +147,52 @@ input[type="text"].wide { width: 100%; min-width: 0; margin-top: 8px; }
 .meter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 @media (max-width: 480px) { .meter-grid { grid-template-columns: 1fr; } }
 .meter-card {
-  position: relative; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 15px; box-shadow: var(--shadow);
-  cursor: pointer; transition: transform .12s, box-shadow .2s; text-align: left; color: var(--text);
+  position: relative; background: linear-gradient(135deg, var(--primary), var(--primary-2)); border: none;
+  border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
+  cursor: pointer; transition: transform .12s, box-shadow .2s; text-align: left; color: #fff;
   display: flex; flex-direction: column; gap: 8px;
 }
+[data-theme="dark"] .meter-card { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
 .meter-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .meter-card[draggable="true"] { cursor: grab; }
 .meter-card[draggable="true"]:active { cursor: grabbing; }
 .meter-card.dragging { opacity: .45; transform: scale(.98); }
 .meter-card.drop-target { outline: 2px dashed var(--primary-2); outline-offset: 2px; }
 .meter-card .mc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.meter-card .mc-provider { font-size: 11px; font-weight: 700; letter-spacing: .6px; color: var(--primary-2); text-transform: uppercase; }
+.meter-card .mc-provider { font-size: 11px; font-weight: 700; letter-spacing: .6px; color: rgba(255,255,255,.75); text-transform: uppercase; }
+[data-theme="dark"] .meter-card .mc-provider { color: var(--primary-2); }
 .meter-card .mc-action {
-  background: none; border: 0; color: var(--text-2); width: 28px; height: 28px;
+  background: none; border: 0; color: rgba(255,255,255,.8); width: 28px; height: 28px;
   border-radius: 8px; display: flex; align-items: center; justify-content: center;
   opacity: .7; flex-shrink: 0;
 }
-.meter-card .mc-action:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); opacity: 1; }
-.meter-card .mc-action-danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+[data-theme="dark"] .meter-card .mc-action { color: var(--text-2); }
+.meter-card .mc-action:hover { background: rgba(255,255,255,.2); color: #fff; opacity: 1; }
+[data-theme="dark"] .meter-card .mc-action:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.meter-card .mc-action-danger:hover { background: rgba(255,255,255,.2); color: #ffcccc; }
+[data-theme="dark"] .meter-card .mc-action-danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 .meter-card .mc-drag { cursor: grab; opacity: .55; }
-.meter-card .mc-drag:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); opacity: 1; }
+.meter-card .mc-drag:hover { background: rgba(255,255,255,.2); color: #fff; opacity: 1; }
+[data-theme="dark"] .meter-card .mc-drag:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
 .meter-card .mc-actions { display: flex; gap: 2px; }
-.meter-card .mc-number { font-size: 13.5px; font-weight: 600; letter-spacing: .4px; }
-.meter-card .mc-balance { font-size: 26px; font-weight: 800; letter-spacing: .5px; display: flex; align-items: baseline; justify-content: space-between; }
-.meter-card .mc-balance.low { color: var(--danger); }
-.meter-card .mc-avg { font-size: 12px; color: var(--accent); font-weight: 600; }
-.meter-card .mc-sub { font-size: 12px; color: var(--text-2); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; line-height: 1.5; }
+.meter-card .mc-number { font-size: 13.5px; font-weight: 600; letter-spacing: .4px; color: rgba(255,255,255,.9); }
+[data-theme="dark"] .meter-card .mc-number { color: var(--text); }
+.meter-card .mc-balance { font-size: 26px; font-weight: 800; letter-spacing: .5px; display: flex; align-items: baseline; justify-content: space-between; color: #fff; }
+[data-theme="dark"] .meter-card .mc-balance { color: var(--text); }
+.meter-card .mc-balance.low { color: #ffcccc; }
+[data-theme="dark"] .meter-card .mc-balance.low { color: var(--danger); }
+.meter-card .mc-avg { font-size: 12px; color: rgba(255,255,255,.8); font-weight: 600; }
+[data-theme="dark"] .meter-card .mc-avg { color: var(--accent); }
+.meter-card .mc-sub { font-size: 12px; color: rgba(255,255,255,.7); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; line-height: 1.5; }
+[data-theme="dark"] .meter-card .mc-sub { color: var(--text-2); }
 .meter-card .mc-sub span { max-width: 100%; }
 .meter-card .mc-badge { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
-.mc-badge.ok { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
-.mc-badge.err { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
-.mc-badge.low { background: color-mix(in srgb, var(--accent) 20%, transparent); color: #b47a00; }
-[data-theme="dark"] .mc-badge.low { color: var(--accent); }
+.mc-badge.ok { background: rgba(255,255,255,.2); color: #fff; }
+[data-theme="dark"] .mc-badge.ok { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+.mc-badge.err { background: rgba(255,255,255,.2); color: #ffcccc; }
+[data-theme="dark"] .mc-badge.err { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.mc-badge.low { background: rgba(255,255,255,.2); color: #ffe0b2; }
+[data-theme="dark"] .mc-badge.low { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
 
 /* ---------- add meter ---------- */
 .add-meter { border: 2px dashed var(--border); background: transparent; color: var(--primary-2); border-radius: var(--radius); padding: 20px; font-size: 14.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; transition: border-color .2s, color .2s; width: 100%; }

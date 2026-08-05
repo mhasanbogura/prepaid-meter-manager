@@ -1112,9 +1112,6 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>
         <p class="muted">${esc(t('home.empty.text'))}</p>
-      </div>
-      <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
       </div>`;
     return;
   }
@@ -1142,7 +1139,7 @@ function renderHome() {
         </div>
       </div>
       <div class="mc-number">${esc(m.nickname || m.info?.customerName || m.info?.name || '')}${(m.nickname || m.info?.customerName || m.info?.name) ? '<br>' : ''}${esc(m.accountNo || m.meterNo || m.consumerNo)}</div>
-      <div class="mc-balance ${b !== null && low ? 'low' : ''}" style="${b !== null && low ? 'color:#ff6b6b' : ''}">${b === null ? '––' : fmtBdt(b)}${low ? ' <span style="font-size:12px;font-weight:700;color:#ff6b6b">Low balance</span>' : ''}</div>
+      <div class="mc-balance ${b !== null && low ? 'low' : ''}">${b === null ? '––' : fmtBdt(b)}${low ? ' <span style="font-size:12px;font-weight:700">Low balance</span>' : ''}</div>
       <div class="mc-sub"><span>${avg || ''}</span><span>${m.updatedAt ? esc(t('home.last_updated', { t: timeAgo(m.updatedAt) })) : esc(t('home.updated_never'))}</span>${badge}</div>
     </div>`;
   }).join('');
@@ -1159,9 +1156,6 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
-    <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.85 (build 258)</span>
-    </div>
   `;
 }
 let dragId = null;
@@ -1300,9 +1294,37 @@ function showView(name) {
   if (name === 'settings') renderSettings();
   scrollToTop();
 }
+/* ================= Google Drive helpers ================= */
+const DRIVE_FOLDER_ID = '1PBrhSIvDk0QrgNS6XeTeA1RDLFPeTqKV';
+const DRIVE_API_KEY = 'AIzaSyA4ymjFIbuGVhFsKjxVV46RT-qWqNHNiY4';
+
+async function driveFetchMdByName(fileName) {
+  try {
+    const query = `'${DRIVE_FOLDER_ID}' in parents and name='${fileName}' and trashed=false`;
+    const listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&key=${DRIVE_API_KEY}&fields=files(id)`;
+    const res = await fetch(listUrl);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const files = json.files;
+    if (!files || !files.length) return null;
+    return await driveFetchMdContent(files[0].id);
+  } catch { return null; }
+}
+
+async function driveFetchMdContent(fileId) {
+  try {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${DRIVE_API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return (await res.text()).trim();
+  } catch { return null; }
+}
+
+/* ================= settings ================= */
 function renderSettings() {
   const isDark = document.documentElement.dataset.theme === 'dark';
-  const version = '1.0.83';
+  const version = '1.0.85';
+  const build = '258';
   $('#settingsContent').innerHTML = `
     <h2 class="section-title" style="margin-bottom:4px">Settings</h2>
     <p class="muted" style="margin-bottom:16px">Manage preferences and theme settings.</p>
@@ -1334,14 +1356,16 @@ function renderSettings() {
     </section>
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+      <div class="settings-box" onclick="window._settingsUpdate(this)">Update</div>
+      <div class="settings-box" onclick="window._settingsShare()">Share</div>
+      <div class="settings-box" onclick="window._settingsAbout(this)">About App</div>
+      <div class="settings-box" onclick="window._settingsContact(this)">Contact Developer</div>
       <button class="btn secondary" onclick="showImportExport()" style="width:100%">Import / Export</button>
       <button class="btn secondary" onclick="window._settingsDeleteAll()" style="width:100%;color:var(--danger)">Delete All Meters</button>
-      <button class="btn secondary" onclick="window._settingsShare()" style="width:100%">Share App</button>
-      <button class="btn secondary" onclick="window._settingsAbout()" style="width:100%">About App</button>
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${version}</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${version} (build ${build})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1353,6 +1377,7 @@ function renderSettings() {
     saveSettings(); applyTheme();
   };
 }
+
 window._settingsDeleteAll = () => {
   if (!state.meters.length) { toast(t('home.empty.title')); return; }
   openDialog(t('settings.clear'), `<p class="body-text">${esc(t('meter.remove_text'))}</p>`, [
@@ -1360,15 +1385,93 @@ window._settingsDeleteAll = () => {
     { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); showView('home'); toast(t('settings.cleared')); } }
   ]);
 };
+
 window._settingsShare = async () => {
   try {
     if (navigator.share) await navigator.share({ title: 'Meter Manager', text: 'Check out Meter Manager - track your DESCO/NESCO prepaid meter', url: location.href });
   } catch {}
 };
-window._settingsAbout = () => {
-  openDialog('About', `<p class="body-text">Meter Manager helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p><p class="muted" style="margin-top:10px">Version 1.0.85 (build 258)</p>`, [
-    { key: 'ok', label: 'OK', fn: closeDialog }
+
+window._settingsAbout = async (el) => {
+  el.textContent = 'Loading...';
+  const md = await driveFetchMdByName('About.md');
+  el.textContent = 'About App';
+  if (!md) {
+    openDialog('About', `<p class="body-text">Meter Manager helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p>`, [
+      { key: 'ok', label: 'OK', fn: closeDialog }
+    ]);
+    return;
+  }
+  let html = '';
+  for (const line of md.split('\n')) {
+    const t = line.trim();
+    if (!t) { html += '<br>'; continue; }
+    if (t.startsWith('## ')) { html += `<h3 style="margin:8px 0 4px;color:var(--primary)">${esc(t.slice(3))}</h3>`; }
+    else if (t.startsWith('- ')) { html += `<p style="margin:2px 0 2px 12px">• ${esc(t.slice(2))}</p>`; }
+    else { html += `<p style="margin:4px 0">${esc(t)}</p>`; }
+  }
+  openDialog('About', html, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
+};
+
+window._settingsContact = async (el) => {
+  el.textContent = 'Loading...';
+  const md = await driveFetchMdByName('Contact.md');
+  el.textContent = 'Contact Developer';
+  if (!md) {
+    openDialog('Contact', '<p class="body-text">No contact information available.</p>', [
+      { key: 'ok', label: 'OK', fn: closeDialog }
+    ]);
+    return;
+  }
+  let devName = 'Contact Developer';
+  const entries = [];
+  for (const line of md.split('\n')) {
+    const raw = line.trim().replace(/^[-*]\s*/, '');
+    if (!raw.includes(':')) continue;
+    const [label, ...rest] = raw.split(':');
+    const value = rest.join(':').trim();
+    if (!label.trim() || !value) continue;
+    const ll = label.trim().toLowerCase();
+    if (ll === 'name' || ll === 'developer') { devName = value; continue; }
+    entries.push({ label: label.trim(), value, ll });
+  }
+  const contactButtons = entries.map(e => {
+    let icon = '🔗', url = '#';
+    if (e.ll.includes('whatsapp')) { icon = '💬'; url = `https://wa.me/${e.value.replace(/[^0-9+]/g, '')}`; }
+    else if (e.ll.includes('messenger')) { icon = '💬'; url = `https://m.me/${e.value}`; }
+    else if (e.ll.includes('instagram')) { icon = '📷'; url = `https://instagram.com/${e.value}`; }
+    else if (e.ll.includes('github')) { icon = '🐙'; url = `https://github.com/${e.value}`; }
+    else if (e.ll.includes('facebook')) { icon = '📘'; url = `https://facebook.com/${e.value}`; }
+    else if (e.ll.includes('telegram')) { icon = '✈️'; url = `https://t.me/${e.value}`; }
+    else if (e.ll.includes('email') || e.ll.includes('mail')) { icon = '📧'; url = `mailto:${e.value}`; }
+    else if (e.ll.includes('twitter') || e.ll === 'x') { icon = '🐦'; url = `https://x.com/${e.value}`; }
+    else if (e.ll.includes('mobile') || e.ll.includes('phone') || e.ll.includes('call')) { icon = '📞'; url = `tel:${e.value}`; }
+    else if (e.ll.includes('website') || e.ll.includes('web')) { icon = '🌐'; url = e.value.startsWith('http') ? e.value : `https://${e.value}`; }
+    else if (e.ll.includes('location') || e.ll.includes('address')) { icon = '📍'; url = `geo:0,0?q=${encodeURIComponent(e.value)}`; }
+    return `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);font-weight:500;font-size:14px">
+      <span style="font-size:20px">${icon}</span><span>${esc(e.label)}</span></a>`;
+  }).join('');
+  openDialog(devName, `<div style="display:flex;flex-direction:column;gap:8px">${contactButtons}</div>`, [
+    { key: 'ok', label: 'Close', fn: closeDialog }
   ]);
+};
+
+window._settingsUpdate = async (el) => {
+  el.textContent = 'Checking for update...';
+  try {
+    const md = await driveFetchMdByName('Update.md');
+    el.textContent = 'Update';
+    if (!md) { openDialog('Update', '<p class="body-text">No update information available.</p>', [{ key: 'ok', label: 'OK', fn: closeDialog }]); return; }
+    let html = '';
+    for (const line of md.split('\n')) {
+      const t = line.trim();
+      if (!t) { html += '<br>'; continue; }
+      if (t.startsWith('## ')) { html += `<h3 style="margin:8px 0 4px;color:var(--primary)">${esc(t.slice(3))}</h3>`; }
+      else if (t.startsWith('- ')) { html += `<p style="margin:2px 0 2px 12px">• ${esc(t.slice(2))}</p>`; }
+      else { html += `<p style="margin:4px 0">${esc(t)}</p>`; }
+    }
+    openDialog('Update', html, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
+  } catch { el.textContent = 'Update'; }
 };
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
