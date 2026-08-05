@@ -1415,30 +1415,15 @@ function renderSettings() {
         </div>
       </div>
 
-      <div class="row" style="justify-content:space-between;gap:12px">
+      <div class="row" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
           <div>
             <div style="font-weight:600">Update Notifications</div>
-            <div class="hint" style="margin:0">Check for app updates periodically</div>
+            <div class="hint" style="margin:0;cursor:pointer" onclick="window._pickNotifTime()">Starts at <strong>${_fmtNotifHour(notifHour)}</strong>, repeats every <strong>${notifInterval} hours</strong></div>
           </div>
         </div>
         <label class="toggle"><input type="checkbox" id="settNotifEnabled" ${notifEnabled ? 'checked' : ''}><span class="toggle-slider"></span></label>
-      </div>
-      <div id="notifOptions" style="display:${notifEnabled ? '' : 'none'}">
-        <div class="notif-row">
-          <label>Start time</label>
-          <select id="notifHour">${[12,1,2,3,4,5,6,7,8,9,10,11].map(h => `<option value="${h}" ${((notifHour % 12) || 12) === h ? 'selected' : ''}>${h}:00 ${h >= 8 && h < 12 || h === 12 ? 'AM' : 'PM'}</option>`).join('')}</select>
-          <label>Repeat</label>
-          <select id="notifInterval">
-            <option value="1" ${notifInterval===1?'selected':''}>1 hour</option>
-            <option value="4" ${notifInterval===4?'selected':''}>4 hours</option>
-            <option value="8" ${notifInterval===8?'selected':''}>8 hours</option>
-            <option value="12" ${notifInterval===12?'selected':''}>12 hours</option>
-            <option value="24" ${notifInterval===24?'selected':''}>24 hours</option>
-            <option value="48" ${notifInterval===48?'selected':''}>48 hours</option>
-          </select>
-        </div>
       </div>
 
       <div class="row" style="justify-content:space-between;gap:12px">
@@ -1481,18 +1466,7 @@ function renderSettings() {
   $('#settNotifEnabled').onchange = (e) => {
     state.settings.notifEnabled = e.target.checked;
     saveSettings();
-    $('#notifOptions').style.display = e.target.checked ? '' : 'none';
     _syncNotifToJava();
-  };
-  $('#notifHour').onchange = (e) => {
-    const h = Number(e.target.value);
-    state.settings.notifHour = h;
-    state.settings.notifMinute = 0;
-    saveSettings(); _syncNotifToJava();
-  };
-  $('#notifInterval').onchange = (e) => {
-    state.settings.notifInterval = Number(e.target.value);
-    saveSettings(); _syncNotifToJava();
   };
   $('#settThreshold').onchange = (e) => {
     const v = Number(e.target.value);
@@ -1500,6 +1474,46 @@ function renderSettings() {
     saveSettings();
   };
 }
+
+function _fmtNotifHour(h) {
+  const hr = h % 12 || 12;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${hr}:00 ${ampm}`;
+}
+
+window._pickNotifTime = () => {
+  const curHour = state.settings.notifHour ?? 8;
+  const curInterval = state.settings.notifInterval ?? 24;
+  const hours = [12,1,2,3,4,5,6,7,8,9,10,11];
+  const intervals = [1,4,8,12,24,48];
+  const hourOptions = hours.map(h => {
+    const ampm = h >= 12 && h < 24 || h === 0 ? 'PM' : 'AM';
+    const isSelected = (curHour % 12 || 12) === h;
+    return `<option value="${h}" ${isSelected ? 'selected' : ''}>${h}:00 ${ampm}</option>`;
+  }).join('');
+  const intervalOptions = intervals.map(i => `<option value="${i}" ${curInterval === i ? 'selected' : ''}>${i} hours</option>`).join('');
+  openDialog('Notification Schedule', `
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <label style="display:block;font-size:13px;color:var(--text-2);margin-bottom:6px">Start time</label>
+        <select id="dlgNotifHour" style="width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:15px">${hourOptions}</select>
+      </div>
+      <div>
+        <label style="display:block;font-size:13px;color:var(--text-2);margin-bottom:6px">Repeat interval</label>
+        <select id="dlgNotifInterval" style="width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:15px">${intervalOptions}</select>
+      </div>
+    </div>`, [
+    { key: 'cancel', label: 'Cancel', cls: 'secondary', fn: closeDialog },
+    { key: 'save', label: 'Save', cls: 'primary', fn: () => {
+      state.settings.notifHour = Number($('#dlgNotifHour').value);
+      state.settings.notifInterval = Number($('#dlgNotifInterval').value);
+      saveSettings();
+      _syncNotifToJava();
+      closeDialog();
+      renderSettings();
+    }}
+  ]);
+};
 
 function _syncNotifToJava() {
   if (window.NescoBridge && window.NescoBridge.scheduleNotification) {
