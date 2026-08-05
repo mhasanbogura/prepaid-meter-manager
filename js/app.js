@@ -1639,6 +1639,20 @@ window._settingsContact = async (el) => {
   ]);
 };
 
+window._updateStatus = (status) => {
+  const btn = document.getElementById('btnUpdate');
+  if (!btn) return;
+  if (status === 'downloading') {
+    btn.textContent = 'Downloading...';
+    btn.style.pointerEvents = 'none';
+    btn.style.color = '';
+  } else if (status === 'error') {
+    btn.textContent = 'Update failed';
+    btn.style.pointerEvents = '';
+    setTimeout(() => { btn.textContent = 'Update'; }, 3000);
+  }
+};
+
 window._settingsUpdate = async (el) => {
   el.textContent = 'Checking for update...';
   el.style.pointerEvents = 'none';
@@ -1655,7 +1669,7 @@ window._settingsUpdate = async (el) => {
     const buildMatch = remoteName.match(/build_(\d+)/);
     const remoteVer = verMatch ? verMatch[1] : '?';
     const remoteBuild = buildMatch ? parseInt(buildMatch[1]) : 0;
-    const curBuild = 270;
+    const curBuild = 282;
     const hasUpdate = remoteBuild > curBuild;
     if (!hasUpdate) {
       el.textContent = 'Latest version already installed';
@@ -1673,11 +1687,10 @@ window._settingsUpdate = async (el) => {
       { key: 'install', label: 'Install Update', cls: 'primary', fn: () => {
         el.textContent = 'Downloading...';
         el.style.pointerEvents = 'none';
+        closeDialog();
         const link = `https://drive.google.com/uc?export=download&id=${apk.id}`;
         if (window.NescoBridge && window.NescoBridge.downloadAndInstall) window.NescoBridge.downloadAndInstall(link);
         else window.open(link, '_blank');
-        closeDialog();
-        setTimeout(() => { el.textContent = 'Update'; el.style.pointerEvents = ''; el.style.color = ''; }, 3000);
       }}
     ]);
   } catch {
