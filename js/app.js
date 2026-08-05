@@ -1347,8 +1347,8 @@ function renderSettings() {
   const lang = state.settings.lang || 'en';
   const threshold = state.settings.alertThreshold ?? LOW_BALANCE;
   $('#settingsContent').innerHTML = `
-    <h2 class="section-title" style="margin-bottom:2px">Settings</h2>
-    <p class="muted" style="margin-bottom:12px">Manage preferences and theme settings.</p>
+    <h2 class="section-title" style="margin-bottom:0">Settings</h2>
+    <p class="muted" style="margin-bottom:8px">Manage preferences and theme settings.</p>
 
     <section class="card">
       <h3 style="text-align:center">General Settings</h3>
@@ -1415,8 +1415,7 @@ function renderSettings() {
     if (e.target.checked) {
       state.settings.theme = 'system';
     } else {
-      const resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light';
-      state.settings.theme = resolved;
+      state.settings.theme = 'light';
     }
     saveSettings(); applyTheme(); renderSettings();
   };
