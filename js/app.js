@@ -1420,7 +1420,7 @@ function renderSettings() {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
           <div>
             <div style="font-weight:600">Update Notifications</div>
-            <div class="hint" style="margin:0;cursor:pointer" onclick="window._pickNotifTime()">Starts at <strong>${_fmtNotifHour(notifHour)}</strong>, repeats every <strong>${notifInterval} hours</strong></div>
+            <div class="hint" style="margin:0">Starts at <strong style="cursor:pointer;color:var(--primary)" onclick="window._pickNotifHour()">${_fmtNotifHour(notifHour)}</strong>, repeats every <strong style="cursor:pointer;color:var(--primary)" onclick="window._pickNotifInterval()">${notifInterval} hours</strong></div>
           </div>
         </div>
         <label class="toggle"><input type="checkbox" id="settNotifEnabled" ${notifEnabled ? 'checked' : ''}><span class="toggle-slider"></span></label>
@@ -1490,38 +1490,82 @@ function _fmtNotifHour(h) {
   return `${hr}:00 ${ampm}`;
 }
 
-window._pickNotifTime = () => {
+window._pickNotifHour = () => {
   const curHour = state.settings.notifHour ?? 8;
-  const curInterval = state.settings.notifInterval ?? 24;
-  const hours = [12,1,2,3,4,5,6,7,8,9,10,11];
-  const intervals = [1,4,8,12,24,48];
-  const hourOptions = hours.map(h => {
-    const ampm = h >= 12 && h < 24 || h === 0 ? 'PM' : 'AM';
-    const isSelected = (curHour % 12 || 12) === h;
-    return `<option value="${h}" ${isSelected ? 'selected' : ''}>${h}:00 ${ampm}</option>`;
-  }).join('');
-  const intervalOptions = intervals.map(i => `<option value="${i}" ${curInterval === i ? 'selected' : ''}>${i} hours</option>`).join('');
-  openDialog('Notification Schedule', `
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <div>
-        <label style="display:block;font-size:13px;color:var(--text-2);margin-bottom:6px">Start time</label>
-        <select id="dlgNotifHour" style="width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:15px">${hourOptions}</select>
+  const isPM = curHour >= 12;
+  const selH = curHour % 12 || 12;
+  let selectedHour = selH;
+  let selectedAmPm = isPM ? 'PM' : 'AM';
+
+  function renderClock() {
+    const nums = [12,1,2,3,4,5,6,7,8,9,10,11];
+    const r = 110, cx = 140, cy = 140;
+    const dots = nums.map(n => {
+      const angle = (n * 30 - 90) * Math.PI / 180;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      const active = n === selectedHour;
+      return `<div style="position:absolute;left:${x - 18}px;top:${y - 18}px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;cursor:pointer;transition:all .15s;${active ? 'background:var(--primary);color:#fff' : 'color:var(--text)'}" onclick="window._clockSelect(${n})">${n}</div>`;
+    }).join('');
+    const angle = (selectedHour * 30 - 90) * Math.PI / 180;
+    const handLen = 80;
+    const hx = cx + handLen * Math.cos(angle);
+    const hy = cy + handLen * Math.sin(angle);
+
+    return `
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="display:inline-flex;align-items:baseline;gap:4px;font-size:48px;font-weight:700">
+          <span id="clockHour" style="color:var(--text)">${selectedHour}</span>
+          <span style="color:var(--text-2);font-size:20px">:</span>
+          <span style="color:var(--text-2);font-size:20px">00</span>
+        </div>
+        <div style="display:flex;justify-content:center;gap:4px;margin-top:8px">
+          <div class="ampm-btn" id="ampmAM" style="padding:4px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;${selectedAmPm === 'AM' ? 'background:var(--primary);color:#fff' : 'color:var(--text-2)'}" onclick="window._clockSetAmPm('AM')">AM</div>
+          <div class="ampm-btn" id="ampmPM" style="padding:4px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;${selectedAmPm === 'PM' ? 'background:var(--primary);color:#fff' : 'color:var(--text-2)'}" onclick="window._clockSetAmPm('PM')">PM</div>
+        </div>
       </div>
-      <div>
-        <label style="display:block;font-size:13px;color:var(--text-2);margin-bottom:6px">Repeat interval</label>
-        <select id="dlgNotifInterval" style="width:100%;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:15px">${intervalOptions}</select>
-      </div>
-    </div>`, [
+      <div style="position:relative;width:280px;height:280px;margin:0 auto;background:var(--surface-2);border-radius:50%">
+        <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 280 280">
+          <line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="${cx}" cy="${cy}" r="4" fill="var(--primary)"/>
+        </svg>
+        ${dots}
+      </div>`;
+  }
+
+  window._clockSelect = (h) => {
+    selectedHour = h;
+    $('#clockPickerContent').innerHTML = renderClock();
+  };
+  window._clockSetAmPm = (v) => {
+    selectedAmPm = v;
+    $('#clockPickerContent').innerHTML = renderClock();
+  };
+
+  openDialog('Select time', `<div id="clockPickerContent">${renderClock()}</div>`, [
     { key: 'cancel', label: 'Cancel', cls: 'secondary', fn: closeDialog },
-    { key: 'save', label: 'Save', cls: 'primary', fn: () => {
-      state.settings.notifHour = Number($('#dlgNotifHour').value);
-      state.settings.notifInterval = Number($('#dlgNotifInterval').value);
-      saveSettings();
-      _syncNotifToJava();
-      closeDialog();
-      renderSettings();
+    { key: 'ok', label: 'OK', cls: 'primary', fn: () => {
+      let h24 = selectedHour;
+      if (selectedAmPm === 'PM' && selectedHour !== 12) h24 = selectedHour + 12;
+      if (selectedAmPm === 'AM' && selectedHour === 12) h24 = 0;
+      state.settings.notifHour = h24;
+      state.settings.notifMinute = 0;
+      saveSettings(); _syncNotifToJava(); closeDialog(); renderSettings();
     }}
   ]);
+};
+
+window._pickNotifInterval = () => {
+  const cur = state.settings.notifInterval ?? 24;
+  const intervals = [1,2,3,4,6,8,12,24,48];
+  const items = intervals.map(i =>
+    `<div style="padding:14px 20px;font-size:16px;cursor:pointer;border-radius:12px;transition:background .15s;${i === cur ? 'color:var(--primary);font-weight:600' : 'color:var(--text)'}" onclick="window._intervalPick(${i})" onmouseenter="this.style.background='var(--surface-2)'" onmouseleave="this.style.background='transparent'">${i} hours</div>`
+  ).join('');
+  window._intervalPick = (v) => {
+    state.settings.notifInterval = v;
+    saveSettings(); _syncNotifToJava(); closeDialog(); renderSettings();
+  };
+  openDialog('Check interval', `<div style="display:flex;flex-direction:column;gap:2px">${items}</div>`, []);
 };
 
 function _syncNotifToJava() {
