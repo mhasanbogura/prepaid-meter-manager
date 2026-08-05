@@ -598,8 +598,6 @@ window.ieSave = () => {
   saveMeters();
   importMetersFromText(text);
   closeDialog();
-  showView('home');
-  renderHome();
 };
 window.ieExport = async () => {
   const text = $('#ieText').value;
@@ -1114,6 +1112,9 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>
         <p class="muted">${esc(t('home.empty.text'))}</p>
+      </div>
+      <div style="text-align:center;margin-top:80px;padding:16px 0">
+        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.83 (build 252)</span>
       </div>`;
     return;
   }
@@ -1141,7 +1142,7 @@ function renderHome() {
         </div>
       </div>
       <div class="mc-number">${esc(m.nickname || m.info?.customerName || m.info?.name || '')}${(m.nickname || m.info?.customerName || m.info?.name) ? '<br>' : ''}${esc(m.accountNo || m.meterNo || m.consumerNo)}</div>
-      <div class="mc-balance ${b !== null && low ? 'low' : ''}">${b === null ? '––' : fmtBdt(b)}${low ? ' <span style="font-size:12px;font-weight:700">Low balance</span>' : ''}</div>
+      <div class="mc-balance ${b !== null && low ? 'low' : ''}" style="${b !== null && low ? 'color:#ff6b6b' : ''}">${b === null ? '––' : fmtBdt(b)}${low ? ' <span style="font-size:12px;font-weight:700;color:#ff6b6b">Low balance</span>' : ''}</div>
       <div class="mc-sub"><span>${avg || ''}</span><span>${m.updatedAt ? esc(t('home.last_updated', { t: timeAgo(m.updatedAt) })) : esc(t('home.updated_never'))}</span>${badge}</div>
     </div>`;
   }).join('');
@@ -1158,6 +1159,9 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
+    <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.83 (build 252)</span>
+    </div>
   `;
 }
 let dragId = null;
@@ -1289,462 +1293,13 @@ function drawChart(canvas, labels, series) {
 /* ================= views / nav ================= */
 function showView(name) {
   currentView = name;
-  $('#view-home').hidden = name !== 'home';
-  $('#view-settings').hidden = name !== 'settings';
   if (name === 'home') { currentMeterId = null; renderHome(); }
   if (name === 'meter') renderMeterDetail();
-  if (name === 'settings') renderSettings();
   scrollToTop();
 }
-/* ================= Google Drive helpers ================= */
-const DRIVE_FOLDER_ID = '1PBrhSIvDk0QrgNS6XeTeA1RDLFPeTqKV';
-const DRIVE_API_KEY = 'AIzaSyA4ymjFIbuGVhFsKjxVV46RT-qWqNHNiY4';
-
-async function driveFindSubfolderId(parentId, folderName) {
-  try {
-    const q = `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
-    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&key=${DRIVE_API_KEY}&fields=files(id)`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.files && json.files.length ? json.files[0].id : null;
-  } catch { return null; }
-}
-
-async function driveSearchFiles(folderId, nameContains, mimeType) {
-  try {
-    let q = `'${folderId}' in parents and trashed=false`;
-    if (nameContains) q += ` and name contains '${nameContains}'`;
-    if (mimeType) q += ` and mimeType='${mimeType}'`;
-    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType,size)&orderBy=name desc`;
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json.files || [];
-  } catch { return []; }
-}
-
-async function driveFetchMdContent(fileId) {
-  try {
-    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${DRIVE_API_KEY}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return (await res.text()).trim();
-  } catch { return null; }
-}
-
-async function driveFindLatestApk() {
-  let files = await driveSearchFiles(DRIVE_FOLDER_ID, 'Meter Manager_com.mahmuduls.metermanager', 'application/vnd.android.package-archive');
-  if (!files.length) {
-    const androidId = await driveFindSubfolderId(DRIVE_FOLDER_ID, 'Android');
-    if (androidId) files = await driveSearchFiles(androidId, 'Meter Manager_com.mahmuduls.metermanager', 'application/vnd.android.package-archive');
-  }
-  return files.length ? files[0] : null;
-}
-
-async function driveFindAboutMd() {
-  let files = await driveSearchFiles(DRIVE_FOLDER_ID, 'Meter Manager_com.mahmuduls.metermanager.md');
-  if (!files.length) {
-    const androidId = await driveFindSubfolderId(DRIVE_FOLDER_ID, 'Android');
-    if (androidId) files = await driveSearchFiles(androidId, 'Meter Manager_com.mahmuduls.metermanager.md');
-  }
-  if (!files.length) return null;
-  return await driveFetchMdContent(files[0].id);
-}
-
-async function driveFetchMdByName(fileName) {
-  let files = await driveSearchFiles(DRIVE_FOLDER_ID, fileName);
-  if (!files.length) {
-    const androidId = await driveFindSubfolderId(DRIVE_FOLDER_ID, 'Android');
-    if (androidId) files = await driveSearchFiles(androidId, fileName);
-  }
-  if (!files.length) return null;
-  return await driveFetchMdContent(files[0].id);
-}
-
-/* ================= settings ================= */
-function renderSettings() {
-  const isDark = document.documentElement.dataset.theme === 'dark';
-  const version = '1.0.86';
-  const build = '261';
-  const lang = state.settings.lang || 'en';
-  const notifEnabled = state.settings.notifEnabled !== false;
-  const notifHour = state.settings.notifHour ?? 8;
-  const notifMinute = state.settings.notifMinute ?? 0;
-  const notifInterval = state.settings.notifInterval ?? 24;
-  const threshold = state.settings.alertThreshold ?? 200;
-
-  $('#settingsContent').innerHTML = `
-    <h2 class="section-title" style="margin-bottom:4px">Settings</h2>
-    <p class="muted" style="margin-bottom:16px">Manage preferences and theme settings.</p>
-
-    <section class="card">
-      <h3 style="text-align:center">General Settings</h3>
-
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5"/></svg>
-          <div>
-            <div style="font-weight:600">Device Theme</div>
-            <div class="hint" style="margin:0">Automatically switch theme based on system</div>
-          </div>
-        </div>
-        <label class="toggle"><input type="checkbox" id="settDeviceTheme" ${state.settings.theme === 'system' ? 'checked' : ''}><span class="toggle-slider"></span></label>
-      </div>
-
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
-          <div>
-            <div style="font-weight:600">OLED Theme</div>
-            <div class="hint" style="margin:0">Use OLED black backdrop for eye comfort</div>
-          </div>
-        </div>
-        <label class="toggle"><input type="checkbox" id="settDarkTheme" ${state.settings.theme === 'dark' ? 'checked' : ''}><span class="toggle-slider"></span></label>
-      </div>
-
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-          <div style="font-weight:600">Language</div>
-        </div>
-        <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
-          <div class="lt-slider"></div>
-          <span class="lt-label ${lang === 'bn' ? 'active' : ''}">বাংলা</span>
-          <span class="lt-label ${lang === 'en' ? 'active' : ''}">English</span>
-        </div>
-      </div>
-
-      <div class="row" style="justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-          <div>
-            <div style="font-weight:600">Update Notifications</div>
-            <div class="hint" style="margin:0">Starts at <strong style="cursor:pointer;color:var(--primary)" onclick="window._pickNotifHour()">${_fmtNotifHour(notifHour)}</strong>, repeats every <strong style="cursor:pointer;color:var(--primary)" onclick="window._pickNotifInterval()">${notifInterval} hours</strong></div>
-          </div>
-        </div>
-        <label class="toggle"><input type="checkbox" id="settNotifEnabled" ${notifEnabled ? 'checked' : ''}><span class="toggle-slider"></span></label>
-      </div>
-
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-          <div>
-            <div style="font-weight:600">Low Balance Alert</div>
-            <div class="hint" style="margin:0">Default alert threshold (BDT)</div>
-          </div>
-        </div>
-        <input type="number" id="settThreshold" value="${threshold}" min="0" max="99999" step="50" inputmode="numeric" style="width:80px;text-align:right">
-      </div>
-    </section>
-
-    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
-      <div class="settings-box" id="btnUpdate" onclick="window._settingsUpdate(this)">Update</div>
-      <div class="settings-box" onclick="window._settingsShare()">Share</div>
-      <div class="settings-box" onclick="showImportExport()">Import / Export</div>
-      <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">Delete All Meters</div>
-      <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">About App</div>
-      <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">Contact Developer</div>
-    </div>
-
-    <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${version} (build ${build})</span>
-    </div>`;
-
-  $('#settDeviceTheme').onchange = (e) => {
-    if (e.target.checked) {
-      state.settings.theme = 'system';
-    } else {
-      const resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      state.settings.theme = resolved;
-    }
-    saveSettings(); applyTheme(); renderSettings();
-  };
-  $('#settDarkTheme').onchange = (e) => {
-    if (e.target.checked) {
-      state.settings.theme = 'dark';
-    } else {
-      state.settings.theme = 'light';
-    }
-    saveSettings(); applyTheme(); renderSettings();
-  };
-  $('#settLangToggle').onclick = () => {
-    state.settings.lang = state.settings.lang === 'bn' ? 'en' : 'bn';
-    saveSettings(); renderSettings(); applyLang();
-  };
-  $('#settNotifEnabled').onchange = (e) => {
-    state.settings.notifEnabled = e.target.checked;
-    saveSettings();
-    _syncNotifToJava();
-  };
-  $('#settThreshold').onchange = (e) => {
-    const v = Number(e.target.value);
-    state.settings.alertThreshold = isNaN(v) ? 200 : v;
-    saveSettings();
-  };
-}
-
-function _fmtNotifHour(h) {
-  const hr = h % 12 || 12;
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  return `${hr}:00 ${ampm}`;
-}
-
-window._pickNotifHour = () => {
-  const curHour = state.settings.notifHour ?? 8;
-  const isPM = curHour >= 12;
-  const selH = curHour % 12 || 12;
-  let selectedHour = selH;
-  let selectedAmPm = isPM ? 'PM' : 'AM';
-
-  function renderClock() {
-    const nums = [12,1,2,3,4,5,6,7,8,9,10,11];
-    const r = 110, cx = 140, cy = 140;
-    const dots = nums.map(n => {
-      const angle = (n * 30 - 90) * Math.PI / 180;
-      const x = cx + r * Math.cos(angle);
-      const y = cy + r * Math.sin(angle);
-      const active = n === selectedHour;
-      return `<div style="position:absolute;left:${x - 18}px;top:${y - 18}px;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;cursor:pointer;transition:all .15s;${active ? 'background:var(--primary);color:#fff' : 'color:var(--text)'}" onclick="window._clockSelect(${n})">${n}</div>`;
-    }).join('');
-    const angle = (selectedHour * 30 - 90) * Math.PI / 180;
-    const handLen = 80;
-    const hx = cx + handLen * Math.cos(angle);
-    const hy = cy + handLen * Math.sin(angle);
-
-    return `
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="display:inline-flex;align-items:baseline;gap:4px;font-size:48px;font-weight:700">
-          <span id="clockHour" style="color:var(--text)">${selectedHour}</span>
-          <span style="color:var(--text-2);font-size:20px">:</span>
-          <span style="color:var(--text-2);font-size:20px">00</span>
-        </div>
-        <div style="display:flex;justify-content:center;gap:4px;margin-top:8px">
-          <div class="ampm-btn" id="ampmAM" style="padding:4px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;${selectedAmPm === 'AM' ? 'background:var(--primary);color:#fff' : 'color:var(--text-2)'}" onclick="window._clockSetAmPm('AM')">AM</div>
-          <div class="ampm-btn" id="ampmPM" style="padding:4px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;${selectedAmPm === 'PM' ? 'background:var(--primary);color:#fff' : 'color:var(--text-2)'}" onclick="window._clockSetAmPm('PM')">PM</div>
-        </div>
-      </div>
-      <div style="position:relative;width:280px;height:280px;margin:0 auto;background:var(--surface-2);border-radius:50%">
-        <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 280 280">
-          <line x1="${cx}" y1="${cy}" x2="${hx}" y2="${hy}" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="${cx}" cy="${cy}" r="4" fill="var(--primary)"/>
-        </svg>
-        ${dots}
-      </div>`;
-  }
-
-  window._clockSelect = (h) => {
-    selectedHour = h;
-    $('#clockPickerContent').innerHTML = renderClock();
-  };
-  window._clockSetAmPm = (v) => {
-    selectedAmPm = v;
-    $('#clockPickerContent').innerHTML = renderClock();
-  };
-
-  openDialog('Select time', `<div id="clockPickerContent">${renderClock()}</div>`, [
-    { key: 'cancel', label: 'Cancel', cls: 'secondary', fn: closeDialog },
-    { key: 'ok', label: 'OK', cls: 'primary', fn: () => {
-      let h24 = selectedHour;
-      if (selectedAmPm === 'PM' && selectedHour !== 12) h24 = selectedHour + 12;
-      if (selectedAmPm === 'AM' && selectedHour === 12) h24 = 0;
-      state.settings.notifHour = h24;
-      state.settings.notifMinute = 0;
-      saveSettings(); _syncNotifToJava(); closeDialog(); renderSettings();
-    }}
-  ]);
-};
-
-window._pickNotifInterval = () => {
-  const cur = state.settings.notifInterval ?? 24;
-  const intervals = [1,2,3,4,6,8,12,24,48];
-  const items = intervals.map(i =>
-    `<div style="padding:14px 20px;font-size:16px;cursor:pointer;border-radius:12px;transition:background .15s;${i === cur ? 'color:var(--primary);font-weight:600' : 'color:var(--text)'}" onclick="window._intervalPick(${i})" onmouseenter="this.style.background='var(--surface-2)'" onmouseleave="this.style.background='transparent'">${i} hours</div>`
-  ).join('');
-  window._intervalPick = (v) => {
-    state.settings.notifInterval = v;
-    saveSettings(); _syncNotifToJava(); closeDialog(); renderSettings();
-  };
-  openDialog('Check interval', `<div style="display:flex;flex-direction:column;gap:2px">${items}</div>`, []);
-};
-
-function _syncNotifToJava() {
-  if (window.NescoBridge && window.NescoBridge.scheduleNotification) {
-    window.NescoBridge.scheduleNotification(
-      state.settings.notifEnabled !== false,
-      state.settings.notifHour ?? 8,
-      state.settings.notifMinute ?? 0,
-      state.settings.notifInterval ?? 24
-    );
-  }
-}
-
-window._settingsDeleteAll = () => {
-  if (!state.meters.length) { toast(t('home.empty.title')); return; }
-  openDialog(t('settings.clear'), `<p class="body-text">${esc(t('meter.remove_text'))}</p>`, [
-    { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
-    { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); showView('home'); toast(t('settings.cleared')); } }
-  ]);
-};
-
-window._settingsShare = async () => {
-  const apk = await driveFindLatestApk();
-  const link = apk ? `https://drive.google.com/uc?export=download&id=${apk.id}` : location.href;
-  try {
-    if (navigator.share) await navigator.share({ title: 'Meter Manager', text: 'Check out Meter Manager - track your DESCO/NESCO prepaid meter', url: link });
-    else { window.NescoBridge?.clipboardWrite(link); toast('Link copied!'); }
-  } catch {}
-};
-
-window._settingsAbout = async (el) => {
-  el.textContent = 'Loading...';
-  const md = await driveFindAboutMd();
-  el.textContent = 'About App';
-  if (!md) {
-    openDialog('About', `<div style="text-align:center;margin-bottom:16px"><img src="icons/icon-electricity.svg" style="width:72px;height:72px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.15)"><h3 style="margin-top:10px">Meter Manager</h3></div><p class="body-text">Helps you track DESCO and NESCO prepaid electricity meters: live balance, daily & monthly consumption, average daily cost and recharge history.</p>`, [
-      { key: 'ok', label: 'OK', fn: closeDialog }
-    ]);
-    return;
-  }
-  let html = '<div style="text-align:center;margin-bottom:16px"><img src="icons/icon-electricity.svg" style="width:72px;height:72px;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.15)"><h3 style="margin-top:10px">Meter Manager</h3></div>';
-  for (const line of md.split('\n')) {
-    const t2 = line.trim();
-    if (!t2) { html += '<div style="height:8px"></div>'; continue; }
-    if (t2.startsWith('## ')) {
-      html += `<h3 style="margin:10px 0 6px;color:var(--primary);font-size:15px;text-align:left">${esc(t2.slice(3))}</h3>`;
-    } else if (t2.startsWith('# ')) {
-      html += `<h2 style="margin:12px 0 6px;color:var(--text);font-size:17px;text-align:left">${esc(t2.slice(2))}</h2>`;
-    } else if (t2.startsWith('- ') || t2.startsWith('* ')) {
-      const bullet = t2.slice(2);
-      const formatted = bullet.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>');
-      html += `<div style="display:flex;gap:8px;margin:3px 0;font-size:13.5px;line-height:1.5;text-align:left"><span style="color:var(--primary);font-weight:700;flex-shrink:0">•</span><span>${formatted}</span></div>`;
-    } else {
-      const formatted = t2.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>');
-      html += `<p style="margin:4px 0;font-size:13.5px;line-height:1.6;text-align:left">${formatted}</p>`;
-    }
-  }
-  openDialog('About', html, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
-};
-
-window._settingsContact = async (el) => {
-  el.textContent = 'Loading...';
-  const md = await driveFetchMdByName('Contact.md');
-  el.textContent = 'Contact Developer';
-  if (!md) {
-    openDialog('Contact', '<p class="body-text">No contact information available.</p>', [
-      { key: 'ok', label: 'OK', fn: closeDialog }
-    ]);
-    return;
-  }
-  let devName = 'Contact Developer';
-  const entries = [];
-  for (const line of md.split('\n')) {
-    const raw = line.trim().replace(/^[-*]\s*/, '');
-    if (!raw.includes(':')) continue;
-    const [label, ...rest] = raw.split(':');
-    const value = rest.join(':').trim();
-    if (!label.trim() || !value) continue;
-    const ll = label.trim().toLowerCase();
-    if (ll === 'name' || ll === 'developer') { devName = value; continue; }
-    entries.push({ label: label.trim(), value, ll });
-  }
-  const svgIcons = {
-    whatsapp: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`,
-    messenger: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0084FF"><path d="M12 2C6.36 2 2 6.37 2 11.8c0 2.91 1.2 5.42 3.15 7.2V22l3.12-1.71c.85.24 1.75.37 2.73.37 5.64 0 10-4.37 10-9.8S17.64 2 12 2zm1.07 13.07l-2.55-2.73L6.5 15.1l5.42-5.72 2.6 2.73 3.97-2.73-5.42 5.71z"/></svg>`,
-    instagram: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#E4405F"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>`,
-    github: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M12 2A10 10 0 002 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>`,
-    facebook: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
-    telegram: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0088CC"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>`,
-    email: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#EA4335"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>`,
-    phone: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`,
-    website: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
-    location: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>`,
-    twitter: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#1DA1F2"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
-    default: `<svg width="20" height="20" viewBox="0 0 24 24" fill="#0b3d91"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`
-  };
-  const contactButtons = entries.map(e => {
-    let iconKey = 'default', url = '#';
-    if (e.ll.includes('whatsapp')) { iconKey = 'whatsapp'; url = `https://wa.me/${e.value.replace(/[^0-9+]/g, '')}`; }
-    else if (e.ll.includes('messenger')) { iconKey = 'messenger'; url = `https://m.me/${e.value}`; }
-    else if (e.ll.includes('instagram')) { iconKey = 'instagram'; url = `https://instagram.com/${e.value}`; }
-    else if (e.ll.includes('github')) { iconKey = 'github'; url = `https://github.com/${e.value}`; }
-    else if (e.ll.includes('facebook')) { iconKey = 'facebook'; url = `https://facebook.com/${e.value}`; }
-    else if (e.ll.includes('telegram')) { iconKey = 'telegram'; url = `https://t.me/${e.value}`; }
-    else if (e.ll.includes('email') || e.ll.includes('mail')) { iconKey = 'email'; url = `mailto:${e.value}`; }
-    else if (e.ll.includes('twitter') || e.ll === 'x') { iconKey = 'twitter'; url = `https://x.com/${e.value}`; }
-    else if (e.ll.includes('mobile') || e.ll.includes('phone') || e.ll.includes('call')) { iconKey = 'phone'; url = `tel:${e.value}`; }
-    else if (e.ll.includes('website') || e.ll.includes('web')) { iconKey = 'website'; url = e.value.startsWith('http') ? e.value : `https://${e.value}`; }
-    else if (e.ll.includes('location') || e.ll.includes('address')) { iconKey = 'location'; url = `geo:0,0?q=${encodeURIComponent(e.value)}`; }
-    return `<a href="${esc(url)}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);font-weight:500;font-size:14px">
-      ${svgIcons[iconKey] || svgIcons.default}<span>${esc(e.label)}</span></a>`;
-  }).join('');
-  openDialog(devName, `<div style="display:flex;flex-direction:column;gap:8px">${contactButtons}</div>`, [
-    { key: 'ok', label: 'Close', fn: closeDialog }
-  ]);
-};
-
-window._updateStatus = (status) => {
-  const btn = document.getElementById('btnUpdate');
-  if (!btn) return;
-  if (status === 'downloading') {
-    btn.textContent = 'Downloading...';
-    btn.style.pointerEvents = 'none';
-    btn.style.color = '';
-  } else if (status === 'error') {
-    btn.textContent = 'Update failed';
-    btn.style.pointerEvents = '';
-    setTimeout(() => { btn.textContent = 'Update'; }, 3000);
-  }
-};
-
-window._settingsUpdate = async (el) => {
-  el.textContent = 'Checking for update...';
-  el.style.pointerEvents = 'none';
-  try {
-    const apk = await driveFindLatestApk();
-    if (!apk) {
-      el.textContent = 'Update';
-      el.style.pointerEvents = '';
-      openDialog('Update', `<div style="text-align:center"><svg width="48" height="48" viewBox="0 0 24 24" fill="var(--success)" style="margin-bottom:8px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><p style="font-size:15px;font-weight:600">You are up to date!</p><p class="muted" style="margin-top:6px">No update information available.</p></div>`, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
-      return;
-    }
-    const remoteName = apk.name || '';
-    const verMatch = remoteName.match(/v([\d.]+)/);
-    const buildMatch = remoteName.match(/build_(\d+)/);
-    const remoteVer = verMatch ? verMatch[1] : '?';
-    const remoteBuild = buildMatch ? parseInt(buildMatch[1]) : 0;
-    const curBuild = 282;
-    const hasUpdate = remoteBuild > curBuild;
-    if (!hasUpdate) {
-      el.textContent = 'Latest version already installed';
-      el.style.pointerEvents = '';
-      el.style.color = 'var(--success)';
-      openDialog('Update', `<div style="text-align:center"><svg width="48" height="48" viewBox="0 0 24 24" fill="var(--success)" style="margin-bottom:8px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><p style="font-size:15px;font-weight:600">You are up to date!</p><p class="muted" style="margin-top:6px">Version ${esc(remoteVer)} (build ${remoteBuild})</p></div>`, [{ key: 'ok', label: 'OK', fn: closeDialog }]);
-      return;
-    }
-    el.textContent = 'Update Available';
-    el.style.pointerEvents = '';
-    el.style.color = 'var(--primary)';
-    const apkSize = apk.size ? (apk.size / 1024 / 1024).toFixed(1) + ' MB' : '';
-    openDialog('Update Available', `<div style="text-align:center"><div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-2));display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><svg width="32" height="32" viewBox="0 0 24 24" fill="#fff"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></div><p style="font-size:15px;font-weight:600">A new version is available</p><p class="muted" style="margin-top:4px">Version ${esc(remoteVer)} (build ${remoteBuild})${apkSize ? ' · ' + apkSize : ''}</p></div>`, [
-      { key: 'cancel', label: 'Later', cls: 'secondary', fn: closeDialog },
-      { key: 'install', label: 'Install Update', cls: 'primary', fn: () => {
-        el.textContent = 'Downloading...';
-        el.style.pointerEvents = 'none';
-        closeDialog();
-        const link = `https://drive.google.com/uc?export=download&id=${apk.id}`;
-        if (window.NescoBridge && window.NescoBridge.downloadAndInstall) window.NescoBridge.downloadAndInstall(link);
-        else window.open(link, '_blank');
-      }}
-    ]);
-  } catch {
-    el.textContent = 'Update';
-    el.style.pointerEvents = '';
-  }
-};
 function initUi() {
   $('#btnBrand').onclick = () => { showView('home'); history.pushState({ view: 'home' }, '', ''); };
-  $('#btnSettings').onclick = () => { showView('settings'); history.pushState({ view: 'settings' }, '', ''); };
+  $('#btnUpload').onclick = () => showImportExport();
   $('#btnRefreshAll').onclick = async () => {
     const el = $('#refreshIcon'); el.parentElement.classList.add('spinning');
     await refreshAllMeters();
@@ -1754,11 +1309,18 @@ function initUi() {
     else if (currentView === 'meter') renderMeterDetail();
     toast(t('home.last_updated', { t: t('time.just') }));
   };
+  $('#btnClearAll').onclick = () => {
+    if (!state.meters.length) { toast(t('home.empty.title')); return; }
+    openDialog(t('settings.clear'), `<p class="body-text">${esc(t('meter.remove_text'))}</p>`, [
+      { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
+      { key: 'remove', label: t('btn.remove'), cls: 'danger', fn: () => { state.meters = []; saveMeters(); closeDialog(); renderHome(); toast(t('settings.cleared')); } }
+    ]);
+  };
   document.addEventListener('click', e => {
     const back = e.target.closest('[data-back]');
-    if (back) { e.preventDefault(); if (!$('#dlg').hidden) { closeDialog(); return; } if (currentView === 'meter') { currentMeterId = null; showView('home'); } else if (currentView === 'settings') { showView('home'); } return; }
-    if ((currentView === 'meter' || currentView === 'settings') &&
-      (e.target === $('#homeContent') || e.target === $('#view-home') || e.target === $('#settingsContent') || e.target === $('#view-settings') ||
+    if (back) { e.preventDefault(); if (!$('#dlg').hidden) { closeDialog(); return; } currentMeterId = null; showView('home'); return; }
+    if (currentView === 'meter' &&
+      (e.target === $('#homeContent') || e.target === $('#view-home') ||
        (e.target.classList && (e.target.classList.contains('home-content') || e.target.classList.contains('view'))))) {
       currentMeterId = null; showView('home');
     }
@@ -1779,7 +1341,7 @@ function applyTheme() {
     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     : state.settings.theme;
   document.documentElement.dataset.theme = t1;
-  document.querySelector('meta[name="theme-color"]').content = t1 === 'dark' ? '#000000' : '#0b3d91';
+  document.querySelector('meta[name="theme-color"]').content = t1 === 'dark' ? '#0f1218' : '#0b3d91';
 }
 async function enableNotifications() {
   if (!('Notification' in window)) { toast(t('alerts.perm'), true); return; }

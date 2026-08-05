@@ -13,8 +13,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -422,107 +420,6 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 return "";
             }
-        }
-
-        @JavascriptInterface
-        public int getVersionCode() {
-            try {
-                android.content.pm.PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-                return android.os.Build.VERSION.SDK_INT >= 28 ? (int) info.getLongVersionCode() : info.versionCode;
-            } catch (Exception e) { return 0; }
-        }
-
-        @JavascriptInterface
-        public String getVersionName() {
-            try {
-                return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            } catch (Exception e) { return ""; }
-        }
-
-        @JavascriptInterface
-        public void downloadAndInstall(String url) {
-            mainHandler.post(() -> {
-                webView.evaluateJavascript("window._updateStatus('downloading')", null);
-                new Thread(() -> {
-                    java.io.InputStream in = null;
-                    java.io.FileOutputStream out = null;
-                    try {
-                        java.io.File cacheDir = new java.io.File(getCacheDir(), "updates");
-                        if (!cacheDir.exists()) cacheDir.mkdirs();
-                        java.io.File apkFile = new java.io.File(cacheDir, "update.apk");
-                        if (apkFile.exists()) apkFile.delete();
-
-                        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
-                        conn.setInstanceFollowRedirects(true);
-                        conn.connect();
-                        int code = conn.getResponseCode();
-                        if (code == 302 || code == 301) {
-                            String loc = conn.getHeaderField("Location");
-                            conn.disconnect();
-                            conn = (java.net.HttpURLConnection) new java.net.URL(loc).openConnection();
-                            conn.connect();
-                        }
-                        in = conn.getInputStream();
-                        out = new java.io.FileOutputStream(apkFile);
-                        byte[] buf = new byte[8192];
-                        int len;
-                        while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-                        out.flush();
-                        out.close(); out = null;
-                        in.close(); in = null;
-
-                        Uri uri;
-                        if (android.os.Build.VERSION.SDK_INT >= 24) {
-                            uri = androidx.core.content.FileProvider.getUriForFile(
-                                MainActivity.this,
-                                getPackageName() + ".fileprovider",
-                                apkFile
-                            );
-                        } else {
-                            uri = Uri.fromFile(apkFile);
-                        }
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setDataAndType(uri, "application/vnd.android.package-archive");
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-
-                        mainHandler.postDelayed(() -> {
-                            try { apkFile.delete(); } catch (Exception ignored) {}
-                        }, 60000);
-                    } catch (Exception e) {
-                        Log.e(TAG, "downloadAndInstall error", e);
-                        mainHandler.post(() -> webView.evaluateJavascript("window._updateStatus('error')", null));
-                    } finally {
-                        try { if (in != null) in.close(); } catch (Exception ignored) {}
-                        try { if (out != null) out.close(); } catch (Exception ignored) {}
-                    }
-                }).start();
-            });
-        }
-
-        @JavascriptInterface
-        public void scheduleNotification(boolean enabled, int hour, int minute, int intervalHours) {
-            android.content.SharedPreferences prefs = getSharedPreferences("meter_manager_prefs", MODE_PRIVATE);
-            prefs.edit()
-                .putBoolean("notif_enabled", enabled)
-                .putInt("notif_hour", hour)
-                .putInt("notif_minute", minute)
-                .putInt("notif_interval_hours", intervalHours)
-                .apply();
-        }
-
-        @JavascriptInterface
-        public String getNotificationSettings() {
-            android.content.SharedPreferences prefs = getSharedPreferences("meter_manager_prefs", MODE_PRIVATE);
-            try {
-                org.json.JSONObject obj = new org.json.JSONObject();
-                obj.put("enabled", prefs.getBoolean("notif_enabled", true));
-                obj.put("hour", prefs.getInt("notif_hour", 8));
-                obj.put("minute", prefs.getInt("notif_minute", 0));
-                obj.put("intervalHours", prefs.getInt("notif_interval_hours", 24));
-                return obj.toString();
-            } catch (Exception e) { return "{}"; }
         }
     }
 
