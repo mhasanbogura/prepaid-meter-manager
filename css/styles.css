@@ -309,15 +309,15 @@ table.list tr:last-child td { border-bottom: 0; }
   box-shadow: inset 2px 2px 4px rgba(0,0,0,.3), inset -2px -2px 4px rgba(255,255,255,.05);
 }
 .lang-toggle .lt-slider {
-  position: absolute; top: 3px; bottom: 3px; width: 30px; background: var(--surface);
-  border-radius: 50%; transition: transform .25s; z-index: 2;
+  position: absolute; top: 3px; bottom: 3px; width: 50%; background: var(--surface);
+  border-radius: 30px; transition: left .25s; z-index: 2;
   box-shadow: 2px 2px 4px rgba(0,0,0,.12), -1px -1px 3px rgba(255,255,255,.5);
 }
 [data-theme="dark"] .lang-toggle .lt-slider, [data-theme="oled"] .lang-toggle .lt-slider {
   box-shadow: 2px 2px 4px rgba(0,0,0,.4), -1px -1px 3px rgba(255,255,255,.05);
 }
-.lang-toggle[data-lang="bn"] .lt-slider { transform: translateX(3px); }
-.lang-toggle[data-lang="en"] .lt-slider { transform: translateX(calc(50% - 2px)); }
+.lang-toggle[data-lang="bn"] .lt-slider { left: 3px; }
+.lang-toggle[data-lang="en"] .lt-slider { left: calc(50% - 3px); }
 .lang-toggle .lt-label {
   position: relative; z-index: 1; padding: 0 14px; font-size: 13px; font-weight: 700;
   line-height: 30px; color: var(--text-2); transition: color .2s; white-space: nowrap;
