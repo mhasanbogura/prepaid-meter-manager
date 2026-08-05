@@ -45,7 +45,7 @@ const I18N = {
     'detail.meter_type': 'Meter type', 'detail.father': 'Father/Husband', 'detail.feed': 'Feeder',
     'detail.total_use': 'Total use', 'detail.this_month': 'This month', 'detail.last_month': 'Last month',
     'detail.units': 'Units', 'detail.install_date': 'Install date', 'detail.min_recharge': 'Min. recharge', 'detail.method': 'Method',
-    'edit.title': 'Edit meter', 'edit.nickname': 'Nickname', 'edit.nickname_hint': 'e.g. Home, Office', 'edit.low_threshold': 'Low balance alert threshold (BDT)',
+    'edit.title': 'Edit meter', 'edit.nickname': 'Nickname', 'edit.nickname_hint': 'e.g. Home, Office', 'edit.low_threshold': 'Low balance alert threshold',
     'nesco.needs_server': 'NESCO needs the local server running. Start it with `node server.js`.',
     'nesco.no_data': 'Not found in the NESCO database. Check the number and try again.',
     'alerts.title': 'Balance alert', 'alerts.body': 'Meter {n} balance fell to {b}. Recharge soon to avoid disconnection.',
@@ -112,7 +112,7 @@ const I18N = {
     'detail.meter_type': 'মিটারের ধরন', 'detail.father': 'বাবা/স্বামীর নাম', 'detail.feed': 'ফিডার',
     'detail.total_use': 'মোট ব্যবহার', 'detail.this_month': 'এই মাস', 'detail.last_month': 'গত মাস',
     'detail.units': 'ইউনিট', 'detail.install_date': 'ইনস্টল তারিখ', 'detail.min_recharge': 'সর্বনিম্ন রিচার্জ', 'detail.method': 'পদ্ধতি',
-    'edit.title': 'মিটার সম্পাদনা', 'edit.nickname': 'ডাকনাম', 'edit.nickname_hint': 'যেমন: বাসা, অফিস', 'edit.low_threshold': 'কম ব্যালেন্স সতর্কতা সীমা (BDT)',
+    'edit.title': 'মিটার সম্পাদনা', 'edit.nickname': 'ডাকনাম', 'edit.nickname_hint': 'যেমন: বাসা, অফিস', 'edit.low_threshold': 'কম ব্যালেন্স সতর্কতা সীমা',
     'nesco.needs_server': 'নেসকোর জন্য লোকাল সার্ভার দরকার। `node server.js` দিয়ে চালু করুন।',
     'nesco.no_data': 'নেসকো ডাটাবেজে পাওয়া যায়নি। নম্বর মিলিয়ে দেখুন।',
     'alerts.title': 'ব্যালেন্স অ্যালার্ট', 'alerts.body': 'মিটার {n} এর ব্যালেন্স {b} এ নেমে এসেছে। সংযোগ বিচ্ছিন্ন হওয়ার আগে রিচার্জ করুন।',
@@ -625,6 +625,9 @@ window.ieSave = () => {
   saveMeters();
   importMetersFromText(text);
   closeDialog();
+  if (currentView !== 'home') { currentView = 'home'; currentMeterId = null; $('#view-home').style.display=''; $('#view-settings').style.display='none'; }
+  renderHome();
+  toast('Meters imported');
 };
 window.ieExport = async () => {
   const text = $('#ieText').value;
@@ -1139,9 +1142,6 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>
         <p class="muted">${esc(t('home.empty.text'))}</p>
-      </div>
-      <div style="text-align:center;margin-top:80px;padding:16px 0">
-        <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.86 (build 261)</span>
       </div>`;
     return;
   }
@@ -1186,9 +1186,6 @@ function renderHome() {
           ${esc(t('home.add'))}
         </button>`
       : `<p class="muted" style="text-align:center">${esc(t('home.max'))}</p>`}
-    <div style="text-align:center;margin-top:80px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version 1.0.86 (build 261)</span>
-    </div>
   `;
 }
 let dragId = null;
@@ -1320,7 +1317,7 @@ function drawChart(canvas, labels, series) {
 /* ================= views / nav ================= */
 function showView(name) {
   currentView = name;
-  if (name === 'home') { currentMeterId = null; renderHome(); }
+  if (name === 'home') { currentMeterId = null; $('#view-home').style.display=''; $('#view-settings').style.display='none'; renderHome(); }
   if (name === 'meter') renderMeterDetail();
   scrollToTop();
 }
@@ -1348,6 +1345,7 @@ function initUi() {
 }
 function renderSettings() {
   const lang = state.settings.lang || 'en';
+  const threshold = state.settings.alertThreshold ?? LOW_BALANCE;
   $('#settingsContent').innerHTML = `
     <h2 class="section-title" style="margin-bottom:4px">Settings</h2>
     <p class="muted" style="margin-bottom:16px">Manage preferences and theme settings.</p>
@@ -1357,7 +1355,7 @@ function renderSettings() {
 
       <div class="row" style="justify-content:space-between;gap:12px">
         <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><circle cx="12" cy="12" r="5"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
           <div>
             <div style="font-weight:600">Device Theme</div>
             <div class="hint" style="margin:0">Automatically switch theme based on system</div>
@@ -1388,6 +1386,17 @@ function renderSettings() {
           <span class="lt-label ${lang === 'en' ? 'active' : ''}">English</span>
         </div>
       </div>
+
+      <div class="row" style="justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          <div>
+            <div style="font-weight:600">Low balance alert threshold</div>
+            <div class="hint" style="margin:0">Default alert threshold (BDT)</div>
+          </div>
+        </div>
+        <input type="number" id="settThreshold" value="${threshold}" min="0" max="99999" step="50" inputmode="numeric" style="width:80px;text-align:right">
+      </div>
     </section>
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
@@ -1406,7 +1415,7 @@ function renderSettings() {
     if (e.target.checked) {
       state.settings.theme = 'system';
     } else {
-      const resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light';
       state.settings.theme = resolved;
     }
     saveSettings(); applyTheme(); renderSettings();
@@ -1423,11 +1432,16 @@ function renderSettings() {
     state.settings.lang = state.settings.lang === 'bn' ? 'en' : 'bn';
     saveSettings(); renderSettings(); applyLang();
   };
+  $('#settThreshold').onchange = (e) => {
+    const v = Number(e.target.value);
+    state.settings.alertThreshold = isNaN(v) ? LOW_BALANCE : v;
+    saveSettings();
+  };
 }
 function syncSettingsUi() {
 }
 window._settingsShare = function() {
-  const url = 'https://github.com/mhasanbogura/prepaid-meter-manager/releases/latest/download/Meter%20Manager_com.mahmuduls.metermanager.apk';
+  const url = 'https://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx';
   const msg = 'Check out Meter Manager – a simple app to track DESCO prepaid electricity meters in Bangladesh!\n\nDownload: ' + url;
   if (navigator.share) {
     navigator.share({ title: 'Meter Manager', text: msg }).catch(() => {});
@@ -1504,7 +1518,7 @@ function applyLang() {
 }
 function applyTheme() {
   const t1 = state.settings.theme === 'system'
-    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light')
     : state.settings.theme;
   document.documentElement.dataset.theme = t1;
   document.querySelector('meta[name="theme-color"]').content = (t1 === 'dark' || t1 === 'oled') ? (t1 === 'oled' ? '#000000' : '#0f1218') : '#0b3d91';
