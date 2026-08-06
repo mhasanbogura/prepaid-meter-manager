@@ -889,7 +889,8 @@ async function renderMeterDetail() {
       <div class="bh-meta">
         <span>${esc(t('detail.meter'))}: ${esc(m.info?.meterNo || m.meterNo || m.consumerNo || '–')}</span>
         ${m.avgDailyCost != null ? `<span>${esc(t('home.avg_day', { v: fmtBdt(m.avgDailyCost) }))}</span>` : ''}
-        ${m.provider === 'nesco' && m.lastReading ? `<span>${esc(t('detail.reading_value', { v: m.lastReading }))}</span>` : `<span>${esc(t('detail.reading_time', { t: m.readingTime ? fmtDate(m.readingTime) : '–' }))}</span>`}
+        ${m.provider === 'nesco' && m.lastReading ? `<span>${esc(t('detail.reading_value', { v: m.lastReading }))}</span>` : ''}
+        <span>${esc(t('detail.reading_time', { t: m.readingTime ? fmtDate(m.readingTime) : '–' }))}</span>
       </div>
       ${m.loading ? '<div style="opacity:.9;font-size:12.5px">' + esc(t('home.refreshing')) + '</div>' : (m.err ? `<div style="opacity:.9;font-size:12.5px;color:#ffd9d9">${esc(m.err)}</div>` : '')}
     </div>
