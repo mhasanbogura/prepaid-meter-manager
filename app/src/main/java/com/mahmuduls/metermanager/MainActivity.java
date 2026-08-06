@@ -239,6 +239,46 @@ public class MainActivity extends Activity {
             Matcher rdMat2 = rdPat2.matcher(html);
             if (rdMat2.find()) readingDate = rdMat2.group(1).trim();
         }
+        if (readingDate.isEmpty()) {
+            Pattern rdPat3 = Pattern.compile("\\b(\\d{1,2}\\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+\\d{4})", Pattern.CASE_INSENSITIVE);
+            Matcher rdMat3 = rdPat3.matcher(seg);
+            if (rdMat3.find()) readingDate = rdMat3.group(1).trim();
+        }
+        if (readingDate.isEmpty()) {
+            Pattern rdPat4 = Pattern.compile("reading[^<]*?\\b(\\d{1,2}\\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{4})", Pattern.CASE_INSENSITIVE);
+            Matcher rdMat4 = rdPat4.matcher(html);
+            if (rdMat4.find()) readingDate = rdMat4.group(1).trim();
+        }
+        if (readingDate.isEmpty()) {
+            Pattern rdPat5 = Pattern.compile("\\b(\\d{1,2}\\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\\s+\\d{4})", Pattern.CASE_INSENSITIVE);
+            Matcher rdMat5 = rdPat5.matcher(seg);
+            if (rdMat5.find()) readingDate = rdMat5.group(1).trim();
+        }
+        if (readingDate.isEmpty()) {
+            Pattern rdPat6 = Pattern.compile("reading[^<]{0,50}?(\\d{1,2}\\s+\\w+\\s+\\d{4})", Pattern.CASE_INSENSITIVE);
+            Matcher rdMat6 = rdPat6.matcher(html);
+            if (rdMat6.find()) readingDate = rdMat6.group(1).trim();
+        }
+        if (readingDate.isEmpty()) {
+            Pattern rdPat7 = Pattern.compile("last[^<]{0,30}?reading[^<]{0,30}?>([^<]*\\d{1,2}[^<]*\\d{4}[^<]*)<", Pattern.CASE_INSENSITIVE);
+            Matcher rdMat7 = rdPat7.matcher(html);
+            if (rdMat7.find()) {
+                String txt = rdMat7.group(1).trim();
+                Matcher dateExtract = Pattern.compile("(\\d{1,2}[\\s\\-\\/]+\\w+[\\s\\-\\/]+\\d{4})").matcher(txt);
+                if (dateExtract.find()) readingDate = dateExtract.group(1).trim();
+            }
+        }
+        if (readingDate.isEmpty()) {
+            Pattern rdPat8 = Pattern.compile(">\\s*([^<]*\\d{1,2}\\s+\\w+\\s+\\d{4}[^<]*)\\s*<", Pattern.CASE_INSENSITIVE);
+            Matcher rdMat8 = rdPat8.matcher(seg);
+            while (rdMat8.find()) {
+                String txt = rdMat8.group(1).trim();
+                if (txt.length() < 30 && Pattern.compile("\\d{1,2}\\s+\\w+\\s+\\d{4}").matcher(txt).find()) {
+                    readingDate = txt;
+                    break;
+                }
+            }
+        }
 
         info.append(",\"lastReading\":\"").append(esc(lastReading)).append("\"");
         info.append(",\"readingDate\":\"").append(esc(readingDate)).append("\"");
