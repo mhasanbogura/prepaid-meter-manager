@@ -64,9 +64,10 @@ task updateWebVersion {
         def webJsFile = file("../js/app.js")
         if (webJsFile.exists()) {
             def content = webJsFile.text
-            content = content.replaceAll('Version \\d+\\.\\d+\\.\\d+ \\(build \\d+\\)', "Version ${newVn} (build ${newVc})")
+            content = content.replaceAll("\\|\\| 'Version \\d+\\.\\d+\\.\\d+'", "|| '${newVn}'")
+            content = content.replaceAll("\\|\\| '\\d+'\\}", "|| '${newVc}'}")
             webJsFile.text = content
-            println "Updated web version footer to Version ${newVn} (build ${newVc})"
+            println "Updated web version fallbacks to Version ${newVn} (build ${newVc})"
         }
     }
 }
