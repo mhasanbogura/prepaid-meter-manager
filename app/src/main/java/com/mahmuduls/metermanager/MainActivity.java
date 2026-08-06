@@ -41,13 +41,18 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String savedTheme = getSharedPreferences("MeterManager", MODE_PRIVATE).getString("theme", "light");
-        setStatusBarColorDirect("light".equals(savedTheme) ? "#e8ebf0" : "oled".equals(savedTheme) ? "#0a0a0a" : "#1a1f2a");
-
         getWindow().setDecorFitsSystemWindows(true);
 
         webView = new WebView(this);
         setContentView(webView);
+
+        String savedTheme = getSharedPreferences("MeterManager", MODE_PRIVATE).getString("theme", "light");
+        String resolved = savedTheme;
+        if ("system".equals(savedTheme)) {
+            int nightMask = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            resolved = (nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES) ? "oled" : "light";
+        }
+        setStatusBarColorDirect("light".equals(resolved) ? "#e8ebf0" : "oled".equals(resolved) ? "#0a0a0a" : "#1a1f2a");
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
