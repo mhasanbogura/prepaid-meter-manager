@@ -502,11 +502,7 @@ async function refreshMeterOnce(meter) {
     if (r.info.lastReading) {
       meter.lastReading = r.info.lastReading;
     }
-    if (r.info.readingDate) {
-      const rd = parseNescoDate(r.info.readingDate);
-      if (rd) meter.readingTime = rd + 'T00:00:00.000Z';
-    }
-    if (!meter.readingTime && meter.history.length > 0) {
+    if (meter.history.length > 0) {
       const rd = parseNescoDate(meter.history[0].rechargeDate);
       if (rd) meter.readingTime = rd + 'T00:00:00.000Z';
     }
