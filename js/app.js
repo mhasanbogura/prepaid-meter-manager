@@ -34,7 +34,7 @@ const I18N = {
     'detail.customer': 'Customer info', 'detail.info': 'Info', 'detail.history': 'Usage',
     'detail.name': 'Name', 'detail.account': 'Account', 'detail.meter': 'Meter', 'detail.route': 'Route',
     'detail.load': 'Sanctioned load', 'detail.tariff': 'Tariff', 'detail.phase': 'Phase', 'detail.status': 'Status',
-    'detail.reading_time': 'Last reading: {t}',
+    'detail.reading_time': 'Collected: {t}',
     'detail.reading_value': 'Last reading: {v} kWh',
     'detail.daily': 'Daily consumption (last 15 days)', 'detail.monthly': 'Monthly consumption (last 12 months)',
     'detail.recharge_history': 'Recharge history', 'detail.recharge_empty': 'No recharges in the last year.',
@@ -113,7 +113,7 @@ const I18N = {
     'detail.customer': 'গ্রাহকের তথ্য', 'detail.info': 'তথ্য', 'detail.history': 'ব্যবহার',
     'detail.name': 'নাম', 'detail.account': 'অ্যাকাউন্ট', 'detail.meter': 'মিটার', 'detail.route': 'রুট',
     'detail.load': 'অনুমোদিত লোড', 'detail.tariff': 'ট্যারিফ', 'detail.phase': 'ফেজ', 'detail.status': 'স্ট্যাটাস',
-    'detail.reading_time': 'শেষ রিডিং: {t}',
+    'detail.reading_time': 'সংগ্রহ: {t}',
     'detail.reading_value': 'শেষ রিডিং: {v} kWh',
     'detail.daily': 'দৈনিক ব্যবহার (শেষ ১৫ দিন)', 'detail.monthly': 'মাসিক ব্যবহার (শেষ ১২ মাস)',
     'detail.recharge_history': 'রিচার্জ ইতিহাস', 'detail.recharge_empty': 'গত এক বছরে কোনো রিচার্জ নেই।',
@@ -957,8 +957,9 @@ function renderNescoTotalUse(m) {
   if (isNaN(balance) || balance >= totalTaka) {
     const byMonth = {};
     for (const r of hist) {
-      const key = parseNescoDate(r.rechargeDate);
-      if (!key) continue;
+      const full = parseNescoDate(r.rechargeDate);
+      if (!full) continue;
+      const key = full.slice(0, 7);
       if (!byMonth[key]) byMonth[key] = { taka: 0, unit: 0 };
       byMonth[key].taka += Number(r.rechargeAmount) || 0;
       byMonth[key].unit += Number(r.energyUnit) || 0;
@@ -971,7 +972,7 @@ function renderNescoTotalUse(m) {
   const consumedTaka = totalTaka - balance;
   const costPerUnit = totalUnit > 0 ? totalTaka / totalUnit : 0;
   const consumedUnit = costPerUnit > 0 ? consumedTaka / costPerUnit : 0;
-  const startDate = new Date(earliestDate + '-01');
+  const startDate = new Date(earliestDate);
   const daysDiff = Math.max(1, Math.round((now - startDate) / 864e5));
   const dailyTaka = consumedTaka / daysDiff;
   const dailyUnit = consumedUnit / daysDiff;
