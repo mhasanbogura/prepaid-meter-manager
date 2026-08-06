@@ -588,6 +588,12 @@ public class MainActivity extends Activity {
         public void saveTheme(String theme) {
             getSharedPreferences("MeterManager", MODE_PRIVATE).edit().putString("theme", theme).apply();
         }
+
+        @JavascriptInterface
+        public boolean isSystemDarkMode() {
+            int nightMask = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            return nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        }
     }
 
     @Override
@@ -631,5 +637,12 @@ public class MainActivity extends Activity {
                 }
             }
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        webView.evaluateJavascript(
+            "if(window.NescoBridge&&window.applyTheme)applyTheme()", null);
     }
 }

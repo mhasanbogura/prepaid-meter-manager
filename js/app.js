@@ -984,7 +984,7 @@ function parseNescoDate(s) {
   const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(s || ''));
   if (!m) return null;
   const day = m[1].padStart(2, '0');
-  return `${m[3]}-${NESCO_MONTHS[m[2]] || '414'}-${day}`;
+  return `${m[3]}-${NESCO_MONTHS[m[2]] || '417'}-${day}`;
 }
 function parseNescoReadingDate(s) {
   if (!s) return null;
@@ -1533,7 +1533,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.37'} (build ${state.settings._build || '414'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.38'} (build ${state.settings._build || '417'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1669,7 +1669,7 @@ function applyLang() {
 }
 function applyTheme() {
   const t1 = state.settings.theme === 'system'
-    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light')
+    ? ((window.NescoBridge && NescoBridge.isSystemDarkMode) ? (NescoBridge.isSystemDarkMode() ? 'oled' : 'light') : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light'))
     : state.settings.theme;
   document.documentElement.dataset.theme = t1;
   const themeColor = t1 === 'oled' ? '#0a0a0a' : t1 === 'dark' ? '#1a1f2a' : '#e8ebf0';
@@ -1736,6 +1736,7 @@ async function boot() {
   dailyCacheCleanup();
   applyLang();
   applyTheme();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (state.settings.theme === 'system') applyTheme(); });
   initUi();
   registerSw();
   showView('home');
