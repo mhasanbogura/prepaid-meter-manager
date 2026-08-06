@@ -934,6 +934,41 @@ function renderNescoHistory(m) {
   </section>`;
 }
 const NESCO_MONTHS = { 'JAN':'01','FEB':'02','MAR':'03','APR':'04','MAY':'05','JUN':'06','JUL':'07','AUG':'08','SEP':'09','OCT':'10','NOV':'11','DEC':'12' };
+const NESCO_SLABS = [
+  { upTo: 75, rate: 6.18 },
+  { upTo: 200, rate: 8.50 },
+  { upTo: 300, rate: 9.10 },
+  { upTo: 400, rate: 9.62 },
+  { upTo: 600, rate: 15.01 },
+  { upTo: Infinity, rate: 17.35 }
+];
+function nescoTakaToUnits(taka) {
+  let remaining = Math.max(0, taka);
+  let units = 0;
+  let prev = 0;
+  for (const s of NESCO_SLABS) {
+    const slabUnits = s.upTo - prev;
+    const slabCost = slabUnits * s.rate;
+    if (remaining <= slabCost) { units += remaining / s.rate; return Math.round(units * 100) / 100; }
+    units += slabUnits;
+    remaining -= slabCost;
+    prev = s.upTo;
+  }
+  return Math.round(units * 100) / 100;
+}
+function nescoUnitsToTaka(units) {
+  let remaining = Math.max(0, units);
+  let taka = 0;
+  let prev = 0;
+  for (const s of NESCO_SLABS) {
+    const slabUnits = s.upTo - prev;
+    if (remaining <= slabUnits) { taka += remaining * s.rate; return Math.round(taka * 100) / 100; }
+    taka += slabUnits * s.rate;
+    remaining -= slabUnits;
+    prev = s.upTo;
+  }
+  return Math.round(taka * 100) / 100;
+}
 function parseNescoDate(s) {
   const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(s || ''));
   if (!m) return null;
@@ -967,8 +1002,7 @@ function renderNescoTotalUse(m) {
   const now = new Date();
   if (!isNaN(balance) && balance < totalTaka) {
     const consumedTaka = totalTaka - balance;
-    const costPerUnit = totalUnit > 0 ? totalTaka / totalUnit : 0;
-    const consumedUnit = costPerUnit > 0 ? consumedTaka / costPerUnit : 0;
+    const consumedUnit = nescoTakaToUnits(consumedTaka);
     const startDate = new Date(earliestDate);
     const daysDiff = Math.max(1, Math.round((now - startDate) / 864e5));
     const dailyTaka = consumedTaka / daysDiff;
