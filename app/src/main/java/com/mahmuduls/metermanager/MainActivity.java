@@ -642,7 +642,19 @@ public class MainActivity extends Activity {
     @Override
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        webView.evaluateJavascript(
-            "if(window.NescoBridge&&window.applyTheme)applyTheme()", null);
+        applyThemeFromAndroid();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        applyThemeFromAndroid();
+    }
+
+    private void applyThemeFromAndroid() {
+        mainHandler.postDelayed(() -> {
+            webView.evaluateJavascript(
+                "(function(){if(typeof applyTheme==='function')applyTheme()})", null);
+        }, 200);
     }
 }

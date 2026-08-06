@@ -984,7 +984,7 @@ function parseNescoDate(s) {
   const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(s || ''));
   if (!m) return null;
   const day = m[1].padStart(2, '0');
-  return `${m[3]}-${NESCO_MONTHS[m[2]] || '417'}-${day}`;
+  return `${m[3]}-${NESCO_MONTHS[m[2]] || '420'}-${day}`;
 }
 function parseNescoReadingDate(s) {
   if (!s) return null;
@@ -1533,7 +1533,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.38'} (build ${state.settings._build || '417'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.39'} (build ${state.settings._build || '420'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
