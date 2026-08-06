@@ -984,7 +984,7 @@ function parseNescoDate(s) {
   const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(s || ''));
   if (!m) return null;
   const day = m[1].padStart(2, '0');
-  return `${m[3]}-${NESCO_MONTHS[m[2]] || '423'}-${day}`;
+  return `${m[3]}-${NESCO_MONTHS[m[2]] || '426'}-${day}`;
 }
 function parseNescoReadingDate(s) {
   if (!s) return null;
@@ -1533,7 +1533,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.40'} (build ${state.settings._build || '423'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.41'} (build ${state.settings._build || '426'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1668,9 +1668,16 @@ function applyLang() {
   renderHome();
 }
 function applyTheme() {
-  const t1 = state.settings.theme === 'system'
-    ? ((window.NescoBridge && NescoBridge.isSystemDarkMode) ? (NescoBridge.isSystemDarkMode() ? 'oled' : 'light') : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light'))
-    : state.settings.theme;
+  let t1;
+  if (state.settings.theme === 'system') {
+    if (window._androidDarkMode !== undefined) {
+      t1 = window._androidDarkMode ? 'oled' : 'light';
+    } else {
+      t1 = (window.NescoBridge && NescoBridge.isSystemDarkMode) ? (NescoBridge.isSystemDarkMode() ? 'oled' : 'light') : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light');
+    }
+  } else {
+    t1 = state.settings.theme;
+  }
   document.documentElement.dataset.theme = t1;
   const themeColor = t1 === 'oled' ? '#0a0a0a' : t1 === 'dark' ? '#1a1f2a' : '#e8ebf0';
   document.querySelector('meta[name="theme-color"]').content = themeColor;
@@ -1736,7 +1743,6 @@ async function boot() {
   dailyCacheCleanup();
   applyLang();
   applyTheme();
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (state.settings.theme === 'system') applyTheme(); });
   initUi();
   registerSw();
   showView('home');

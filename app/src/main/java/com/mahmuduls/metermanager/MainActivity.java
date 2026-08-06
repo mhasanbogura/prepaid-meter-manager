@@ -41,11 +41,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setDecorFitsSystemWindows(true);
-
-        webView = new WebView(this);
-        setContentView(webView);
-
         String savedTheme = getSharedPreferences("MeterManager", MODE_PRIVATE).getString("theme", "light");
         String resolved = savedTheme;
         if ("system".equals(savedTheme)) {
@@ -53,6 +48,11 @@ public class MainActivity extends Activity {
             resolved = (nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES) ? "oled" : "light";
         }
         setStatusBarColorDirect("light".equals(resolved) ? "#e8ebf0" : "oled".equals(resolved) ? "#0a0a0a" : "#1a1f2a");
+
+        getWindow().setDecorFitsSystemWindows(true);
+
+        webView = new WebView(this);
+        setContentView(webView);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -642,19 +642,23 @@ public class MainActivity extends Activity {
     @Override
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        applyThemeFromAndroid();
+        pushThemeToWebView();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        applyThemeFromAndroid();
+        pushThemeToWebView();
     }
 
-    private void applyThemeFromAndroid() {
+    private void pushThemeToWebView() {
         mainHandler.postDelayed(() -> {
+            int nightMask = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            boolean isDark = nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES;
             webView.evaluateJavascript(
-                "(function(){if(typeof applyTheme==='function')applyTheme()})", null);
-        }, 200);
+                "window._androidDarkMode=" + isDark + ";if(typeof applyTheme==='function')applyTheme()", null);
+            String color = isDark ? "#0a0a0a" : "#e8ebf0";
+            setStatusBarColorDirect(color);
+        }, 150);
     }
 }
