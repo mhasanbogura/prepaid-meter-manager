@@ -984,7 +984,7 @@ function parseNescoDate(s) {
   const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(s || ''));
   if (!m) return null;
   const day = m[1].padStart(2, '0');
-  return `${m[3]}-${NESCO_MONTHS[m[2]] || '420'}-${day}`;
+  return `${m[3]}-${NESCO_MONTHS[m[2]] || '423'}-${day}`;
 }
 function parseNescoReadingDate(s) {
   if (!s) return null;
@@ -1533,7 +1533,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.39'} (build ${state.settings._build || '420'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${state.settings._version || '1.1.40'} (build ${state.settings._build || '423'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1678,7 +1678,7 @@ function applyTheme() {
     NescoBridge.setStatusBarColor(themeColor);
   }
   if (window.NescoBridge && NescoBridge.saveTheme) {
-    NescoBridge.saveTheme(t1);
+    NescoBridge.saveTheme(state.settings.theme);
   }
 }
 async function enableNotifications() {
