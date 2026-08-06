@@ -218,6 +218,7 @@ public class MainActivity extends Activity {
         info.append(",\"balance\":\"").append(esc(take(inputs, 14))).append("\"");
 
         String lastReading = "";
+        String readingDate = "";
         Pattern lrPat = Pattern.compile("last\\s*reading[^<]*?<[^>]*>([\\d.,]+)", Pattern.CASE_INSENSITIVE);
         Matcher lrMat = lrPat.matcher(html);
         if (lrMat.find()) lastReading = lrMat.group(1).trim();
@@ -230,7 +231,17 @@ public class MainActivity extends Activity {
             lastReading = take(inputs, 15);
         }
 
+        Pattern rdPat = Pattern.compile("reading[^<]*?\\b(\\d{1,2}[\\-\\/](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[\\-\\/]\\d{4})", Pattern.CASE_INSENSITIVE);
+        Matcher rdMat = rdPat.matcher(html);
+        if (rdMat.find()) readingDate = rdMat.group(1).trim();
+        if (readingDate.isEmpty()) {
+            Pattern rdPat2 = Pattern.compile("reading[^<]*?\\b(\\d{1,2}[\\-\\/]\\d{1,2}[\\-\\/]\\d{4})", Pattern.CASE_INSENSITIVE);
+            Matcher rdMat2 = rdPat2.matcher(html);
+            if (rdMat2.find()) readingDate = rdMat2.group(1).trim();
+        }
+
         info.append(",\"lastReading\":\"").append(esc(lastReading)).append("\"");
+        info.append(",\"readingDate\":\"").append(esc(readingDate)).append("\"");
         info.append("}");
 
         Pattern rowPat = Pattern.compile("<[^>]*?consumerRechargeData[^>]*>");

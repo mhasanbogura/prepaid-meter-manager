@@ -504,7 +504,11 @@ async function refreshMeterOnce(meter) {
     if (r.info.lastReading) {
       meter.lastReading = r.info.lastReading;
     }
-    meter.readingTime = new Date().toISOString();
+    if (r.info.readingDate) {
+      const rd = parseNescoReadingDate(r.info.readingDate);
+      if (rd) meter.readingTime = rd;
+    }
+    if (!meter.readingTime) meter.readingTime = new Date().toISOString();
     meter.consumerNo = r.info.consumerNo || meter.consumerNo;
     meter.err = null;
   }
@@ -936,6 +940,14 @@ function parseNescoDate(s) {
   const day = m[1].padStart(2, '0');
   return `${m[3]}-${NESCO_MONTHS[m[2]] || '01'}-${day}`;
 }
+function parseNescoReadingDate(s) {
+  if (!s) return null;
+  const m1 = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(s);
+  if (m1 && NESCO_MONTHS[m1[2]]) return `${m1[3]}-${NESCO_MONTHS[m1[2]]}-${m1[1].padStart(2,'0')}T00:00:00.000Z`;
+  const m2 = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s);
+  if (m2) return `${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}T00:00:00.000Z`;
+  return null;
+}
 function renderNescoTotalUse(m) {
   const hist = m.history || [];
   if (!hist.length) return '';
@@ -950,6 +962,22 @@ function renderNescoTotalUse(m) {
   if (!earliestDate || totalTaka <= 0) return '';
   const balance = Number(m.balance);
   const now = new Date();
+  if (!isNaN(balance) && balance < totalTaka) {
+    const consumedTaka = totalTaka - balance;
+    const costPerUnit = totalUnit > 0 ? totalTaka / totalUnit : 0;
+    const consumedUnit = costPerUnit > 0 ? consumedTaka / costPerUnit : 0;
+    const startDate = new Date(earliestDate);
+    const daysDiff = Math.max(1, Math.round((now - startDate) / 864e5));
+    const dailyTaka = consumedTaka / daysDiff;
+    const dailyUnit = consumedUnit / daysDiff;
+    const thisMonthDays = now.getDate();
+    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthDays = new Date(lastMonthDate.getFullYear(), lastMonthDate.getMonth() + 1, 0).getDate();
+    return renderTotalUseCard(
+      { taka: Math.round(dailyTaka * thisMonthDays * 100) / 100, unit: Math.round(dailyUnit * thisMonthDays * 100) / 100 },
+      { taka: Math.round(dailyTaka * lastMonthDays * 100) / 100, unit: Math.round(dailyUnit * lastMonthDays * 100) / 100 }
+    );
+  }
   const byMonth = {};
   for (const r of hist) {
     const full = parseNescoDate(r.rechargeDate);
@@ -962,28 +990,7 @@ function renderNescoTotalUse(m) {
   const thisKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
   const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastKey = `${lm.getFullYear()}-${pad(lm.getMonth() + 1)}`;
-  const thisMonthData = byMonth[thisKey];
-  const lastMonthData = byMonth[lastKey];
-  if (thisMonthData || lastMonthData) {
-    return renderTotalUseCard(thisMonthData || { taka: 0, unit: 0 }, lastMonthData || { taka: 0, unit: 0 });
-  }
-  if (isNaN(balance) || balance >= totalTaka) {
-    return renderTotalUseCard({ taka: 0, unit: 0 }, { taka: 0, unit: 0 });
-  }
-  const consumedTaka = totalTaka - balance;
-  const costPerUnit = totalUnit > 0 ? totalTaka / totalUnit : 0;
-  const consumedUnit = costPerUnit > 0 ? consumedTaka / costPerUnit : 0;
-  const startDate = new Date(earliestDate);
-  const daysDiff = Math.max(1, Math.round((now - startDate) / 864e5));
-  const dailyTaka = consumedTaka / daysDiff;
-  const dailyUnit = consumedUnit / daysDiff;
-  const thisMonthDays = now.getDate();
-  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const lastMonthDays = new Date(lastMonthDate.getFullYear(), lastMonthDate.getMonth() + 1, 0).getDate();
-  return renderTotalUseCard(
-    { taka: Math.round(dailyTaka * thisMonthDays * 100) / 100, unit: Math.round(dailyUnit * thisMonthDays * 100) / 100 },
-    { taka: Math.round(dailyTaka * lastMonthDays * 100) / 100, unit: Math.round(dailyUnit * lastMonthDays * 100) / 100 }
-  );
+  return renderTotalUseCard(byMonth[thisKey] || { taka: 0, unit: 0 }, byMonth[lastKey] || { taka: 0, unit: 0 });
 }
 function renderInfoCard(m) {
   const i = m.info || {};
