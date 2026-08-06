@@ -80,7 +80,7 @@ const I18N = {
     'about.disclaimer': 'This is an unofficial viewer. Meter Manager is not affiliated with DESCO. All trademarks belong to their owners.',
     'err.network': 'Network error. Check your connection and try again.',
     'err.server': 'DESCO server is temporarily unreachable.',
-    'time.just': 'just now', 'time.min': '{m} min ago', 'time.hour': '{h} h ago',
+    'time.just': 'just now', 'time.min': '{m} min ago', 'time.hour': '{h} hour ago', 'time.hours': '{h} hours ago',
     'time.day': '{d} day ago', 'time.days': '{d} days ago', 'time.month': '{m} month ago', 'time.months': '{m} months ago',
     'detail.balance_updated': 'Updated {t}',
     'today': 'Today'
@@ -303,7 +303,7 @@ function timeAgo(ts) {
   if (m < 1) return t('time.just');
   if (m < 60) return t('time.min', { m });
   const h = Math.floor(m / 60);
-  if (h < 24) return t('time.hour', { h });
+  if (h < 24) return h === 1 ? t('time.hour', { h }) : t('time.hours', { h });
   const d = Math.floor(h / 24);
   if (d < 30) return d === 1 ? t('time.day', { d }) : t('time.days', { d });
   const mo = Math.floor(d / 30);
@@ -419,11 +419,10 @@ function avgDailyCost(normalizedDays) {
   return Math.round(sum / 7);
 }
 function nescoAvgDailyCost(history) {
-  const months = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
   const rows = (history || []).map(r => {
-    const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(r.rechargeDate || ''));
-    if (!m || !(m[2] in months)) return null;
-    return { t: new Date(+m[3], months[m[2]], +m[1]).getTime(), amt: Number(r.rechargeAmount) || 0 };
+    const d = parseNescoDate(r.rechargeDate);
+    if (!d) return null;
+    return { t: new Date(d + 'T00:00:00').getTime(), amt: Number(r.rechargeAmount) || 0 };
   }).filter(Boolean).sort((a, b) => a.t - b.t);
   if (rows.length < 2) return null;
   const span = (rows[rows.length - 1].t - rows[0].t) / 86400000;
@@ -505,6 +504,7 @@ async function refreshMeterOnce(meter) {
     if (!r.ok) throw new Error(r.error || t('nesco.no_data'));
     meter.info = Object.assign({}, meter.info, r.info);
     meter.history = r.history || [];
+    meter.monthlyUsage = r.monthlyUsage || [];
     if (!meter._cachedHistoryLen || meter._cachedHistoryLen !== meter.history.length) {
       meter.avgDailyCost = nescoAvgDailyCost(meter.history);
       meter._cachedHistoryLen = meter.history.length;
@@ -981,10 +981,30 @@ function nescoUnitsToTaka(units) {
   return Math.round(taka * 100) / 100;
 }
 function parseNescoDate(s) {
-  const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(s || ''));
-  if (!m) return null;
-  const day = m[1].padStart(2, '0');
-  return `${m[3]}-${NESCO_MONTHS[m[2]] || '426'}-${day}`;
+  const str = String(s || '').trim();
+  if (!str) return null;
+  const FULL_MONTHS = { 'january':'01','february':'02','march':'03','april':'04','may':'05','june':'06','july':'07','august':'08','september':'09','october':'10','november':'11','december':'12' };
+  let m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/i.exec(str);
+  if (m && NESCO_MONTHS[m[2].toUpperCase()]) return `${m[3]}-${NESCO_MONTHS[m[2].toUpperCase()]}-${m[1].padStart(2, '0')}`;
+  m = /^(\d{1,2})-([A-Za-z]+)-(\d{4})/i.exec(str);
+  if (m && FULL_MONTHS[m[2].toLowerCase()]) return `${m[3]}-${FULL_MONTHS[m[2].toLowerCase()]}-${m[1].padStart(2, '0')}`;
+  m = /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/i.exec(str);
+  if (m && FULL_MONTHS[m[2].toLowerCase()]) return `${m[3]}-${FULL_MONTHS[m[2].toLowerCase()]}-${m[1].padStart(2, '0')}`;
+  m = /^(\d{4})-([A-Za-z]+)-(\d{1,2})/i.exec(str);
+  if (m && FULL_MONTHS[m[2].toLowerCase()]) return `${m[1]}-${FULL_MONTHS[m[2].toLowerCase()]}-${m[3].padStart(2, '0')}`;
+  m = /^(\d{4})-(\d{2})-(\d{2})/.exec(str);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(str);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  m = /^(\d{1,2})-(\d{1,2})-(\d{4})/.exec(str);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  m = /^(\d{4})\/(\d{1,2})\/(\d{1,2})/.exec(str);
+  if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})/.exec(str);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  m = /^(\d{4})\.(\d{1,2})\.(\d{1,2})/.exec(str);
+  if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  return null;
 }
 function parseNescoReadingDate(s) {
   if (!s) return null;
@@ -1000,17 +1020,41 @@ function parseNescoReadingDate(s) {
 function renderNescoTotalUse(m) {
   const hist = m.history || [];
   if (!hist.length) return '';
+  const safeNum = v => { const n = parseFloat(String(v || 0).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+  const now = new Date();
+
+  const mu = m.monthlyUsage || [];
+  const byMonth = {};
+  for (const row of mu) {
+    if (row.key && row.nums && row.nums.length >= 5) {
+      byMonth[row.key] = { taka: row.nums[3], unit: row.nums[row.nums.length - 1] };
+    }
+  }
+
+  if (!Object.keys(byMonth).length) {
+    for (const r of hist) {
+      const full = parseNescoDate(r.rechargeDate);
+      if (!full) continue;
+      const key = full.slice(0, 7);
+      if (!byMonth[key]) byMonth[key] = { taka: 0, unit: 0 };
+      byMonth[key].taka += safeNum(r.rechargeAmount);
+      byMonth[key].unit += safeNum(r.energyUnit);
+    }
+  }
+
+  const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastKey = `${lm.getFullYear()}-${pad(lm.getMonth() + 1)}`;
+  const lastMonth = byMonth[lastKey] || { taka: 0, unit: 0 };
   let totalTaka = 0, totalUnit = 0;
   let earliestDate = null;
   for (const r of hist) {
-    totalTaka += Number(r.rechargeAmount) || 0;
-    totalUnit += Number(r.energyUnit) || 0;
+    totalTaka += safeNum(r.rechargeAmount);
+    totalUnit += safeNum(r.energyUnit);
     const d = parseNescoDate(r.rechargeDate);
     if (d && (!earliestDate || d < earliestDate)) earliestDate = d;
   }
-  if (!earliestDate || totalTaka <= 0) return '';
+  if (!earliestDate || totalTaka <= 0) return renderTotalUseCard({ taka: 0, unit: 0 }, lastMonth);
   const balance = Number(m.balance);
-  const now = new Date();
   if (!isNaN(balance) && balance < totalTaka) {
     const consumedTaka = totalTaka - balance;
     const consumedUnit = nescoTakaToUnits(consumedTaka);
@@ -1019,26 +1063,13 @@ function renderNescoTotalUse(m) {
     const dailyTaka = consumedTaka / daysDiff;
     const dailyUnit = consumedUnit / daysDiff;
     const thisMonthDays = now.getDate();
-    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthDays = new Date(lastMonthDate.getFullYear(), lastMonthDate.getMonth() + 1, 0).getDate();
     return renderTotalUseCard(
       { taka: Math.round(dailyTaka * thisMonthDays * 100) / 100, unit: Math.round(dailyUnit * thisMonthDays * 100) / 100 },
-      { taka: Math.round(dailyTaka * lastMonthDays * 100) / 100, unit: Math.round(dailyUnit * lastMonthDays * 100) / 100 }
+      lastMonth
     );
   }
-  const byMonth = {};
-  for (const r of hist) {
-    const full = parseNescoDate(r.rechargeDate);
-    if (!full) continue;
-    const key = full.slice(0, 7);
-    if (!byMonth[key]) byMonth[key] = { taka: 0, unit: 0 };
-    byMonth[key].taka += Number(r.rechargeAmount) || 0;
-    byMonth[key].unit += Number(r.energyUnit) || 0;
-  }
   const thisKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
-  const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const lastKey = `${lm.getFullYear()}-${pad(lm.getMonth() + 1)}`;
-  return renderTotalUseCard(byMonth[thisKey] || { taka: 0, unit: 0 }, byMonth[lastKey] || { taka: 0, unit: 0 });
+  return renderTotalUseCard(byMonth[thisKey] || { taka: 0, unit: 0 }, lastMonth);
 }
 function renderInfoCard(m) {
   const i = m.info || {};
@@ -1175,6 +1206,8 @@ function renderMonthlyChart(m, monthly) {
   </section>`;
 }
 function renderTotalUse(monthly, hist, balance) {
+  const nm = normalizeMonthly(monthly);
+  const lastMonth = nm[nm.length - 2] || { taka: 0, unit: 0 };
   const h = hist || [];
   if (h.length && balance != null) {
     let totalTaka = 0;
@@ -1192,18 +1225,12 @@ function renderTotalUse(monthly, hist, balance) {
       const dailyT = consumedTaka / daysDiff;
       const now = new Date();
       const thisDays = now.getDate();
-      const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const lastDays = new Date(lm.getFullYear(), lm.getMonth() + 1, 0).getDate();
       const thisMT = Math.round(dailyT * thisDays * 100) / 100;
-      const lastMT = Math.round(dailyT * lastDays * 100) / 100;
       const thisMonth = { taka: thisMT, unit: descoTakaToKwh(thisMT) };
-      const lastMonth = { taka: lastMT, unit: descoTakaToKwh(lastMT) };
       return renderTotalUseCard(thisMonth, lastMonth);
     }
   }
-  const nm = normalizeMonthly(monthly);
   const thisMonth = nm[nm.length - 1] || { taka: 0, unit: 0 };
-  const lastMonth = nm[nm.length - 2] || { taka: 0, unit: 0 };
   return renderTotalUseCard(thisMonth, lastMonth);
 }
 function renderTotalUseCard(thisMonth, lastMonth) {
@@ -1294,7 +1321,7 @@ function renderHome() {
   c.innerHTML = demoBanner + `
     <div style="display:flex;align-items:center;justify-content:space-between">
       <h2 class="section-title">${esc(t('home.title'))}</h2>
-      <span style="font-size:12px;color:var(--text-2)">${esc(t('home.last_updated', { t: timeAgo(Math.max(...state.meters.map(m => m.readingTime ? new Date(m.readingTime).getTime() : (m.updatedAt || 0)))) }))}</span>
+      <span style="font-size:12px;color:var(--text-2)">${esc(t('home.last_updated', { t: timeAgo(Math.max(...state.meters.map(m => m.updatedAt || 0))) }))}</span>
     </div>
     <p class="home-desc">${esc(t('home.desc'))}</p>
     <div class="meter-grid">${list}</div>
@@ -1533,7 +1560,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.44'} (build ${'435'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.45'} (build ${'438'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {

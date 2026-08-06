@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const PANEL = 'https://customer.nesco.gov.bd/pre/panel';
 const SUBMIT_HISTORY = '\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF'; // রিচার্জ হিস্ট্রি
+const SUBMIT_MONTHLY = '\u09AE\u09BE\u09B8\u09BF\u0995 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0'; // মাসিক ব্যবহার
 
 /* ---------- tiny https request helper ---------- */
 function req(url, opts = {}) {
@@ -60,7 +61,6 @@ function attr(html, re) {
   const m = html.match(re);
   return m ? m[1].trim() : '';
 }
-
 function parseHtml(html) {
   const start = html.indexOf('id="con_info_div"');
   if (start < 0) {
@@ -70,10 +70,9 @@ function parseHtml(html) {
   if (end < 0) end = html.indexOf('arrear_notice_div', start);
   if (end < 0) end = html.length;
   const seg = html.slice(start, end);
-  // Only extract readonly inputs (actual customer data fields)
   const inputs = [...seg.matchAll(/<input[^>]*readonly[^>]*value="([^"]*)"/g)].map(m => m[1]);
   const take = i => (inputs[i] || '').trim();
-  const info = {
+  let info = {
     name: take(0),
     fatherOrHusband: take(1),
     address: take(2),
@@ -90,6 +89,7 @@ function parseHtml(html) {
     minimumRecharge: take(13),
     balance: take(14),
   };
+
   const hist = [];
   const reRows = /<[^>]*?consumerRechargeData[^>]*>/g;
   let m2;
@@ -102,11 +102,151 @@ function parseHtml(html) {
     keys.forEach(k => { o[k] = attr(tag, new RegExp(`data-${k}=["']([^"']*)`, 'i')); });
     if (o.order || o.token) hist.push(o);
   }
+
+  if (!info.consumerNo && hist.length) {
+    const first = hist[0];
+    info = {
+      name: first.customername || '',
+      fatherOrHusband: '',
+      address: '',
+      mobile: '',
+      office: '',
+      feeder: '',
+      consumerNo: first.customerno || '',
+      meterNo: first.meterno || '',
+      sanctionedLoad: first.sanctionload || '',
+      tariff: first.tariff || '',
+      meterType: '',
+      meterStatus: '',
+      installDate: '',
+      minimumRecharge: '',
+      balance: '',
+      organization: first.organization || '',
+    };
+  }
+
   return { info, history: hist };
 }
 
 /* ---------- type NESCO proxy ---------- */
 async function nescoLookup(cust) {
+  cust = String(cust).replace(/\D/g, '').slice(0, 11);
+  if (!cust) throw new Error('missing customer number');
+
+  async function fetchNesco(submit) {
+    const get = await req(PANEL);
+    const panelHtml = get.body.toString('utf8');
+    const token = extractToken(panelHtml);
+    if (!token) throw new Error('no csrf token');
+    const cookie = sessionCookie(get.headers);
+    if (!cookie) throw new Error('no session cookie');
+    const form = '_token=' + encodeURIComponent(token) +
+      '&cust_no=' + encodeURIComponent(cust) +
+      '&submit=' + encodeURIComponent(submit);
+    const resp = await req(PANEL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': cookie,
+        'Origin': 'https://customer.nesco.gov.bd',
+        'Referer': PANEL,
+      },
+      body: form,
+    });
+    return { resp, panelHtml };
+  }
+
+  const { resp: histPost, panelHtml } = await fetchNesco(SUBMIT_HISTORY);
+  if (histPost.status !== 200) throw new Error('nesco portal http ' + histPost.status);
+  const histHtml = histPost.body.toString('utf8');
+  const { info, history } = parseHtml(histHtml);
+  if (!info.consumerNo && !info.name && !info.meterNo && !history.length) throw new Error('NESCO returned no customer data. The portal may have changed or blocked this request.');
+
+  if (!info.balance) {
+    const balPatterns = [
+      /অবশিষ্ট ব্যালেন্স[\s\S]*?disabled[^>]*?value="?\s*([\d,.]+)\s*"?/i,
+      /অবশিষ্ট ব্যালেন্স[\s\S]*?value="?\s*([\d,.]+)\s*"?/i,
+      /(?:Remaining|অবশিষ্ট)\s*(?:balance|ব্যালেন্স)[\s\S]{0,300}?([\d,]+\.?\d*)/,
+      /data-balance=["']([\d,.]+)/i,
+    ];
+    for (const pat of balPatterns) {
+      const m = histHtml.match(pat) || (panelHtml && panelHtml.match(pat));
+      if (m) { info.balance = m[1].replace(/[, ]/g, ''); break; }
+    }
+  }
+
+  if (!info.readingDate) {
+    const dateMatch = histHtml.match(/(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i);
+    if (dateMatch) info.readingDate = dateMatch[1].trim();
+  }
+
+  let monthlyUsage = [];
+  try {
+    const { resp: monthlyPost } = await fetchNesco(SUBMIT_MONTHLY);
+    if (monthlyPost.status === 200) {
+      monthlyUsage = parseMonthlyUsageHtml(monthlyPost.body.toString('utf8'));
+    }
+  } catch { /* monthly not available */ }
+
+  return {
+    info,
+    monthlyUsage,
+    history: history.map(h => {
+      const num = v => { const n = parseFloat(String(v || 0).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+      return {
+        orderId: h.order || '', tokenNo: h.token || '', seqNo: h.seq || '',
+        meterRent: num(h.rent), demandCharge: num(h.demandcharge),
+        vat: num(h.tax), pfcCharge: num(h.pfc),
+        subsidy: num(h.subsidyamount), electricityAmount: num(h.purchaseamount),
+        rechargeAmount: num(h.totalamount), energyUnit: num(h.purchaseenergy),
+        method: h.salename || '', rechargeDate: h.purchasedate || '',
+        debtAmount: num(h.debtamount), paidAmount: num(h.paidamount),
+        meterNo: h.meterno || '', customerNo: h.customerno || '',
+        customerName: h.customername || '', tariff: h.tariff || '', organization: h.organization || '',
+      };
+    }),
+  };
+}
+
+const MONTH_MAP = {
+  'january': '01', 'february': '02', 'march': '03', 'april': '04',
+  'may': '05', 'june': '06', 'july': '07', 'august': '08',
+  'september': '09', 'october': '10', 'november': '11', 'december': '12',
+  'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+  'jun': '06', 'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12',
+  'জানুয়ারি': '01', 'ফেব্রুয়ারি': '02', 'মার্চ': '03', 'এপ্রিল': '04',
+  'মে': '05', 'জুন': '06', 'জুলাই': '07', 'আগস্ট': '08',
+  'সেপ্টেম্বর': '09', 'অক্টোবর': '10', 'নভেম্বর': '11', 'ডিসেম্বর': '12',
+};
+
+function parseMonthlyUsageHtml(html) {
+  const rows = [];
+  const reTr = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let tr;
+  while ((tr = reTr.exec(html))) {
+    const tds = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(m => m[1].replace(/<[^>]*>/g, '').trim());
+    if (tds.length < 5) continue;
+    let year = null, month = null;
+    for (const td of tds) {
+      const lower = td.toLowerCase().trim();
+      for (const [name, num] of Object.entries(MONTH_MAP)) {
+        if (lower === name || lower.includes(name)) { month = num; break; }
+      }
+      if (month && year) break;
+    }
+    if (!month) continue;
+    for (const td of tds) {
+      if (month && /^\d{4}$/.test(td.trim())) { year = td.trim(); break; }
+    }
+    if (!year || !month) continue;
+    const nums = tds.map(s => parseFloat(s.replace(/,/g, ''))).filter(n => !isNaN(n));
+    if (nums.length < 3) continue;
+    rows.push({ key: `${year}-${month}`, tds, nums });
+  }
+  return rows;
+}
+
+async function nescoMonthlyUsage(cust) {
   cust = String(cust).replace(/\D/g, '').slice(0, 11);
   if (!cust) throw new Error('missing customer number');
 
@@ -118,7 +258,7 @@ async function nescoLookup(cust) {
 
   const form = '_token=' + encodeURIComponent(token) +
     '&cust_no=' + encodeURIComponent(cust) +
-    '&submit=' + encodeURIComponent(SUBMIT_HISTORY);
+    '&submit=' + encodeURIComponent(SUBMIT_MONTHLY);
   const post = await req(PANEL, {
     method: 'POST',
     headers: {
@@ -130,22 +270,55 @@ async function nescoLookup(cust) {
     body: form,
   });
   if (post.status !== 200) throw new Error('nesco portal http ' + post.status);
-  const { info, history } = parseHtml(post.body.toString('utf8'));
-  if (!info.consumerNo && !info.name && !info.meterNo) throw new Error('NESCO returned no customer data. The portal may have changed or blocked this request.');
-  return {
-    info,
-    history: history.map(h => ({
-      orderId: h.order, tokenNo: h.token, seqNo: h.seq,
-      meterRent: +(h.rent || 0), demandCharge: +(h.demandcharge || 0),
-      vat: +(h.tax || 0), pfcCharge: +(h.pfc || 0),
-      subsidy: +(h.subsidyamount || 0), electricityAmount: +(h.purchaseamount || 0),
-      rechargeAmount: +(h.totalamount || 0), energyUnit: +(h.purchaseenergy || 0),
-      method: h.salename || '', rechargeDate: h.purchasedate || '',
-      debtAmount: +(h.debtamount || 0), paidAmount: +(h.paidamount || 0),
-      meterNo: h.meterno || '', customerNo: h.customerno || '',
-      customerName: h.customername || '', tariff: h.tariff || '', organization: h.organization || '',
-    })),
-  };
+  const html = post.body.toString('utf8');
+  return parseMonthlyUsageHtml(html);
+}
+
+/* ---------- NESCO debug ---------- */
+async function nescoDebug(cust) {
+  cust = String(cust).replace(/\D/g, '').slice(0, 11);
+  if (!cust) throw new Error('missing customer number');
+
+  async function fetchNesco(submit) {
+    const get = await req(PANEL);
+    const token = extractToken(get.body.toString('utf8'));
+    if (!token) throw new Error('no csrf token');
+    const cookie = sessionCookie(get.headers);
+    if (!cookie) throw new Error('no session cookie');
+    const form = '_token=' + encodeURIComponent(token) +
+      '&cust_no=' + encodeURIComponent(cust) +
+      '&submit=' + encodeURIComponent(submit);
+    return req(PANEL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': cookie, 'Origin': 'https://customer.nesco.gov.bd', 'Referer': PANEL },
+      body: form,
+    });
+  }
+
+  const histPost = await fetchNesco(SUBMIT_HISTORY);
+  const histHtml = histPost.body.toString('utf8');
+  const { info, history } = parseHtml(histHtml);
+
+  if (!info.readingDate) {
+    const dateMatch = histHtml.match(/(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i);
+    if (dateMatch) info.readingDate = dateMatch[1].trim();
+  }
+
+  const monthlyPost = await fetchNesco(SUBMIT_MONTHLY);
+  const monthlyHtml = monthlyPost.body.toString('utf8');
+  const monthlyUsage = parseMonthlyUsageHtml(monthlyHtml);
+
+  const balMatches = [];
+  const balRe = /(?:balance|ব্যালেন্স|Remaining|বাকি|সুবিধা)[^<]{0,100}/gi;
+  let bm;
+  while ((bm = balRe.exec(histHtml))) balMatches.push(bm[0].slice(0, 150));
+  const balRe2 = /(?:balance|ব্যালেন্স|Remaining|বাকি|সুবিধা)[^<]{0,100}/gi;
+  while ((bm = balRe2.exec(monthlyHtml))) balMatches.push('monthly:' + bm[0].slice(0, 150));
+
+  const balSnippet = histHtml.match(/অবশিষ্ট ব্যালেন্স[\s\S]{0,800}/i);
+  const snippet = balSnippet ? balSnippet[0].replace(/\s+/g, ' ').slice(0, 800) : null;
+
+  return { info, historyCount: history.length, monthlyUsageCount: monthlyUsage.length, readingDate: info.readingDate || null, snippet };
 }
 
 /* ---------- static server ---------- */
@@ -171,6 +344,18 @@ const server = http.createServer((req, res) => {
     if (url.searchParams.get('probe')) {
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ ok: true, probe: true }));
+      return;
+    }
+    if (url.searchParams.get('debug')) {
+      nescoDebug(cust)
+        .then(data => {
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ ok: true, ...data }));
+        })
+        .catch(err => {
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        });
       return;
     }
     nescoLookup(cust)
