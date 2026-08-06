@@ -1663,7 +1663,11 @@ function applyTheme() {
     ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oled' : 'light')
     : state.settings.theme;
   document.documentElement.dataset.theme = t1;
-  document.querySelector('meta[name="theme-color"]').content = t1 === 'oled' ? '#0a0a0a' : t1 === 'dark' ? '#1a1f2a' : '#e8ebf0';
+  const themeColor = t1 === 'oled' ? '#0a0a0a' : t1 === 'dark' ? '#1a1f2a' : '#e8ebf0';
+  document.querySelector('meta[name="theme-color"]').content = themeColor;
+  if (window.NescoBridge && NescoBridge.setStatusBarColor) {
+    NescoBridge.setStatusBarColor(themeColor);
+  }
 }
 async function enableNotifications() {
   if (!('Notification' in window)) { toast(t('alerts.perm'), true); return; }

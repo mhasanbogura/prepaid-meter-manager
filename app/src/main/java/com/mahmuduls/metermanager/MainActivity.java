@@ -3,10 +3,14 @@ package com.mahmuduls.metermanager;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -527,6 +531,30 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 return "";
             }
+        }
+
+        @JavascriptInterface
+        public void setStatusBarColor(String colorHex) {
+            mainHandler.post(() -> {
+                try {
+                    Window window = getWindow();
+                    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                    int color = android.graphics.Color.parseColor(colorHex);
+                    window.setStatusBarColor(color);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        boolean light = android.graphics.Color.luminance(color) > 0.5;
+                        if (light) {
+                            window.getDecorView().setSystemUiVisibility(
+                                window.getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                        } else {
+                            window.getDecorView().setSystemUiVisibility(
+                                window.getDecorView().getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "setStatusBarColor error", e);
+                }
+            });
         }
     }
 
