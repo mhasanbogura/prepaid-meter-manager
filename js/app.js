@@ -493,13 +493,24 @@ async function refreshMeterOnce(meter) {
     if (!r.ok) throw new Error(r.error || t('nesco.no_data'));
     meter.info = Object.assign({}, meter.info, r.info);
     meter.history = r.history || [];
-    meter.avgDailyCost = nescoAvgDailyCost(meter.history);
+    if (!meter._cachedHistoryLen || meter._cachedHistoryLen !== meter.history.length) {
+      meter.avgDailyCost = nescoAvgDailyCost(meter.history);
+      meter._cachedHistoryLen = meter.history.length;
+    }
     const bal = Number(r.info.balance);
     if (!isNaN(bal)) { meter.balance = bal; }
     if (r.info.lastReading) {
       meter.lastReading = r.info.lastReading;
     }
-    meter.readingTime = new Date().toISOString();
+    if (r.info.readingDate) {
+      const rd = parseNescoDate(r.info.readingDate);
+      if (rd) meter.readingTime = rd + 'T00:00:00.000Z';
+    }
+    if (!meter.readingTime && meter.history.length > 0) {
+      const rd = parseNescoDate(meter.history[0].rechargeDate);
+      if (rd) meter.readingTime = rd + 'T00:00:00.000Z';
+    }
+    if (!meter.readingTime) meter.readingTime = new Date().toISOString();
     meter.consumerNo = r.info.consumerNo || meter.consumerNo;
     meter.err = null;
   }
@@ -927,7 +938,8 @@ const NESCO_MONTHS = { 'JAN':'01','FEB':'02','MAR':'03','APR':'04','MAY':'05','J
 function parseNescoDate(s) {
   const m = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(String(s || ''));
   if (!m) return null;
-  return `${m[3]}-${NESCO_MONTHS[m[2]] || '01'}`;
+  const day = m[1].padStart(2, '0');
+  return `${m[3]}-${NESCO_MONTHS[m[2]] || '01'}-${day}`;
 }
 function renderNescoTotalUse(m) {
   const hist = m.history || [];
@@ -1641,8 +1653,17 @@ function registerSw() {
 }
 
 /* ================= boot ================= */
+function dailyCacheCleanup() {
+  const today = new Date().toISOString().slice(0, 10);
+  const lastCleanup = localStorage.getItem('last_cache_cleanup');
+  if (lastCleanup === today) return;
+  localStorage.removeItem('cached_about_md');
+  localStorage.removeItem('cached_contact_md');
+  localStorage.setItem('last_cache_cleanup', today);
+}
 async function boot() {
   loadState();
+  dailyCacheCleanup();
   applyLang();
   applyTheme();
   initUi();
