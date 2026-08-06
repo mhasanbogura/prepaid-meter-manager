@@ -154,7 +154,7 @@ input[type="text"].wide { width: 100%; min-width: 0; margin-top: 8px; }
   -webkit-tap-highlight-color: transparent; user-select: none;
 }
 .btn:active, .btn.pressed { filter: brightness(.85); }
-.btn.secondary { background: var(--surface-2); color: var(--text); border: 0.3px solid var(--border); border-radius: 11px; }
+.btn.secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 11px; }
 .btn.secondary:active, .btn.secondary.pressed { background: #c8ccd2; }
 .btn.danger { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 .btn.block { width: 100%; }
