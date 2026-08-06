@@ -62,6 +62,33 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                String lower = url.toLowerCase();
+                if (lower.startsWith("http://") || lower.startsWith("https://")) {
+                    if (lower.contains("wa.me/") || lower.contains("api.whatsapp.com") ||
+                        lower.contains("m.me/") || lower.contains("fb-messenger://") ||
+                        lower.contains("instagram.com/") || lower.contains("instagram://") ||
+                        lower.contains("t.me/") || lower.contains("tg://") ||
+                        lower.contains("twitter.com/") || lower.contains("x.com/") ||
+                        lower.contains("facebook.com/") || lower.contains("fb.com/") ||
+                        lower.contains("linkedin.com/") || lower.contains("youtube.com/") ||
+                        lower.contains("github.com/")) {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            // fallback: let WebView handle it
+                        }
+                        return true;
+                    }
+                } else if (!lower.startsWith("javascript:")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                    return true;
+                }
                 return false;
             }
         });
