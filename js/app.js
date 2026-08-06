@@ -1545,7 +1545,7 @@ function renderSettings() {
   };
   $('#settLangToggle').onclick = () => {
     state.settings.lang = state.settings.lang === 'bn' ? 'en' : 'bn';
-    saveSettings(); renderSettings(); applyLang();
+    saveSettings(); applyLang(); renderSettings();
   };
   $('#settThreshold').onchange = (e) => {
     const v = Number(e.target.value);
