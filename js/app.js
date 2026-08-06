@@ -1633,7 +1633,7 @@ window._settingsContact = async function(el) {
   for (const { label, value } of entries) {
     const lower = label.toLowerCase();
     let href = value;
-    if (lower.includes('whatsapp')) href = 'https://wa.me/' + value.replace(/[^0-9]/g, '');
+    if (lower.includes('whatsapp')) { const digits = value.replace(/[^0-9]/g, ''); href = digits.length >= 7 ? 'https://wa.me/' + digits : 'https://wa.me/' + value.replace(/^https?:\/\/(www\.)?(wa\.me|api\.whatsapp\.com\/send)\//, ''); }
     else if (lower.includes('messenger')) href = 'https://m.me/' + value.replace(/^https?:\/\/(www\.)?(m\.me|facebook\.com\/messages)\//, '');
     else if (lower.includes('email') || lower.includes('mail')) href = 'mailto:' + value;
     else if (lower.includes('github')) href = 'https://github.com/' + value.replace(/^https?:\/\/github\.com\//, '');
