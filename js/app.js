@@ -504,11 +504,7 @@ async function refreshMeterOnce(meter) {
     if (r.info.lastReading) {
       meter.lastReading = r.info.lastReading;
     }
-    if (meter.history.length > 0) {
-      const rd = parseNescoDate(meter.history[0].rechargeDate);
-      if (rd) meter.readingTime = rd + 'T00:00:00.000Z';
-    }
-    if (!meter.readingTime) meter.readingTime = new Date().toISOString();
+    meter.readingTime = new Date().toISOString();
     meter.consumerNo = r.info.consumerNo || meter.consumerNo;
     meter.err = null;
   }
@@ -954,20 +950,25 @@ function renderNescoTotalUse(m) {
   if (!earliestDate || totalTaka <= 0) return '';
   const balance = Number(m.balance);
   const now = new Date();
+  const byMonth = {};
+  for (const r of hist) {
+    const full = parseNescoDate(r.rechargeDate);
+    if (!full) continue;
+    const key = full.slice(0, 7);
+    if (!byMonth[key]) byMonth[key] = { taka: 0, unit: 0 };
+    byMonth[key].taka += Number(r.rechargeAmount) || 0;
+    byMonth[key].unit += Number(r.energyUnit) || 0;
+  }
+  const thisKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+  const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastKey = `${lm.getFullYear()}-${pad(lm.getMonth() + 1)}`;
+  const thisMonthData = byMonth[thisKey];
+  const lastMonthData = byMonth[lastKey];
+  if (thisMonthData || lastMonthData) {
+    return renderTotalUseCard(thisMonthData || { taka: 0, unit: 0 }, lastMonthData || { taka: 0, unit: 0 });
+  }
   if (isNaN(balance) || balance >= totalTaka) {
-    const byMonth = {};
-    for (const r of hist) {
-      const full = parseNescoDate(r.rechargeDate);
-      if (!full) continue;
-      const key = full.slice(0, 7);
-      if (!byMonth[key]) byMonth[key] = { taka: 0, unit: 0 };
-      byMonth[key].taka += Number(r.rechargeAmount) || 0;
-      byMonth[key].unit += Number(r.energyUnit) || 0;
-    }
-    const thisKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
-    const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastKey = `${lm.getFullYear()}-${pad(lm.getMonth() + 1)}`;
-    return renderTotalUseCard(byMonth[thisKey] || { taka: 0, unit: 0 }, byMonth[lastKey] || { taka: 0, unit: 0 });
+    return renderTotalUseCard({ taka: 0, unit: 0 }, { taka: 0, unit: 0 });
   }
   const consumedTaka = totalTaka - balance;
   const costPerUnit = totalUnit > 0 ? totalTaka / totalUnit : 0;
