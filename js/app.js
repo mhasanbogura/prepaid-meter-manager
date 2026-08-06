@@ -988,11 +988,11 @@ function parseNescoReadingDate(s) {
   if (!s) return null;
   const FULL_MONTHS = { 'january':'01','february':'02','march':'03','april':'04','may':'05','june':'06','july':'07','august':'08','september':'09','october':'10','november':'11','december':'12' };
   const m1 = /^(\d{1,2})-([A-Z]{3})-(\d{4})/.exec(s);
-  if (m1 && NESCO_MONTHS[m1[2]]) return `${m1[3]}-${NESCO_MONTHS[m1[2]]}-${m1[1].padStart(2,'0')}T00:00:00.000Z`;
+  if (m1 && NESCO_MONTHS[m1[2]]) return `${m1[3]}-${NESCO_MONTHS[m1[2]]}-${m1[1].padStart(2,'0')}T00:00:00+06:00`;
   const m2 = /^(\d{1,2})\s+(\w+)\s+(\d{4})/.exec(s);
-  if (m2 && FULL_MONTHS[m2[2].toLowerCase()]) return `${m2[3]}-${FULL_MONTHS[m2[2].toLowerCase()]}-${m2[1].padStart(2,'0')}T00:00:00.000Z`;
+  if (m2 && FULL_MONTHS[m2[2].toLowerCase()]) return `${m2[3]}-${FULL_MONTHS[m2[2].toLowerCase()]}-${m2[1].padStart(2,'0')}T00:00:00+06:00`;
   const m3 = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s);
-  if (m3) return `${m3[3]}-${m3[2].padStart(2,'0')}-${m3[1].padStart(2,'0')}T00:00:00.000Z`;
+  if (m3) return `${m3[3]}-${m3[2].padStart(2,'0')}-${m3[1].padStart(2,'0')}T00:00:00+06:00`;
   return null;
 }
 function renderNescoTotalUse(m) {
