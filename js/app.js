@@ -1677,6 +1677,9 @@ function applyTheme() {
   if (window.NescoBridge && NescoBridge.setStatusBarColor) {
     NescoBridge.setStatusBarColor(themeColor);
   }
+  if (window.NescoBridge && NescoBridge.saveTheme) {
+    NescoBridge.saveTheme(t1);
+  }
 }
 async function enableNotifications() {
   if (!('Notification' in window)) { toast(t('alerts.perm'), true); return; }

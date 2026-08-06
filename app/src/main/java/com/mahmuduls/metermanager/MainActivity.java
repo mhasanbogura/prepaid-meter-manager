@@ -41,6 +41,9 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        String savedTheme = getSharedPreferences("MeterManager", MODE_PRIVATE).getString("theme", "light");
+        setStatusBarColorDirect("light".equals(savedTheme) ? "#e8ebf0" : "oled".equals(savedTheme) ? "#0a0a0a" : "#1a1f2a");
+
         getWindow().setDecorFitsSystemWindows(true);
 
         webView = new WebView(this);
@@ -573,33 +576,12 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void setStatusBarColor(String colorHex) {
-            mainHandler.post(() -> {
-                try {
-                    Window window = getWindow();
-                    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-                    int color = android.graphics.Color.parseColor(colorHex);
-                    window.setStatusBarColor(color);
-                    boolean light = android.graphics.Color.luminance(color) > 0.5;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        WindowInsetsController controller = window.getInsetsController();
-                        if (controller != null) {
-                            controller.setSystemBarsAppearance(
-                                light ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0,
-                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
-                        }
-                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        if (light) {
-                            window.getDecorView().setSystemUiVisibility(
-                                window.getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-                        } else {
-                            window.getDecorView().setSystemUiVisibility(
-                                window.getDecorView().getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "setStatusBarColor error", e);
-                }
-            });
+            mainHandler.post(() -> setStatusBarColorDirect(colorHex));
+        }
+
+        @JavascriptInterface
+        public void saveTheme(String theme) {
+            getSharedPreferences("MeterManager", MODE_PRIVATE).edit().putString("theme", theme).apply();
         }
     }
 
