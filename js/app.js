@@ -45,7 +45,7 @@ const I18N = {
     'detail.mobile': 'Mobile', 'detail.address': 'Address', 'detail.office': 'Office',
     'detail.meter_type': 'Meter type', 'detail.father': 'Father/Husband', 'detail.feed': 'Feeder',
     'detail.total_use': 'Total use', 'detail.this_month': 'This month', 'detail.last_month': 'Last month',
-    'detail.units': 'Units', 'detail.install_date': 'Install date', 'detail.min_recharge': 'Min. recharge', 'detail.method': 'Method',
+    'detail.units': 'Units', 'detail.install_date': 'Install date', 'detail.min_recharge': 'Min. recharge', 'detail.last_reading': 'Last reading', 'detail.method': 'Method',
     'edit.title': 'Edit meter', 'edit.nickname': 'Nickname', 'edit.nickname_hint': 'e.g. Home, Office', 'edit.low_threshold': 'Low balance threshold',
     'settings.title': 'Settings', 'settings.subtitle': 'Manage preferences and theme settings.',
     'settings.general': 'General Settings', 'settings.device_theme': 'Device Theme', 'settings.device_theme_hint': 'Automatically switch theme based on system',
@@ -123,7 +123,7 @@ const I18N = {
     'detail.mobile': 'মোবাইল', 'detail.address': 'ঠিকানা', 'detail.office': 'অফিস',
     'detail.meter_type': 'মিটারের ধরন', 'detail.father': 'বাবা/স্বামীর নাম', 'detail.feed': 'ফিডার',
     'detail.total_use': 'মোট ব্যবহার', 'detail.this_month': 'এই মাস', 'detail.last_month': 'গত মাস',
-    'detail.units': 'ইউনিট', 'detail.install_date': 'ইনস্টল তারিখ', 'detail.min_recharge': 'সর্বনিম্ন রিচার্জ', 'detail.method': 'পদ্ধতি',
+    'detail.units': 'ইউনিট', 'detail.install_date': 'ইনস্টল তারিখ', 'detail.min_recharge': 'সর্বনিম্ন রিচার্জ', 'detail.last_reading': 'শেষ রিডিং', 'detail.method': 'পদ্ধতি',
     'edit.title': 'মিটার সম্পাদনা', 'edit.nickname': 'ডাকনাম', 'edit.nickname_hint': 'যেমন: বাসা, অফিস', 'edit.low_threshold': 'কম ব্যালেন্স সীমা',
     'settings.title': 'সেটিংস', 'settings.subtitle': 'প্রয়োজন অনুযায়ী সেটিংস ও থিম পরিবর্তন করুন।',
     'settings.general': 'সাধারণ সেটিংস', 'settings.device_theme': 'ডিভাইস থিম', 'settings.device_theme_hint': 'সিস্টেমের উপর ভিত্তি করে স্বয়ংক্রিয়ভাবে থিম পরিবর্তন করুন',
@@ -496,6 +496,9 @@ async function refreshMeterOnce(meter) {
     meter.avgDailyCost = nescoAvgDailyCost(meter.history);
     const bal = Number(r.info.balance);
     if (!isNaN(bal)) { meter.balance = bal; }
+    if (r.info.lastReading) {
+      meter.lastReading = r.info.lastReading;
+    }
     meter.readingTime = new Date().toISOString();
     meter.consumerNo = r.info.consumerNo || meter.consumerNo;
     meter.err = null;
@@ -901,6 +904,7 @@ function renderNescoInfoCard(m) {
       ${kv(t('detail.meter'), i.meterNo)}${kv(t('detail.load'), i.sanctionedLoad)}${kv(t('detail.tariff'), i.tariff)}
       ${kv(t('detail.meter_type'), i.meterType)}${kv(t('detail.status'), i.meterStatus)}
       ${kv(t('detail.install_date'), i.installDate)}${kv(t('detail.min_recharge'), i.minimumRecharge)}
+      ${i.lastReading ? kv(t('detail.last_reading'), i.lastReading) : ''}
     </tbody></table>
   </section>`;
 }

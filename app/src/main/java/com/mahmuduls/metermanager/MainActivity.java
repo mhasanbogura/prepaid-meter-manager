@@ -216,6 +216,20 @@ public class MainActivity extends Activity {
         info.append(",\"installDate\":\"").append(esc(take(inputs, 12))).append("\"");
         info.append(",\"minimumRecharge\":\"").append(esc(take(inputs, 13))).append("\"");
         info.append(",\"balance\":\"").append(esc(take(inputs, 14))).append("\"");
+
+        String lastReading = "";
+        Pattern lrPat = Pattern.compile("last\\s*reading[^<]*?<[^>]*>([\\d.,]+)", Pattern.CASE_INSENSITIVE);
+        Matcher lrMat = lrPat.matcher(html);
+        if (lrMat.find()) lastReading = lrMat.group(1).trim();
+        if (lastReading.isEmpty()) {
+            Pattern lrPat2 = Pattern.compile("meter\\s*reading[^<]*?<[^>]*>([\\d.,]+)", Pattern.CASE_INSENSITIVE);
+            Matcher lrMat2 = lrPat2.matcher(html);
+            if (lrMat2.find()) lastReading = lrMat2.group(1).trim();
+        }
+        if (lastReading.isEmpty() && inputs.size() > 15) {
+            lastReading = take(inputs, 15);
+        }
+        info.append(",\"lastReading\":\"").append(esc(lastReading)).append("\"");
         info.append("}");
 
         Pattern rowPat = Pattern.compile("<[^>]*?consumerRechargeData[^>]*>");
