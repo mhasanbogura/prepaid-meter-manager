@@ -35,6 +35,7 @@ const I18N = {
     'detail.name': 'Name', 'detail.account': 'Account', 'detail.meter': 'Meter', 'detail.route': 'Route',
     'detail.load': 'Sanctioned load', 'detail.tariff': 'Tariff', 'detail.phase': 'Phase', 'detail.status': 'Status',
     'detail.reading_time': 'Last reading: {t}',
+    'detail.reading_value': 'Last reading: {v} kWh',
     'detail.daily': 'Daily consumption (last 15 days)', 'detail.monthly': 'Monthly consumption (last 12 months)',
     'detail.recharge_history': 'Recharge history', 'detail.recharge_empty': 'No recharges in the last year.',
     'detail.total': 'Total', 'detail.energy': 'Energy', 'detail.vat': 'VAT', 'detail.rebate': 'Rebate',
@@ -113,6 +114,7 @@ const I18N = {
     'detail.name': 'নাম', 'detail.account': 'অ্যাকাউন্ট', 'detail.meter': 'মিটার', 'detail.route': 'রুট',
     'detail.load': 'অনুমোদিত লোড', 'detail.tariff': 'ট্যারিফ', 'detail.phase': 'ফেজ', 'detail.status': 'স্ট্যাটাস',
     'detail.reading_time': 'শেষ রিডিং: {t}',
+    'detail.reading_value': 'শেষ রিডিং: {v} kWh',
     'detail.daily': 'দৈনিক ব্যবহার (শেষ ১৫ দিন)', 'detail.monthly': 'মাসিক ব্যবহার (শেষ ১২ মাস)',
     'detail.recharge_history': 'রিচার্জ ইতিহাস', 'detail.recharge_empty': 'গত এক বছরে কোনো রিচার্জ নেই।',
     'detail.total': 'মোট', 'detail.energy': 'এনার্জি', 'detail.vat': 'ভ্যাট', 'detail.rebate': 'রিবেট',
@@ -887,7 +889,7 @@ async function renderMeterDetail() {
       <div class="bh-meta">
         <span>${esc(t('detail.meter'))}: ${esc(m.info?.meterNo || m.meterNo || m.consumerNo || '–')}</span>
         ${m.avgDailyCost != null ? `<span>${esc(t('home.avg_day', { v: fmtBdt(m.avgDailyCost) }))}</span>` : ''}
-        <span>${esc(t('detail.reading_time', { t: m.readingTime ? fmtDate(m.readingTime) : '–' }))}</span>
+        ${m.provider === 'nesco' && m.lastReading ? `<span>${esc(t('detail.reading_value', { v: m.lastReading }))}</span>` : `<span>${esc(t('detail.reading_time', { t: m.readingTime ? fmtDate(m.readingTime) : '–' }))}</span>`}
       </div>
       ${m.loading ? '<div style="opacity:.9;font-size:12.5px">' + esc(t('home.refreshing')) + '</div>' : (m.err ? `<div style="opacity:.9;font-size:12.5px;color:#ffd9d9">${esc(m.err)}</div>` : '')}
     </div>
