@@ -81,6 +81,8 @@ const I18N = {
     'err.network': 'Network error. Check your connection and try again.',
     'err.server': 'DESCO server is temporarily unreachable.',
     'time.just': 'just now', 'time.min': '{m} min ago', 'time.hour': '{h} h ago',
+    'time.day': '{d} day ago', 'time.days': '{d} days ago', 'time.month': '{m} month ago', 'time.months': '{m} months ago',
+    'detail.balance_updated': 'Updated {t}',
     'today': 'Today'
   },
   bn: {
@@ -160,6 +162,8 @@ const I18N = {
     'err.network': 'নেটওয়ার্ক সমস্যা। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।',
     'err.server': 'ডেসকো সার্ভার সাময়িকভাবে অনুপলব্ধ।',
     'time.just': 'এইমাত্র', 'time.min': '{m} মিনিট আগে', 'time.hour': '{h} ঘণ্টা আগে',
+    'time.day': '{d} দিন আগে', 'time.days': '{d} দিন আগে', 'time.month': '{m} মাস আগে', 'time.months': '{m} মাস আগে',
+    'detail.balance_updated': '{t} আপডেট হয়েছে',
     'today': 'আজ'
   }
 };
@@ -297,7 +301,12 @@ function timeAgo(ts) {
   const m = Math.floor((Date.now() - ts) / 60000);
   if (m < 1) return t('time.just');
   if (m < 60) return t('time.min', { m });
-  return t('time.hour', { h: Math.floor(m / 60) });
+  const h = Math.floor(m / 60);
+  if (h < 24) return t('time.hour', { h });
+  const d = Math.floor(h / 24);
+  if (d < 30) return d === 1 ? t('time.day', { d }) : t('time.days', { d });
+  const mo = Math.floor(d / 30);
+  return mo === 1 ? t('time.month', { m: mo }) : t('time.months', { m: mo });
 }
 function toast(msg, isErr = false) {
   const el = $('#toast');
@@ -891,6 +900,7 @@ async function renderMeterDetail() {
         ${m.avgDailyCost != null ? `<span>${esc(t('home.avg_day', { v: fmtBdt(m.avgDailyCost) }))}</span>` : ''}
         ${m.provider === 'nesco' && m.lastReading ? `<span>${esc(t('detail.reading_value', { v: m.lastReading }))}</span>` : ''}
         <span>${esc(t('detail.reading_time', { t: m.readingTime ? fmtDate(m.readingTime) : '–' }))}</span>
+        <span class="balance-updated"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${esc(t('detail.balance_updated', { t: timeAgo(m.readingTime ? new Date(m.readingTime).getTime() : m.updatedAt) }))}</span>
       </div>
       ${m.loading ? '<div style="opacity:.9;font-size:12.5px">' + esc(t('home.refreshing')) + '</div>' : (m.err ? `<div style="opacity:.9;font-size:12.5px;color:#ffd9d9">${esc(m.err)}</div>` : '')}
     </div>
@@ -1277,13 +1287,13 @@ function renderHome() {
       </div>
       <div class="mc-number">${esc(m.nickname || m.info?.customerName || m.info?.name || '')}${(m.nickname || m.info?.customerName || m.info?.name) ? '<br>' : ''}${esc(m.accountNo || m.meterNo || m.consumerNo)}</div>
       <div class="mc-balance ${b !== null && low ? 'low' : ''}" style="${b !== null && low ? 'color:#ff6b6b' : ''}">${b === null ? '––' : fmtBdt(b)}${low ? ' <span style="font-size:12px;font-weight:700;color:#ff6b6b">' + esc(t('home.low')) + '</span>' : ''}</div>
-      <div class="mc-sub"><span>${avg || ''}</span><span>${m.updatedAt ? esc(t('home.last_updated', { t: timeAgo(m.updatedAt) })) : esc(t('home.updated_never'))}</span>${badge}</div>
+      <div class="mc-sub"><span>${avg || ''}</span><span>${m.readingTime ? esc(t('home.last_updated', { t: timeAgo(new Date(m.readingTime).getTime()) })) : (m.updatedAt ? esc(t('home.last_updated', { t: timeAgo(m.updatedAt) })) : esc(t('home.updated_never')))}</span>${badge}</div>
     </div>`;
   }).join('');
   c.innerHTML = demoBanner + `
     <div style="display:flex;align-items:center;justify-content:space-between">
       <h2 class="section-title">${esc(t('home.title'))}</h2>
-      <span style="font-size:12px;color:var(--text-2)">${esc(t('home.last_updated', { t: timeAgo(Math.max(...state.meters.map(m => m.updatedAt || 0))) }))}</span>
+      <span style="font-size:12px;color:var(--text-2)">${esc(t('home.last_updated', { t: timeAgo(Math.max(...state.meters.map(m => m.readingTime ? new Date(m.readingTime).getTime() : (m.updatedAt || 0)))) }))}</span>
     </div>
     <p class="home-desc">${esc(t('home.desc'))}</p>
     <div class="meter-grid">${list}</div>
