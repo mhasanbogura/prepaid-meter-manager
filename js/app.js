@@ -180,6 +180,7 @@ const NESCO_API = '/nesco';
 var state = { meters: [], settings: null };
 var currentView = 'home';
 var currentMeterId = null;
+let homeScrollY = 0;
 let langs = I18N.en;
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -876,6 +877,7 @@ function scrollToTop() {
 function openMeter(id) {
   currentMeterId = id;
   currentView = 'meter';
+  homeScrollY = window.scrollY || document.documentElement.scrollTop || 0;
   history.pushState({ view: 'meter', id }, '', '');
   scrollToTop();
   renderMeterDetail();
@@ -1432,10 +1434,17 @@ function drawChart(canvas, labels, series) {
 
 /* ================= views / nav ================= */
 function showView(name) {
+  const prev = currentView;
   currentView = name;
-  if (name === 'home') { currentMeterId = null; $('#view-home').style.display=''; $('#view-settings').style.display='none'; renderHome(); }
+  if (name === 'home') {
+    currentMeterId = null;
+    $('#view-home').style.display=''; $('#view-settings').style.display='none';
+    renderHome();
+    if (prev !== 'meter') scrollToTop();
+    else requestAnimationFrame(() => window.scrollTo(0, homeScrollY));
+  }
   if (name === 'meter') renderMeterDetail();
-  scrollToTop();
+  if (name !== 'home' || prev === 'home') scrollToTop();
 }
 function initUi() {
   $('#btnBrand').onclick = () => { currentView = 'home'; currentMeterId = null; $('#view-home').style.display=''; $('#view-settings').style.display='none'; renderHome(); scrollToTop(); };
