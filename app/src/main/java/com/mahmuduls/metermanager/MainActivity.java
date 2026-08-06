@@ -10,6 +10,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -62,6 +63,15 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 injectOverrides();
+                view.evaluateJavascript(
+                    "(function(){var t=document.querySelector('meta[name=theme-color]');return t?t.content:'light'})()",
+                    value -> {
+                        String color = value != null ? value.replace("\"", "") : "light";
+                        if ("light".equals(color)) color = "#e8ebf0";
+                        else if ("dark".equals(color)) color = "#1a1f2a";
+                        else if ("oled".equals(color)) color = "#0a0a0a";
+                        setStatusBarColorDirect(color);
+                    });
             }
 
             @Override
@@ -398,6 +408,34 @@ public class MainActivity extends Activity {
         return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
     }
 
+    private void setStatusBarColorDirect(String colorHex) {
+        try {
+            Window window = getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            int color = android.graphics.Color.parseColor(colorHex);
+            window.setStatusBarColor(color);
+            boolean light = android.graphics.Color.luminance(color) > 0.5;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                WindowInsetsController controller = window.getInsetsController();
+                if (controller != null) {
+                    controller.setSystemBarsAppearance(
+                        light ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (light) {
+                    window.getDecorView().setSystemUiVisibility(
+                        window.getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                } else {
+                    window.getDecorView().setSystemUiVisibility(
+                        window.getDecorView().getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "setStatusBarColorDirect error", e);
+        }
+    }
+
     private HttpsResult httpGet(String urlStr) throws Exception {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -541,8 +579,15 @@ public class MainActivity extends Activity {
                     window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
                     int color = android.graphics.Color.parseColor(colorHex);
                     window.setStatusBarColor(color);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        boolean light = android.graphics.Color.luminance(color) > 0.5;
+                    boolean light = android.graphics.Color.luminance(color) > 0.5;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        WindowInsetsController controller = window.getInsetsController();
+                        if (controller != null) {
+                            controller.setSystemBarsAppearance(
+                                light ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0,
+                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+                        }
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         if (light) {
                             window.getDecorView().setSystemUiVisibility(
                                 window.getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
