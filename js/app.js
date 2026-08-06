@@ -648,11 +648,9 @@ function showImportExport() {
   const txt = exportMetersTxt();
   openDialog('Import / Export', `
     <textarea id="ieText" style="width:100%;min-height:120px;font-family:monospace;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical">${esc(txt)}</textarea>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">
       <button class="btn secondary sm" onclick="ieExport()" style="white-space:nowrap">Export to file</button>
       <button class="btn secondary sm" onclick="ieImport()" style="white-space:nowrap">Import from file</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
       <button class="btn secondary sm" onclick="ieCopy()" style="white-space:nowrap">Copy</button>
       <button class="btn secondary sm" onclick="iePaste()" style="white-space:nowrap">Paste</button>
       <button class="btn secondary sm" onclick="ieSave()" style="white-space:nowrap">Save</button>
