@@ -396,7 +396,7 @@ public class MainActivity extends Activity {
         String infoBalance = take(inputs, 14);
 
         if (infoBalance.isEmpty() || "0".equals(infoBalance)) {
-            Pattern balPat = Pattern.compile("balance[\"']?\\s*[>:]+\\s*[৳Tk]*\\s*([\\d,.]+)", Pattern.CASE_INSENSITIVE);
+            Pattern balPat = Pattern.compile("balance[\"']?\\s*[>:]+\\s*[৳Tk]*\\s*(-?[\\d,.]+)", Pattern.CASE_INSENSITIVE);
             Matcher balMat = balPat.matcher(html);
             if (balMat.find()) infoBalance = balMat.group(1).trim();
         }

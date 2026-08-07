@@ -70,7 +70,7 @@ function parseHtml(html) {
   if (end < 0) end = html.indexOf('arrear_notice_div', start);
   if (end < 0) end = html.length;
   const seg = html.slice(start, end);
-  const inputs = [...seg.matchAll(/<input[^>]*readonly[^>]*value="([^"]*)"/g)].map(m => m[1]);
+  const inputs = [...seg.matchAll(/<input[^>]*(?:readonly|disabled)[^>]*value="([^"]*)"/g)].map(m => m[1]);
   const take = i => (inputs[i] || '').trim();
   let info = {
     name: take(0),
@@ -164,10 +164,10 @@ async function nescoLookup(cust) {
 
   if (!info.balance) {
     const balPatterns = [
-      /অবশিষ্ট ব্যালেন্স[\s\S]*?disabled[^>]*?value="?\s*([\d,.]+)\s*"?/i,
-      /অবশিষ্ট ব্যালেন্স[\s\S]*?value="?\s*([\d,.]+)\s*"?/i,
-      /(?:Remaining|অবশিষ্ট)\s*(?:balance|ব্যালেন্স)[\s\S]{0,300}?([\d,]+\.?\d*)/,
-      /data-balance=["']([\d,.]+)/i,
+      /অবশিষ্ট ব্যালেন্স[\s\S]*?disabled[^>]*?value="?\s*(-?[\d,.]+)\s*"?/i,
+      /অবশিষ্ট ব্যালেন্স[\s\S]*?value="?\s*(-?[\d,.]+)\s*"?/i,
+      /(?:Remaining|অবশিষ্ট)\s*(?:balance|ব্যালেন্স)[\s\S]{0,300}?(-?[\d,]+\.?\d*)/,
+      /data-balance=["'](-?[\d,.]+)/i,
     ];
     for (const pat of balPatterns) {
       const m = histHtml.match(pat) || (panelHtml && panelHtml.match(pat));
