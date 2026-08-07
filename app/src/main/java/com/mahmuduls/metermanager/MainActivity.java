@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
     private static final String WEB_URL = "https://mhasanbogura.github.io/prepaid-meter-manager/";
     private static final String PANEL = "https://customer.nesco.gov.bd/pre/panel";
     private static final String SUBMIT_HISTORY = "\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF";
+    private static final String SUBMIT_MONTHLY = "\u09AE\u09BE\u09B8\u09BF\u0995 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0";
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String pendingSaveContent;
 
@@ -189,7 +190,32 @@ public class MainActivity extends Activity {
             HttpsResult postResult = httpPost(PANEL, cookie, form);
             if (postResult.code != 200) return "{\"ok\":false,\"error\":\"portal HTTP " + postResult.code + "\"}";
 
-            return parseNescoHtml(postResult.body);
+            String result = parseNescoHtml(postResult.body);
+
+            // Fetch monthly usage with a fresh GET + POST
+            try {
+                HttpsResult panelGet2 = httpGet(PANEL);
+                if (panelGet2.code == 200) {
+                    String token2 = extractToken(panelGet2.body);
+                    String cookie2 = sessionCookie(panelGet2.setCookie);
+                    if (token2 != null && cookie2 != null && !cookie2.isEmpty()) {
+                        String form2 = "_token=" + URLEncoder.encode(token2, "UTF-8") +
+                            "&cust_no=" + URLEncoder.encode(cust, "UTF-8") +
+                            "&submit=" + URLEncoder.encode(SUBMIT_MONTHLY, "UTF-8");
+                        HttpsResult monthlyPost = httpPost(PANEL, cookie2, form2);
+                        if (monthlyPost.code == 200) {
+                            String monthlyJson = parseMonthlyUsageHtml(monthlyPost.body);
+                            if (!monthlyJson.equals("[]")) {
+                                result = result.replaceFirst("\\}$", ",\"monthlyUsage\":" + monthlyJson + "}");
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e2) {
+                Log.w(TAG, "monthly usage fetch failed", e2);
+            }
+
+            return result;
 
         } catch (Exception e) {
             Log.e(TAG, "nescoLookupSync error", e);
@@ -407,6 +433,87 @@ public class MainActivity extends Activity {
         Pattern p = Pattern.compile(attrName + "=['\"]([^'\"]*)", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(tag);
         return m.find() ? m.group(1).trim() : "";
+    }
+
+    private String parseMonthlyUsageHtml(String html) {
+        String[][] monthMap = {
+            {"january","01"}, {"february","02"}, {"march","03"}, {"april","04"},
+            {"may","05"}, {"june","06"}, {"july","07"}, {"august","08"},
+            {"september","09"}, {"october","10"}, {"november","11"}, {"december","12"},
+            {"jan","01"}, {"feb","02"}, {"mar","03"}, {"apr","04"},
+            {"jun","06"}, {"jul","07"}, {"aug","08"}, {"sep","09"}, {"oct","10"}, {"nov","11"}, {"dec","12"},
+            {"\u099C\u09BE\u09A8\u09C1\u09AF\u09BC\u09BE\u09B0\u09BF","01"}, // জানুয়ারি
+            {"\u09AB\u09C7\u09AC\u09CD\u09B0\u09C1\u09AF\u09BC\u09BE\u09B0\u09BF","02"}, // ফেব্রুয়ারি
+            {"\u09AE\u09BE\u09B0\u09CD\u099A","03"}, // মার্চ
+            {"\u098F\u09AA\u09CD\u09B0\u09BF\u09B2","04"}, // এপ্রিল
+            {"\u09AE\u09C7","05"}, // মে
+            {"\u099C\u09C1\u09A8","06"}, // জুন
+            {"\u099C\u09C1\u09B2\u09BE\u0987","07"}, // জুলাই
+            {"\u0986\u0997\u09B8\u09CD\u099F","08"}, // আগস্ট
+            {"\u09B8\u09C7\u09AA\u09CD\u099F\u09C7\u09AE\u09CD\u09AC\u09B0","09"}, // সেপ্টেম্বর
+            {"\u0985\u0995\u09CD\u099F\u09CB\u09AC\u09B0","10"}, // অক্টোবর
+            {"\u09A8\u09AD\u09C7\u09AE\u09CD\u09AC\u09B0","11"}, // নভেম্বর
+            {"\u09A1\u09BF\u09B8\u09C7\u09AE\u09CD\u09AC\u09B0","12"}, // ডিসেম্বর
+        };
+
+        StringBuilder rows = new StringBuilder();
+        rows.append("[");
+        boolean firstRow = true;
+
+        Pattern trPat = Pattern.compile("<tr[^>]*>([\\s\\S]*?)</tr>", Pattern.CASE_INSENSITIVE);
+        Matcher trMat = trPat.matcher(html);
+        while (trMat.find()) {
+            String trContent = trMat.group(1);
+            Pattern tdPat = Pattern.compile("<td[^>]*>([\\s\\S]*?)</td>", Pattern.CASE_INSENSITIVE);
+            Matcher tdMat = tdPat.matcher(trContent);
+            java.util.List<String> tds = new java.util.ArrayList<>();
+            while (tdMat.find()) {
+                tds.add(tdMat.group(1).replaceAll("<[^>]*>", "").trim());
+            }
+            if (tds.size() < 5) continue;
+
+            String month = null;
+            String year = null;
+            for (String td : tds) {
+                String lower = td.toLowerCase().trim();
+                for (String[] entry : monthMap) {
+                    if (lower.equals(entry[0]) || lower.contains(entry[0])) {
+                        month = entry[1];
+                        break;
+                    }
+                }
+                if (month != null) break;
+            }
+            if (month == null) continue;
+
+            for (String td : tds) {
+                if (td.trim().matches("^\\d{4}$")) {
+                    year = td.trim();
+                    break;
+                }
+            }
+            if (year == null || month == null) continue;
+
+            java.util.List<Double> nums = new java.util.ArrayList<>();
+            for (String td : tds) {
+                try {
+                    double n = Double.parseDouble(td.replace(",", ""));
+                    nums.add(n);
+                } catch (Exception e) { /* skip */ }
+            }
+            if (nums.size() < 3) continue;
+
+            if (!firstRow) rows.append(",");
+            firstRow = false;
+            rows.append("{\"key\":\"").append(year).append("-").append(month).append("\",\"nums\":[");
+            for (int i = 0; i < nums.size(); i++) {
+                if (i > 0) rows.append(",");
+                rows.append(nums.get(i));
+            }
+            rows.append("]}");
+        }
+        rows.append("]");
+        return rows.toString();
     }
 
     private String take(java.util.List<String> list, int i) { return i < list.size() ? list.get(i) : ""; }
