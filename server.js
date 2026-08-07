@@ -221,6 +221,16 @@ const MONTH_MAP = {
 
 function parseMonthlyUsageHtml(html) {
   const rows = [];
+
+  let unitColIdx = -1;
+  const theadMatch = html.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i);
+  if (theadMatch) {
+    const ths = [...theadMatch[1].matchAll(/<th[^>]*>([\s\S]*?)<\/th>/gi)].map(m => m[1].replace(/<[^>]*>/g, '').trim());
+    for (let i = 0; i < ths.length; i++) {
+      if (ths[i].includes('\u0995\u09BF.\u0993.\u0986')) { unitColIdx = i; break; }
+    }
+  }
+
   const reTr = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
   let tr;
   while ((tr = reTr.exec(html))) {
@@ -241,7 +251,8 @@ function parseMonthlyUsageHtml(html) {
     if (!year || !month) continue;
     const nums = tds.map(s => parseFloat(s.replace(/,/g, ''))).filter(n => !isNaN(n));
     if (nums.length < 3) continue;
-    rows.push({ key: `${year}-${month}`, tds, nums });
+    const unitVal = (unitColIdx >= 0 && unitColIdx < tds.length) ? parseFloat((tds[unitColIdx] || '0').replace(/,/g, '')) : nums[nums.length - 1];
+    rows.push({ key: `${year}-${month}`, tds, nums, unit: isNaN(unitVal) ? 0 : unitVal });
   }
   return rows;
 }

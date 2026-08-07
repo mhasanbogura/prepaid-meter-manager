@@ -456,6 +456,19 @@ public class MainActivity extends Activity {
             {"\u09A1\u09BF\u09B8\u09C7\u09AE\u09CD\u09AC\u09B0","12"}, // ডিসেম্বর
         };
 
+        // Find the units column index from <th> headers
+        int unitColIdx = -1;
+        Matcher thMat = Pattern.compile("<thead[^>]*>([\\s\\S]*?)</thead>", Pattern.CASE_INSENSITIVE).matcher(html);
+        if (thMat.find()) {
+            Matcher thCell = Pattern.compile("<th[^>]*>([\\s\\S]*?)</th>", Pattern.CASE_INSENSITIVE).matcher(thMat.group(1));
+            int idx = 0;
+            while (thCell.find()) {
+                String thText = thCell.group(1).replaceAll("<[^>]*>", "").trim();
+                if (thText.contains("\u0995\u09BF.\u0993.\u0986")) { unitColIdx = idx; break; }
+                idx++;
+            }
+        }
+
         StringBuilder rows = new StringBuilder();
         rows.append("[");
         boolean firstRow = true;
@@ -503,6 +516,13 @@ public class MainActivity extends Activity {
             }
             if (nums.size() < 3) continue;
 
+            double unitVal = 0;
+            if (unitColIdx >= 0 && unitColIdx < tds.size()) {
+                try { unitVal = Double.parseDouble(tds.get(unitColIdx).replace(",", "")); } catch (Exception e) { unitVal = 0; }
+            } else {
+                unitVal = nums.get(nums.size() - 1);
+            }
+
             if (!firstRow) rows.append(",");
             firstRow = false;
             rows.append("{\"key\":\"").append(year).append("-").append(month).append("\",\"nums\":[");
@@ -510,7 +530,7 @@ public class MainActivity extends Activity {
                 if (i > 0) rows.append(",");
                 rows.append(nums.get(i));
             }
-            rows.append("]}");
+            rows.append("],\"unit\":").append(unitVal).append("}");
         }
         rows.append("]");
         return rows.toString();
