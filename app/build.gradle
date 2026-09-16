@@ -143,19 +143,26 @@ task uploadToGitHub {
 
         def apkFile = "Meter Manager_com.mahmuduls.metermanager_v${newVn}_build_${newVc}.apk"
         def apkPath = new File('/home/mhasanbogura/Google Drive/mahmudulhasandhk70/Apk Store/Android', apkFile)
+        def tmpApk = new File(layout.buildDirectory.get().asFile, 'release.apk')
         exec {
             commandLine ghBin, 'release', 'delete', tagName, '--yes'
             workingDir = file('..')
             ignoreExitValue true
         }
         if (apkPath.exists()) {
+            copy {
+                from apkPath
+                into tmpApk.parentFile
+                rename { tmpApk.name }
+            }
             exec {
-                commandLine ghBin, 'release', 'create', tagName, apkPath.absolutePath,
+                commandLine ghBin, 'release', 'create', tagName, tmpApk.absolutePath,
                     '--title', "Meter Manager v${newVn} (build ${newVc})",
                     '--notes', "Meter Manager v${newVn} build ${newVc}",
                     '--latest'
                 workingDir = file('..')
             }
+            tmpApk.delete()
             println "GitHub: released ${tagName} with ${apkFile}"
         } else {
             exec {
