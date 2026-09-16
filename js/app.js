@@ -244,6 +244,19 @@ async function driveFetchCached(key, fileName) {
   return content;
 }
 
+async function driveFetchById(key, fileId) {
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+  try {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${DRIVE_API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const content = (await res.text()).trim();
+    if (content) localStorage.setItem(key, content);
+    return content;
+  } catch { return null; }
+}
+
 /* ================= helpers ================= */
 function t(key, vars) {
   let s = langs[key] ?? I18N.en[key] ?? key;
@@ -1560,7 +1573,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.49'} (build ${'450'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.50'} (build ${'453'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1592,14 +1605,17 @@ function renderSettings() {
 function syncSettingsUi() {
 }
 window._settingsShare = function() {
-  const url = 'https://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx';
-  const msg = 'Check out Meter Manager – a simple app to track DESCO prepaid electricity meters in Bangladesh!\n\nDownload: ' + url;
-  if (window.NescoBridge && window.NescoBridge.shareText) {
-    window.NescoBridge.shareText('Meter Manager', msg);
-  } else if (navigator.share) {
-    navigator.share({ title: 'Meter Manager', text: msg, url: url }).catch(() => {});
+  const apkName = 'Meter Manager_com.mahmuduls.metermanager_v' + '1.1.50' + '_build_' + '450' + '.apk';
+  if (window.NescoBridge && window.NescoBridge.shareApk) {
+    window.NescoBridge.shareApk(apkName);
   } else {
-    navigator.clipboard.writeText(msg).then(() => toast(t('settings.link_copied') || 'Link copied!')).catch(() => {});
+    const url = 'https://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx';
+    const msg = apkName + '\n\nDownload: ' + url;
+    if (navigator.share) {
+      navigator.share({ title: 'Meter Manager', text: msg, url: url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(msg).then(() => toast(t('settings.link_copied') || 'Link copied!')).catch(() => {});
+    }
   }
 };
 window._settingsDeleteAll = function() {
@@ -1612,7 +1628,7 @@ window._settingsDeleteAll = function() {
 window._settingsAbout = async function(el) {
   el.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
   let md = localStorage.getItem('cached_about_md');
-  if (!md) md = await driveFetchCached('cached_about_md', 'Meter Manager_com.mahmuduls.metermanager.md');
+  if (!md) md = await driveFetchById('cached_about_md', '1chwKX5Qfmrs8ihtDS7B8OLS_9_6D5vRJ');
   el.textContent = t('settings.about');
   if (!md) md = '## Overview\n\nMeter Manager is a web-based electricity meter management app that helps users monitor and track their DESCO and NESCO prepaid electricity meters. It provides live meter information, usage statistics, average daily costs, and recharge history in one convenient place.\n\n## Features\n\n- Check live prepaid meter balance\n- View meter information\n- Monitor average electricity cost per day\n- View total electricity usage for the current month\n- Compare usage with the previous month\n- Track daily electricity consumption\n- Track monthly electricity consumption\n- View recharge history\n- Monitor electricity usage trends\n- Simple and convenient web-based interface\n\n## Best for\n\nDESCO and NESCO prepaid electricity meter users who want to conveniently check their live balance, monitor daily and monthly electricity consumption, track average daily costs, compare usage, and review recharge history from one place.';
   let html = '<div style="text-align:center;margin-bottom:12px"><img src="icons/icon-512.png" class="about-logo" style="width:80px;height:80px;border-radius:20px"><div style="font-weight:700;font-size:16px;margin-top:4px">Meter Manager</div></div>';
@@ -1630,7 +1646,7 @@ window._settingsAbout = async function(el) {
 window._settingsContact = async function(el) {
   el.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
   let md = localStorage.getItem('cached_contact_md');
-  if (!md) md = await driveFetchCached('cached_contact_md', 'Contact.md');
+  if (!md) md = await driveFetchById('cached_contact_md', '1VNmXxG33NWMphp1mz2xQGWcm9NdCc3oH');
   el.textContent = t('settings.contact');
   if (!md) { openDialog(t('settings.contact'), '<p class="body-text">' + esc(t('settings.no_contact')) + '</p>', []); return; }
   let developerName = 'Developer';

@@ -672,6 +672,56 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void shareApk(String apkName) {
+            mainHandler.post(() -> {
+                try {
+                    java.io.File apkFile = null;
+                    String[] searchPaths = {
+                        "/storage/emulated/0/Google Drive/mahmudulhasandhk70/Apk Store/Android/" + apkName,
+                        "/storage/emulated/0/Download/" + apkName,
+                        getExternalFilesDir(null) + "/" + apkName
+                    };
+                    for (String path : searchPaths) {
+                        java.io.File f = new java.io.File(path);
+                        if (f.exists()) { apkFile = f; break; }
+                    }
+                    if (apkFile != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                            MainActivity.this,
+                            getPackageName() + ".fileprovider",
+                            apkFile
+                        );
+                        Intent intent = new Intent(Intent.ACTION_SEND);
+                        intent.setType("application/vnd.android.package-archive");
+                        intent.putExtra(Intent.EXTRA_STREAM, uri);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(intent, "Share APK"));
+                    } else if (apkFile != null) {
+                        Uri uri = Uri.fromFile(apkFile);
+                        Intent intent = new Intent(Intent.ACTION_SEND);
+                        intent.setType("application/vnd.android.package-archive");
+                        intent.putExtra(Intent.EXTRA_STREAM, uri);
+                        startActivity(Intent.createChooser(intent, "Share APK"));
+                    } else {
+                        String msg = apkName + "\n\nhttps://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx";
+                        Intent intent = new Intent(Intent.ACTION_SEND);
+                        intent.setType("text/plain");
+                        intent.putExtra(Intent.EXTRA_SUBJECT, "Meter Manager");
+                        intent.putExtra(Intent.EXTRA_TEXT, msg);
+                        startActivity(Intent.createChooser(intent, "Share APK"));
+                    }
+                } catch (Exception e) {
+                    String msg = apkName + "\n\nhttps://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx";
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("text/plain");
+                    intent.putExtra(Intent.EXTRA_SUBJECT, "Meter Manager");
+                    intent.putExtra(Intent.EXTRA_TEXT, msg);
+                    startActivity(Intent.createChooser(intent, "Share APK"));
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void saveFileWithPicker(String content, String defaultName) {
             pendingSaveContent = content;
             mainHandler.post(() -> {
