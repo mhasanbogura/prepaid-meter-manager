@@ -1573,7 +1573,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.51'} (build ${'456'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.52'} (build ${'459'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1605,7 +1605,7 @@ function renderSettings() {
 function syncSettingsUi() {
 }
 window._settingsShare = function() {
-  const apkName = 'Meter Manager_com.mahmuduls.metermanager_v' + '1.1.51' + '_build_' + '450' + '.apk';
+  const apkName = 'Meter Manager_com.mahmuduls.metermanager_v' + '1.1.52' + '_build_' + '450' + '.apk';
   if (window.NescoBridge && window.NescoBridge.shareApk) {
     window.NescoBridge.shareApk(apkName);
   } else {
