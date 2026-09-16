@@ -98,6 +98,7 @@ task deployApk(dependsOn: 'assembleDebug') {
 }
 
 task uploadToGitHub {
+    def ghBin = '/home/mhasanbogura/gh-cli/bin/gh'
     doLast {
         def out = new ByteArrayOutputStream()
         exec {
@@ -140,41 +141,31 @@ task uploadToGitHub {
         }
         println "GitHub: tagged ${tagName}"
 
-        def token = System.getenv('GITHUB_TOKEN') ?: ''
-        def repo = 'mhasanbogura/prepaid-meter-manager'
         def apkFile = "Meter Manager_com.mahmuduls.metermanager_v${newVn}_build_${newVc}.apk"
         def apkPath = new File('/home/mhasanbogura/Google Drive/mahmudulhasandhk70/Apk Store/Android', apkFile)
-
-        if (token) {
-            def createBody = '{"tag_name":"' + tagName + '","name":"Meter Manager v' + newVn + ' (build ' + newVc + ')","body":"Meter Manager v' + newVn + ' build ' + newVc + '","draft":false,"prerelease":false}'
-            def createOut = new ByteArrayOutputStream()
+        exec {
+            commandLine ghBin, 'release', 'delete', tagName, '--yes'
+            workingDir = file('..')
+            ignoreExitValue true
+        }
+        if (apkPath.exists()) {
             exec {
-                commandLine 'curl', '-s', '-X', 'POST',
-                    '-H', 'Authorization: token ' + token,
-                    '-H', 'Accept: application/vnd.github+json',
-                    '-d', createBody,
-                    'https://api.github.com/repos/' + repo + '/releases'
-                standardOutput = createOut
-                ignoreExitValue true
+                commandLine ghBin, 'release', 'create', tagName, apkPath.absolutePath,
+                    '--title', "Meter Manager v${newVn} (build ${newVc})",
+                    '--notes', "Meter Manager v${newVn} build ${newVc}",
+                    '--latest'
+                workingDir = file('..')
             }
-            def releaseJson = createOut.toString()
-            def uploadUrl = ''
-            def m = releaseJson =~ /"upload_url"\s*:\s*"([^"]+)"/
-            if (m.find()) uploadUrl = m.group(1).replaceAll('\\{\\?name,label\\}', '')
-            if (uploadUrl && apkPath.exists()) {
-                exec {
-                    commandLine 'curl', '-s', '-X', 'POST',
-                        '-H', 'Authorization: token ' + token,
-                        '-H', 'Content-Type: application/vnd.android.package-archive',
-                        '--data-binary', '@' + apkPath.absolutePath,
-                        uploadUrl + '?name=' + URLEncoder.encode(apkFile, 'UTF-8')
-                }
-                println "GitHub: released ${tagName} with ${apkFile}"
-            } else {
-                println "GitHub: released ${tagName}" + (uploadUrl ? '' : ' (no upload URL)')
-            }
+            println "GitHub: released ${tagName} with ${apkFile}"
         } else {
-            println "GitHub: tagged ${tagName} (no GITHUB_TOKEN, skipping release upload)"
+            exec {
+                commandLine ghBin, 'release', 'create', tagName,
+                    '--title', "Meter Manager v${newVn} (build ${newVc})",
+                    '--notes', "Meter Manager v${newVn} build ${newVc}",
+                    '--latest'
+                workingDir = file('..')
+            }
+            println "GitHub: released ${tagName} (no APK attached)"
         }
     }
 }
