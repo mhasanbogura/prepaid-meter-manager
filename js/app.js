@@ -248,7 +248,7 @@ async function driveFetchById(key, fileId) {
   const cached = localStorage.getItem(key);
   if (cached) return cached;
   try {
-    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${DRIVE_API_KEY}`;
+    const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const content = (await res.text()).trim();
@@ -1573,7 +1573,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.50'} (build ${'453'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.51'} (build ${'456'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1605,7 +1605,7 @@ function renderSettings() {
 function syncSettingsUi() {
 }
 window._settingsShare = function() {
-  const apkName = 'Meter Manager_com.mahmuduls.metermanager_v' + '1.1.50' + '_build_' + '450' + '.apk';
+  const apkName = 'Meter Manager_com.mahmuduls.metermanager_v' + '1.1.51' + '_build_' + '450' + '.apk';
   if (window.NescoBridge && window.NescoBridge.shareApk) {
     window.NescoBridge.shareApk(apkName);
   } else {
