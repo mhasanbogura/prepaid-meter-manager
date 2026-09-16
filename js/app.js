@@ -1573,7 +1573,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.59'} (build ${'480'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.60'} (build ${'483'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
