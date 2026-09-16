@@ -1573,7 +1573,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.52'} (build ${'459'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.53'} (build ${'462'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1605,17 +1605,13 @@ function renderSettings() {
 function syncSettingsUi() {
 }
 window._settingsShare = function() {
-  const apkName = 'Meter Manager_com.mahmuduls.metermanager_v' + '1.1.52' + '_build_' + '450' + '.apk';
-  if (window.NescoBridge && window.NescoBridge.shareApk) {
-    window.NescoBridge.shareApk(apkName);
+  const msg = 'Check out Meter Manager \u2014 Meter Manager is a web-based electricity meter management app that helps users monitor and track their DESCO and NESCO prepaid electricity meters. It provides live meter information, usage statistics,\n\nDownload: https://github.com/mhasanbogura/prepaid-meter-manager/releases/latest';
+  if (window.NescoBridge && window.NescoBridge.shareText) {
+    window.NescoBridge.shareText('Meter Manager', msg);
+  } else if (navigator.share) {
+    navigator.share({ title: 'Meter Manager', text: msg }).catch(() => {});
   } else {
-    const url = 'https://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx';
-    const msg = apkName + '\n\nDownload: ' + url;
-    if (navigator.share) {
-      navigator.share({ title: 'Meter Manager', text: msg, url: url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(msg).then(() => toast(t('settings.link_copied') || 'Link copied!')).catch(() => {});
-    }
+    navigator.clipboard.writeText(msg).then(() => toast(t('settings.link_copied') || 'Link copied!')).catch(() => {});
   }
 };
 window._settingsDeleteAll = function() {
