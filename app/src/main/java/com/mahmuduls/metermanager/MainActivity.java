@@ -21,12 +21,6 @@ import android.widget.FrameLayout;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -46,10 +40,8 @@ public class MainActivity extends Activity {
     private static final String PANEL = "https://customer.nesco.gov.bd/pre/panel";
     private static final String SUBMIT_HISTORY = "\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF";
     private static final String SUBMIT_MONTHLY = "\u09AE\u09BE\u09B8\u09BF\u0995 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0";
-    private static final int RC_SIGN_IN = 9001;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String pendingSaveContent;
-    private GoogleSignInClient googleSignInClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,13 +73,25 @@ public class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new NescoBridge(), "NescoBridge");
 
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-        googleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
+                WebView popup = new WebView(MainActivity.this);
+                popup.getSettings().setJavaScriptEnabled(true);
+                popup.getSettings().setDomStorageEnabled(true);
+                popup.getSettings().setUserAgentString(settings.getUserAgentString());
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(popup);
+                resultMsg.sendToTarget();
+                popup.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView v, String url) {
+                        return false;
+                    }
+                });
+                return true;
+            }
+        });
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -715,25 +719,6 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public String getPendingGoogleToken() {
-            String token = getSharedPreferences("MeterManager", MODE_PRIVATE)
-                .getString("pendingGoogleToken", null);
-            if (token != null) {
-                getSharedPreferences("MeterManager", MODE_PRIVATE).edit()
-                    .remove("pendingGoogleToken").commit();
-            }
-            return token != null ? token : "";
-        }
-
-        @JavascriptInterface
-        public void googleSignIn() {
-            mainHandler.post(() -> {
-                Intent signInIntent = googleSignInClient.getSignInIntent();
-                startActivityForResult(signInIntent, RC_SIGN_IN);
-            });
-        }
-
-        @JavascriptInterface
         public void shareText(String title, String text) {
             mainHandler.post(() -> {
                 Intent intent = new Intent(Intent.ACTION_SEND);
@@ -799,25 +784,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RC_SIGN_IN) {
-            Task<com.google.android.gms.auth.api.signin.GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                com.google.android.gms.auth.api.signin.GoogleSignInAccount account = task.getResult(ApiException.class);
-                String idToken = account.getIdToken();
-                if (idToken != null) {
-                    getSharedPreferences("MeterManager", MODE_PRIVATE).edit()
-                        .putString("pendingGoogleToken", idToken).commit();
-                    webView.evaluateJavascript(
-                        "if(window.onGoogleSignInResult) window.onGoogleSignInResult('" +
-                        idToken.replace("\\", "\\\\").replace("'", "\\'") + "');", null);
-                }
-            } catch (ApiException e) {
-                Log.e(TAG, "Google Sign-In failed: code=" + e.getStatusCode(), e);
-                webView.evaluateJavascript(
-                    "if(window.onGoogleSignInResult) window.onGoogleSignInResult(null);", null);
-            }
-            return;
-        }
         if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null && pendingSaveContent != null) {
