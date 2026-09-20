@@ -1712,10 +1712,11 @@ window._settingsDeleteAll = function() {
   ]);
 };
 window._settingsAbout = async function(el) {
-  el.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
+  const span = el.querySelector('span');
+  if (span) span.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
   let md = localStorage.getItem('cached_about_md');
   if (!md) md = await driveFetchCached('cached_about_md', 'Meter Manager_com.mahmuduls.metermanager.md');
-  el.textContent = t('settings.about');
+  if (span) span.textContent = t('settings.about');
   if (!md) md = '## Overview\n\nMeter Manager is a web-based electricity meter management app that helps users monitor and track their DESCO and NESCO prepaid electricity meters. It provides live meter information, usage statistics, average daily costs, and recharge history in one convenient place.\n\n## Features\n\n- Check live prepaid meter balance\n- View meter information\n- Monitor average electricity cost per day\n- View total electricity usage for the current month\n- Compare usage with the previous month\n- Track daily electricity consumption\n- Track monthly electricity consumption\n- View recharge history\n- Monitor electricity usage trends\n- Simple and convenient web-based interface\n\n## Best for\n\nDESCO and NESCO prepaid electricity meter users who want to conveniently check their live balance, monitor daily and monthly electricity consumption, track average daily costs, compare usage, and review recharge history from one place.';
   let html = '<div style="text-align:center;margin-bottom:12px"><img src="icons/icon-512.png" class="about-logo" style="width:80px;height:80px;border-radius:20px"><div style="font-weight:700;font-size:16px;margin-top:4px">Meter Manager</div></div>';
   for (const line of md.split('\n')) {
@@ -1730,10 +1731,11 @@ window._settingsAbout = async function(el) {
   openDialog('', html, []);
 };
 window._settingsContact = async function(el) {
-  el.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
+  const span = el.querySelector('span');
+  if (span) span.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
   let md = localStorage.getItem('cached_contact_md');
   if (!md) md = await driveFetchCached('cached_contact_md', 'Contact.md');
-  el.textContent = t('settings.contact');
+  if (span) span.textContent = t('settings.contact');
   if (!md) { openDialog(t('settings.contact'), '<p class="body-text">' + esc(t('settings.no_contact')) + '</p>', []); return; }
   let developerName = 'Developer';
   let bio = '';
