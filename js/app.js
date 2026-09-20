@@ -1931,6 +1931,7 @@ async function emailRegister() {
   } finally { btn.disabled = false; btn.textContent = orig; }
 }
 let googleSignInInProgress = sessionStorage.getItem('gsi') === '1';
+let wasLoggedIn = false;
 async function googleLogin() {
   const btns = document.querySelectorAll('.auth-btn-google');
   btns.forEach(b => { b.disabled = true; });
@@ -2087,6 +2088,9 @@ async function boot() {
   try { await db.enablePersistence({ synchronizeTabs: true }); } catch {}
   auth.onAuthStateChanged(async (user) => {
     if (user) {
+      wasLoggedIn = true;
+      googleSignInInProgress = false;
+      sessionStorage.removeItem('gsi');
       currentUser = user;
       showApp();
       await loadFromCloud();
@@ -2101,7 +2105,10 @@ async function boot() {
       scheduleAutoRefresh();
     } else {
       currentUser = null;
-      if (!googleSignInInProgress) showAuthScreen('auth-screen');
+      if (wasLoggedIn) {
+        wasLoggedIn = false;
+        showAuthScreen('auth-screen');
+      }
     }
   });
 }
