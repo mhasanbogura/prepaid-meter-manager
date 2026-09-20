@@ -48,7 +48,7 @@ const I18N = {
     'detail.total_use': 'Total use', 'detail.this_month': 'This month', 'detail.last_month': 'Last month',
     'detail.units': 'Units', 'detail.install_date': 'Install date', 'detail.min_recharge': 'Min. recharge', 'detail.last_reading': 'Last reading', 'detail.method': 'Method',
     'edit.title': 'Edit meter', 'edit.nickname': 'Nickname', 'edit.nickname_hint': 'e.g. Home, Office', 'edit.low_threshold': 'Low balance threshold',
-    'settings.title': 'Settings', 'settings.subtitle': 'Manage preferences and theme settings.',
+    'settings.title': 'Settings', 'settings.subtitle': 'Manage your account, profile, and app preferences.',
     'settings.general': 'General Settings', 'settings.device_theme': 'Device Theme', 'settings.device_theme_hint': 'Automatically switch theme based on system',
     'settings.oled_theme': 'OLED Theme', 'settings.oled_theme_hint': 'Use OLED black backdrop for eye comfort',
     'settings.language': 'Language', 'settings.low_threshold': 'Low balance threshold', 'settings.low_threshold_hint': 'Default threshold (BDT)',
@@ -683,6 +683,7 @@ function showImportExport() {
   const txt = exportMetersTxt();
   openDialog('Import / Export', `
     <textarea id="ieText" placeholder="Home desco 12345678&#10;Office nesco 87654321&#10;desco 11223344" style="width:100%;min-height:120px;font-family:monospace;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical">${esc(txt)}</textarea>
+    <div class="hint" style="margin:6px 0 0">Format: &lt;name&gt; desco/nesco &lt;number&gt; (one per line)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
       <button class="btn secondary sm" onclick="ieExport()" style="white-space:nowrap">Export to file</button>
       <button class="btn secondary sm" onclick="ieImport()" style="white-space:nowrap">Import from file</button>
