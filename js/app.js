@@ -52,7 +52,7 @@ const I18N = {
     'settings.general': 'General Settings', 'settings.device_theme': 'Device Theme', 'settings.device_theme_hint': 'Automatically switch theme based on system',
     'settings.oled_theme': 'OLED Theme', 'settings.oled_theme_hint': 'Use OLED black backdrop for eye comfort',
     'settings.language': 'Language', 'settings.low_threshold': 'Low balance threshold', 'settings.low_threshold_hint': 'Default threshold (BDT)',
-    'settings.share': 'Share', 'settings.import_export': 'Import/Export Meter Data', 'settings.delete_all': 'Delete All Meters',
+    'settings.share': 'Share app', 'settings.import_export': 'Import/Export Meter Data', 'settings.delete_all': 'Delete All Meters',
     'settings.about': 'About App', 'settings.contact': 'Contact Developer',
     'settings.no_desc': 'No description available.', 'settings.no_contact': 'No contact information available.',
     'detail.energy_amount': 'Energy Amount', 'detail.energy_kwh': 'Energy (kWh)', 'detail.vat_other': 'VAT & Other Charges',
