@@ -1808,6 +1808,7 @@ function showAuthScreen(screenId) {
   });
   const appEl = document.getElementById('app');
   if (appEl) appEl.style.display = 'none';
+  hideSplash();
 }
 function showApp() {
   ['auth-screen', 'auth-login-screen', 'auth-register-screen', 'auth-forgot-screen'].forEach(id => {
@@ -1816,6 +1817,12 @@ function showApp() {
   });
   const appEl = document.getElementById('app');
   if (appEl) appEl.style.display = '';
+  const splash = document.getElementById('splash-screen');
+  if (splash) splash.classList.add('visible');
+}
+function hideSplash() {
+  const splash = document.getElementById('splash-screen');
+  if (splash) splash.classList.remove('visible');
 }
 function initAuth() {
   const byId = id => document.getElementById(id);
@@ -1994,6 +2001,7 @@ async function boot() {
       renderHome();
       await refreshAllMeters();
       renderHome();
+      hideSplash();
       scheduleAlerts();
       scheduleAutoRefresh();
     } else {
