@@ -1604,7 +1604,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.0'} (build ${'451'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.1'} (build ${'454'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1885,6 +1885,11 @@ async function googleLogin() {
   btns.forEach(b => { b.disabled = true; });
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
+    const isAndroid = !!(window.NescoBridge && typeof window.NescoBridge.shareText === 'function');
+    if (isAndroid) {
+      NescoBridge.googleSignIn();
+      return;
+    }
     const c = await auth.signInWithPopup(provider);
     const s = await db.ref('users/' + c.user.uid).once('value');
     if (!s.exists()) await db.ref('users/' + c.user.uid).set({ name: c.user.displayName, email: c.user.email, createdAt: Date.now() });
@@ -1895,6 +1900,18 @@ async function googleLogin() {
     toast(m, true);
   } finally { btns.forEach(b => { b.disabled = false; }); }
 }
+window.onGoogleSignInResult = async function(idToken) {
+  const btns = document.querySelectorAll('.auth-btn-google');
+  btns.forEach(b => { b.disabled = true; });
+  try {
+    const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
+    const c = await auth.signInWithCredential(credential);
+    const s = await db.ref('users/' + c.user.uid).once('value');
+    if (!s.exists()) await db.ref('users/' + c.user.uid).set({ name: c.user.displayName, email: c.user.email, createdAt: Date.now() });
+  } catch (e) {
+    toast(e.message || 'Google login failed', true);
+  } finally { btns.forEach(b => { b.disabled = false; }); }
+};
 async function sendResetEmail() {
   const email = document.getElementById('resetEmail').value.trim();
   if (!email) { toast('Enter email', true); return; }

@@ -17,6 +17,15 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,13 +39,17 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends Activity {
     private WebView webView;
+    private FrameLayout splash;
+    private boolean splashHidden = false;
     private static final String TAG = "MeterManager";
     private static final String WEB_URL = "https://mhasanbogura.github.io/prepaid-meter-manager/";
     private static final String PANEL = "https://customer.nesco.gov.bd/pre/panel";
     private static final String SUBMIT_HISTORY = "\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF";
     private static final String SUBMIT_MONTHLY = "\u09AE\u09BE\u09B8\u09BF\u0995 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0";
+    private static final int RC_SIGN_IN = 9001;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String pendingSaveContent;
+    private GoogleSignInClient googleSignInClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,8 +65,10 @@ public class MainActivity extends Activity {
 
         getWindow().setDecorFitsSystemWindows(true);
 
-        webView = new WebView(this);
-        setContentView(webView);
+        setContentView(R.layout.activity_main);
+
+        webView = findViewById(R.id.webView);
+        splash = findViewById(R.id.splash);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -66,12 +81,34 @@ public class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new NescoBridge(), "NescoBridge");
 
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        googleSignInClient = GoogleSignIn.getClient(this, gso);
+
         webView.setWebChromeClient(new WebChromeClient());
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                if (!splashHidden) {
+                    splashHidden = true;
+                    AlphaAnimation fadeOut = new AlphaAnimation(1.0f, 0.0f);
+                    fadeOut.setDuration(300);
+                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                        @Override public void onAnimationStart(Animation a) {}
+                        @Override public void onAnimationRepeat(Animation a) {}
+                        @Override public void onAnimationEnd(Animation a) {
+                            splash.setVisibility(View.GONE);
+                            setStatusBarColorDirect("light".equals(
+                                getSharedPreferences("MeterManager", MODE_PRIVATE).getString("theme", "light"))
+                                ? "#e8ebf0" : "#1a1f2a");
+                        }
+                    });
+                    splash.startAnimation(fadeOut);
+                }
                 injectOverrides();
                 view.evaluateJavascript(
                     "(function(){var t=document.querySelector('meta[name=theme-color]');return t?t.content:'light'})()",
@@ -678,6 +715,14 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void googleSignIn() {
+            mainHandler.post(() -> {
+                Intent signInIntent = googleSignInClient.getSignInIntent();
+                startActivityForResult(signInIntent, RC_SIGN_IN);
+            });
+        }
+
+        @JavascriptInterface
         public void shareText(String title, String text) {
             mainHandler.post(() -> {
                 Intent intent = new Intent(Intent.ACTION_SEND);
@@ -743,6 +788,23 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN) {
+            Task<com.google.android.gms.auth.api.signin.GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                com.google.android.gms.auth.api.signin.GoogleSignInAccount account = task.getResult(ApiException.class);
+                String idToken = account.getIdToken();
+                if (idToken != null) {
+                    String escaped = idToken.replace("\\", "\\\\").replace("'", "\\'");
+                    webView.evaluateJavascript(
+                        "if(window.onGoogleSignInResult) window.onGoogleSignInResult('" + escaped + "');", null);
+                }
+            } catch (ApiException e) {
+                Log.e(TAG, "Google Sign-In failed: code=" + e.getStatusCode(), e);
+                webView.evaluateJavascript(
+                    "if(window.onGoogleSignInResult) window.onGoogleSignInResult(null);", null);
+            }
+            return;
+        }
         if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null && pendingSaveContent != null) {
@@ -793,6 +855,16 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         pushThemeToWebView();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getData() != null) {
+            Uri uri = intent.getData();
+            webView.loadUrl(WEB_URL);
+        }
     }
 
     private void pushThemeToWebView() {

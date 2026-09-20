@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1034014653431",
+    "firebase_url": "https://meter-manager-e9c12-default-rtdb.firebaseio.com",
+    "project_id": "meter-manager-e9c12",
+    "storage_bucket": "meter-manager-e9c12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1034014653431:android:0eb5a43276a7a585538cf2",
+        "android_client_info": {
+          "package_name": "com.mahmuduls.metermanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1034014653431-gfluor3kopu8i3t329av99g706ekvpup.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mahmuduls.metermanager",
+            "certificate_hash": "4e8e70902a44c0f05f501fa8d62c08ec011ce875"
+          }
+        },
+        {
+          "client_id": "1034014653431-3s38rn1svl9rtpd4k9f1kp1cjf60ap3b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnMFdnrRK9nROwVnHn4pv7UwiMSMp7xoU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1034014653431-3s38rn1svl9rtpd4k9f1kp1cjf60ap3b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
