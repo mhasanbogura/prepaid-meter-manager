@@ -1607,31 +1607,51 @@ function renderSettings() {
       <div class="sett-section-card">
         <div class="sett-item" onclick="showImportExport()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
-          <span>${esc(t('settings.import_export'))}</span>
+          <span style="flex:1">${esc(t('settings.import_export'))}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
         <div class="sett-item danger" onclick="window._settingsDeleteAll()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-          <span>${esc(t('settings.delete_all'))}</span>
+          <span style="flex:1">${esc(t('settings.delete_all'))}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
         <div class="sett-item" onclick="window._settingsSignOut()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-          <span>${esc(t('settings.sign_out'))}</span>
+          <span style="flex:1">${esc(t('settings.sign_out'))}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
-        <div class="sett-item" onclick="if(currentUser) auth.sendPasswordResetEmail(currentUser.email).then(()=>toast(t('auth.reset_sent')||'Reset link sent!')).catch(e=>toast(e.message,true))">
+        <div class="sett-item" onclick="showResetPasswordDialog()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
-          <span>${esc(t('settings.reset_password') || 'Reset password')}</span>
+          <span style="flex:1">${esc(t('settings.reset_password') || 'Reset password')}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
         <div class="sett-item danger" onclick="window._settingsDeleteAccount()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-          <span>${esc(t('settings.delete_account'))}</span>
+          <span style="flex:1">${esc(t('settings.delete_account'))}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
       </div>
     </div>` : ''}
 
-    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
-      <div class="settings-box" onclick="window._settingsShare()">${esc(t('settings.share'))}</div>
-      <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">${esc(t('settings.about'))}</div>
-      <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">${esc(t('settings.contact'))}</div>
+    <div class="sett-section">
+      <div class="sett-section-title">MORE</div>
+      <div class="sett-section-card">
+        <div class="sett-item" onclick="window._settingsShare()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+          <span style="flex:1">${esc(t('settings.share'))}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+        <div class="sett-item" id="btnAbout" onclick="window._settingsAbout(this)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          <span style="flex:1">${esc(t('settings.about'))}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+        <div class="sett-item" id="btnContact" onclick="window._settingsContact(this)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          <span style="flex:1">${esc(t('settings.contact'))}</span>
+          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+      </div>
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
@@ -1951,6 +1971,21 @@ async function sendResetEmail() {
     toast('Reset link sent!');
     setTimeout(() => showAuthScreen('auth-login-screen'), 2000);
   } catch (e) { toast(e.message, true); }
+}
+function showResetPasswordDialog() {
+  if (!currentUser) return;
+  openDialog(t('settings.reset_password') || 'Reset password',
+    '<p class="body-text">A password reset link will be sent to <strong>' + esc(currentUser.email) + '</strong>.</p>' +
+    '<p style="color:var(--danger);font-size:13px;margin-top:8px">It can take a few minutes and may land in your Spam / Junk folder — please check there too.</p>',
+    [
+      { key: 'cancel', label: t('btn.cancel') || 'Cancel', cls: 'secondary', fn: closeDialog },
+      { key: 'send', label: t('auth.send_reset') || 'Send link', cls: '', fn: () => {
+        closeDialog();
+        auth.sendPasswordResetEmail(currentUser.email)
+          .then(() => toast(t('auth.reset_sent') || 'Reset link sent!'))
+          .catch(e => toast(e.message, true));
+      }}
+    ]);
 }
 async function signOut() {
   try { await auth.signOut(); } catch {}

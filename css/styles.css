@@ -381,6 +381,7 @@ table.list tr:last-child td { border-bottom: 0; }
 .sett-item:last-child { border-bottom: 0; }
 .sett-item:active { opacity: .7; }
 .sett-item.danger { color: var(--danger); }
+.sett-chevron { opacity: .3; flex-shrink: 0; }
 
 /* ---------- auth screens ---------- */
 .auth-screen {
