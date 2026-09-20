@@ -1655,7 +1655,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.11'} (build ${'478'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.12'} (build ${'481'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1937,7 +1937,7 @@ async function googleLogin() {
     const provider = new firebase.auth.GoogleAuthProvider();
     const isAndroid = !!(window.NescoBridge && typeof window.NescoBridge.shareText === 'function');
     if (isAndroid) {
-      await auth.signInWithRedirect(provider);
+      NescoBridge.googleSignIn();
       return;
     }
     const c = await auth.signInWithPopup(provider);
@@ -1950,6 +1950,23 @@ async function googleLogin() {
     toast(m, true);
   } finally { btns.forEach(b => { b.disabled = false; }); }
 }
+window.onGoogleSignInResult = async function(idToken) {
+  const btns = document.querySelectorAll('.auth-btn-google');
+  btns.forEach(b => { b.disabled = true; });
+  if (!idToken) {
+    toast('Google sign-in cancelled', true);
+    btns.forEach(b => { b.disabled = false; });
+    return;
+  }
+  try {
+    const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
+    const c = await auth.signInWithCredential(credential);
+    const s = await db.ref('users/' + c.user.uid).once('value');
+    if (!s.exists()) await db.ref('users/' + c.user.uid).set({ name: c.user.displayName, email: c.user.email, createdAt: Date.now() });
+  } catch (e) {
+    toast(e.message || 'Google login failed', true);
+  } finally { btns.forEach(b => { b.disabled = false; }); }
+};
 async function sendResetEmail() {
   const email = document.getElementById('resetEmail').value.trim();
   if (!email) { toast('Enter email', true); return; }
@@ -2059,13 +2076,6 @@ async function boot() {
   registerSw();
   try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch {}
   try { await db.enablePersistence({ synchronizeTabs: true }); } catch {}
-  try {
-    const result = await auth.getRedirectResult();
-    if (result && result.user) {
-      const s = await db.ref('users/' + result.user.uid).once('value');
-      if (!s.exists()) await db.ref('users/' + result.user.uid).set({ name: result.user.displayName, email: result.user.email, createdAt: Date.now() });
-    }
-  } catch (e) { console.warn('Redirect result error:', e); }
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentUser = user;

@@ -21,6 +21,12 @@ import android.widget.FrameLayout;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -40,8 +46,10 @@ public class MainActivity extends Activity {
     private static final String PANEL = "https://customer.nesco.gov.bd/pre/panel";
     private static final String SUBMIT_HISTORY = "\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF";
     private static final String SUBMIT_MONTHLY = "\u09AE\u09BE\u09B8\u09BF\u0995 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0";
+    private static final int RC_SIGN_IN = 9001;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String pendingSaveContent;
+    private GoogleSignInClient googleSignInClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +80,12 @@ public class MainActivity extends Activity {
         settings.setUserAgentString("Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
 
         webView.addJavascriptInterface(new NescoBridge(), "NescoBridge");
+
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        googleSignInClient = GoogleSignIn.getClient(this, gso);
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -719,6 +733,14 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void googleSignIn() {
+            mainHandler.post(() -> {
+                Intent signInIntent = googleSignInClient.getSignInIntent();
+                startActivityForResult(signInIntent, RC_SIGN_IN);
+            });
+        }
+
+        @JavascriptInterface
         public void shareText(String title, String text) {
             mainHandler.post(() -> {
                 Intent intent = new Intent(Intent.ACTION_SEND);
@@ -784,6 +806,33 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN) {
+            Task<com.google.android.gms.auth.api.signin.GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                com.google.android.gms.auth.api.signin.GoogleSignInAccount account = task.getResult(ApiException.class);
+                String idToken = account.getIdToken();
+                Log.d(TAG, "Google Sign-In success, idToken=" + (idToken != null ? "present" : "null"));
+                if (idToken != null) {
+                    String escaped = idToken.replace("\\", "\\\\").replace("'", "\\'");
+                    String js = "(function(){if(typeof window.onGoogleSignInResult==='function'){window.onGoogleSignInResult('" + escaped + "');return 'ok';}return 'nofunc';})()";
+                    webView.evaluateJavascript(js, value -> {
+                        Log.d(TAG, "evaluateJavascript result: " + value);
+                    });
+                }
+            } catch (ApiException e) {
+                Log.e(TAG, "Google Sign-In failed: code=" + e.getStatusCode(), e);
+                String msg = "Google sign-in failed (error " + e.getStatusCode() + ")";
+                if (e.getStatusCode() == 10) msg = "Google Sign-In configuration error. Please update the app.";
+                if (e.getStatusCode() == 12501) msg = "Google sign-in cancelled";
+                if (e.getStatusCode() == 12500) msg = "Google sign-in failed. Please try again.";
+                if (e.getStatusCode() == 12502) msg = "Google sign-in already in progress";
+                if (e.getStatusCode() == 16) msg = "Google sign-in timeout. Check internet connection.";
+                final String finalMsg = msg;
+                webView.evaluateJavascript(
+                    "if(window.toast) window.toast('" + finalMsg.replace("'", "\\'") + "', true);", null);
+            }
+            return;
+        }
         if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null && pendingSaveContent != null) {
