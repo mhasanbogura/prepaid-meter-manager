@@ -1604,6 +1604,14 @@ function renderSettings() {
     <div class="sett-section">
       <div class="sett-section-title">ACCOUNT</div>
       <div class="sett-section-card">
+        <div class="sett-item" onclick="showImportExport()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+          <span>${esc(t('settings.import_export'))}</span>
+        </div>
+        <div class="sett-item danger" onclick="window._settingsDeleteAll()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          <span>${esc(t('settings.delete_all'))}</span>
+        </div>
         <div class="sett-item" onclick="window._settingsSignOut()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
           <span>${esc(t('settings.sign_out'))}</span>
@@ -1621,8 +1629,6 @@ function renderSettings() {
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
       <div class="settings-box" onclick="window._settingsShare()">${esc(t('settings.share'))}</div>
-      <div class="settings-box" onclick="showImportExport()">${esc(t('settings.import_export'))}</div>
-      <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">${esc(t('settings.delete_all'))}</div>
       <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">${esc(t('settings.about'))}</div>
       <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">${esc(t('settings.contact'))}</div>
     </div>
