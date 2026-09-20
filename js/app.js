@@ -1631,17 +1631,7 @@ function renderSettings() {
           <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
       </div>
-    </div>` : `
-    <div class="sett-section">
-      <div class="sett-section-title">ACCOUNT</div>
-      <div class="sett-section-card">
-        <div class="sett-item" onclick="showAuthScreen('auth-login-screen')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          <span style="flex:1">Sign in to sync meters across devices</span>
-          <svg class="sett-chevron" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
-        </div>
-      </div>
-    </div>`}
+    </div>` : ''}
 
     <div class="sett-section">
       <div class="sett-section-title">MORE</div>
@@ -1665,7 +1655,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.20'} (build ${'505'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.17'} (build ${'496'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
