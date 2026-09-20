@@ -2111,6 +2111,12 @@ async function boot() {
       }
     }
   });
+  if (window.NescoBridge && typeof window.NescoBridge.getPendingGoogleToken === 'function') {
+    const pendingToken = window.NescoBridge.getPendingGoogleToken();
+    if (pendingToken && typeof window.onGoogleSignInResult === 'function') {
+      window.onGoogleSignInResult(pendingToken);
+    }
+  }
 }
 document.addEventListener('DOMContentLoaded', boot);
 
