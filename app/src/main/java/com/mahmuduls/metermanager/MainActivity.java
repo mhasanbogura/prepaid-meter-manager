@@ -621,6 +621,7 @@ public class MainActivity extends Activity {
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             int color = android.graphics.Color.parseColor(colorHex);
             window.setStatusBarColor(color);
+            window.setNavigationBarColor(color);
             boolean light = android.graphics.Color.luminance(color) > 0.5;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 WindowInsetsController controller = window.getInsetsController();
@@ -628,15 +629,18 @@ public class MainActivity extends Activity {
                     controller.setSystemBarsAppearance(
                         light ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0,
                         WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+                    controller.setSystemBarsAppearance(
+                        light ? WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS : 0,
+                        WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                int flags = window.getDecorView().getSystemUiVisibility();
                 if (light) {
-                    window.getDecorView().setSystemUiVisibility(
-                        window.getDecorView().getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
                 } else {
-                    window.getDecorView().setSystemUiVisibility(
-                        window.getDecorView().getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                    flags &= ~(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
                 }
+                window.getDecorView().setSystemUiVisibility(flags);
             }
         } catch (Exception e) {
             Log.e(TAG, "setStatusBarColorDirect error", e);
@@ -735,8 +739,10 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void googleSignIn() {
             mainHandler.post(() -> {
-                Intent signInIntent = googleSignInClient.getSignInIntent();
-                startActivityForResult(signInIntent, RC_SIGN_IN);
+                googleSignInClient.signOut().addOnCompleteListener(task -> {
+                    Intent signInIntent = googleSignInClient.getSignInIntent();
+                    startActivityForResult(signInIntent, RC_SIGN_IN);
+                });
             });
         }
 
