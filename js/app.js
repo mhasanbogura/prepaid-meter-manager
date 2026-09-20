@@ -1665,7 +1665,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.17'} (build ${'496'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.18'} (build ${'499'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -2102,13 +2102,7 @@ async function boot() {
       scheduleAutoRefresh();
     } else {
       currentUser = null;
-      showApp();
-      applyLang();
-      showView('home');
-      hideSplash();
-      state.meters.forEach(m => { m.loading = true; m.err = null; });
-      renderHome();
-      refreshAllMeters().then(() => renderHome());
+      showAuthScreen('auth-screen');
     }
   });
   if (window.NescoBridge && typeof window.NescoBridge.getPendingGoogleToken === 'function') {
