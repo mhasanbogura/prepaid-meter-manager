@@ -98,6 +98,7 @@ const I18N = {
     'auth.send_reset': 'Send Reset Link',
     'settings.account': 'Account', 'settings.account_name': 'Name', 'settings.account_email': 'Email',
     'settings.sign_out': 'Sign Out', 'settings.delete_account': 'Delete Account',
+    'settings.reset_password': 'Reset Password',
     'settings.cloud_sync': 'Cloud Sync', 'settings.cloud_synced': 'Meters synced to your account',
     'settings.cloud_offline': 'Offline – data saved locally',
   },
@@ -195,6 +196,7 @@ const I18N = {
     'auth.send_reset': 'রিসেট লিংক পাঠান',
     'settings.account': 'অ্যাকাউন্ট', 'settings.account_name': 'নাম', 'settings.account_email': 'ইমেইল',
     'settings.sign_out': 'সাইন আউট', 'settings.delete_account': 'অ্যাকাউন্ট মুছে ফেলুন',
+    'settings.reset_password': 'পাসওয়ার্ড রিসেট',
     'settings.cloud_sync': 'ক্লাউড সিঙ্ক', 'settings.cloud_synced': 'মিটার আপনার অ্যাকাউন্টে সিঙ্ক হয়েছে',
     'settings.cloud_offline': 'অফলাইন – তথ্য স্থানীয়ভাবে সংরক্ষিত',
   }
@@ -1530,75 +1532,97 @@ function initUi() {
 function renderSettings() {
   const lang = state.settings.lang || 'en';
   const threshold = state.settings.alertThreshold ?? LOW_BALANCE;
-  const accountHtml = currentUser ? `
-    <section class="card">
-      <h3>${esc(t('settings.account'))}</h3>
-      <table class="list"><tbody>
-        <tr><td style="color:var(--text-2)">${esc(t('settings.account_name'))}</td><td style="font-weight:600">${esc(currentUser.displayName || '–')}</td></tr>
-        <tr><td style="color:var(--text-2)">${esc(t('settings.account_email'))}</td><td style="font-weight:600">${esc(currentUser.email || '–')}</td></tr>
-        <tr><td style="color:var(--text-2)">${esc(t('settings.cloud_sync'))}</td><td style="font-weight:600;color:var(--success)">${esc(t('settings.cloud_synced'))}</td></tr>
-      </tbody></table>
-    </section>` : '';
+  const initial = currentUser ? (currentUser.displayName || currentUser.email || '?')[0].toUpperCase() : '';
+  const profileHtml = currentUser ? `
+    <div class="sett-profile">
+      <div class="sett-avatar">${esc(initial)}</div>
+      <div class="sett-profile-info">
+        <div class="sett-profile-name">${esc(currentUser.displayName || 'User')}</div>
+        <div class="sett-profile-email">${esc(currentUser.email || '')}</div>
+      </div>
+    </div>` : '';
+
   $('#settingsContent').innerHTML = `
     <h2 class="section-title" style="margin-bottom:0">${esc(t('settings.title'))}</h2>
     <p class="muted" style="margin-bottom:8px">${esc(t('settings.subtitle'))}</p>
-    ${accountHtml}
 
-    <section class="card">
-      <h3 style="text-align:center">${esc(t('settings.general'))}</h3>
+    ${profileHtml}
 
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
-          <div>
-            <div style="font-weight:600">${esc(t('settings.device_theme'))}</div>
-            <div class="hint" style="margin:0">${esc(t('settings.device_theme_hint'))}</div>
+    <div class="sett-section">
+      <div class="sett-section-title">${esc(t('settings.general'))}</div>
+      <div class="sett-section-card">
+
+        <div class="row" style="justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px;flex:1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+            <div>
+              <div style="font-weight:600">${esc(t('settings.device_theme'))}</div>
+              <div class="hint" style="margin:0">${esc(t('settings.device_theme_hint'))}</div>
+            </div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="settDeviceTheme" ${state.settings.theme === 'system' ? 'checked' : ''}><span class="toggle-slider"></span></label>
+        </div>
+
+        <div class="row" style="justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px;flex:1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
+            <div>
+              <div style="font-weight:600">${esc(t('settings.oled_theme'))}</div>
+              <div class="hint" style="margin:0">${esc(t('settings.oled_theme_hint'))}</div>
+            </div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="settDarkTheme" ${state.settings.theme === 'oled' ? 'checked' : ''}><span class="toggle-slider"></span></label>
+        </div>
+
+        <div class="row" style="justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px;flex:1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+            <div style="font-weight:600">${esc(t('settings.language'))}</div>
+          </div>
+          <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
+            <div class="lt-slider"></div>
+            <span class="lt-label ${lang === 'bn' ? 'active' : ''}">BD</span>
+            <span class="lt-label ${lang === 'en' ? 'active' : ''}">EN</span>
           </div>
         </div>
-        <label class="toggle"><input type="checkbox" id="settDeviceTheme" ${state.settings.theme === 'system' ? 'checked' : ''}><span class="toggle-slider"></span></label>
-      </div>
 
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
-          <div>
-            <div style="font-weight:600">${esc(t('settings.oled_theme'))}</div>
-            <div class="hint" style="margin:0">${esc(t('settings.oled_theme_hint'))}</div>
+        <div class="row" style="justify-content:space-between;gap:12px;border-bottom:0">
+          <div style="display:flex;align-items:center;gap:12px;flex:1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            <div>
+              <div style="font-weight:600">${esc(t('settings.low_threshold'))}</div>
+              <div class="hint" style="margin:0">${esc(t('settings.low_threshold_hint'))}</div>
+            </div>
           </div>
+          <input type="number" id="settThreshold" value="${threshold}" min="0" max="99999" step="50" inputmode="numeric" style="width:80px;text-align:right">
         </div>
-        <label class="toggle"><input type="checkbox" id="settDarkTheme" ${state.settings.theme === 'oled' ? 'checked' : ''}><span class="toggle-slider"></span></label>
-      </div>
 
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-          <div style="font-weight:600">${esc(t('settings.language'))}</div>
-        </div>
-        <div class="lang-toggle" id="settLangToggle" data-lang="${lang}">
-          <div class="lt-slider"></div>
-          <span class="lt-label ${lang === 'bn' ? 'active' : ''}">BD</span>
-          <span class="lt-label ${lang === 'en' ? 'active' : ''}">EN</span>
-        </div>
       </div>
+    </div>
 
-      <div class="row" style="justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px;flex:1">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-          <div>
-            <div style="font-weight:600">${esc(t('settings.low_threshold'))}</div>
-            <div class="hint" style="margin:0">${esc(t('settings.low_threshold_hint'))}</div>
-          </div>
+    ${currentUser ? `
+    <div class="sett-section">
+      <div class="sett-section-title">ACCOUNT</div>
+      <div class="sett-section-card">
+        <div class="sett-item" onclick="window._settingsSignOut()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+          <span>${esc(t('settings.sign_out'))}</span>
         </div>
-        <input type="number" id="settThreshold" value="${threshold}" min="0" max="99999" step="50" inputmode="numeric" style="width:80px;text-align:right">
+        <div class="sett-item" onclick="if(currentUser) auth.sendPasswordResetEmail(currentUser.email).then(()=>toast(t('auth.reset_sent')||'Reset link sent!')).catch(e=>toast(e.message,true))">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+          <span>${esc(t('settings.reset_password') || 'Reset password')}</span>
+        </div>
+        <div class="sett-item danger" onclick="window._settingsDeleteAccount()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          <span>${esc(t('settings.delete_account'))}</span>
+        </div>
       </div>
-    </section>
+    </div>` : ''}
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
       <div class="settings-box" onclick="window._settingsShare()">${esc(t('settings.share'))}</div>
       <div class="settings-box" onclick="showImportExport()">${esc(t('settings.import_export'))}</div>
       <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">${esc(t('settings.delete_all'))}</div>
-      ${currentUser ? `<div class="settings-box" onclick="window._settingsSignOut()">${esc(t('settings.sign_out'))}</div>` : ''}
-      ${currentUser ? `<div class="settings-box" onclick="window._settingsDeleteAccount()" style="color:var(--danger)">${esc(t('settings.delete_account'))}</div>` : ''}
       <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">${esc(t('settings.about'))}</div>
       <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">${esc(t('settings.contact'))}</div>
     </div>

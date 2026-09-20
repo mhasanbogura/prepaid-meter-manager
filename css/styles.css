@@ -349,6 +349,39 @@ table.list tr:last-child td { border-bottom: 0; }
 .splash-screen img { width: 80px; height: 80px; border-radius: 18px; box-shadow: var(--shadow-lg); animation: splashPulse 2s ease-in-out infinite; }
 @keyframes splashPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: .8; } }
 
+/* ---------- settings profile & sections ---------- */
+.sett-profile {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+}
+.sett-avatar {
+  width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+  background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; text-transform: uppercase;
+}
+.sett-profile-info { min-width: 0; }
+.sett-profile-name { font-size: 16px; font-weight: 700; color: var(--text); }
+.sett-profile-email { font-size: 13px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sett-section { margin-top: 16px; }
+.sett-section-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-2); margin-bottom: 10px; text-align: center;
+}
+.sett-section-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0 14px; box-shadow: var(--shadow);
+}
+.sett-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 0; font-size: 15px; font-weight: 600; color: var(--text);
+  border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: opacity .15s;
+}
+.sett-item:last-child { border-bottom: 0; }
+.sett-item:active { opacity: .7; }
+.sett-item.danger { color: var(--danger); }
+
 /* ---------- auth screens ---------- */
 .auth-screen {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
