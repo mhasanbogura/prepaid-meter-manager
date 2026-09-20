@@ -1538,10 +1538,6 @@ function renderSettings() {
         <tr><td style="color:var(--text-2)">${esc(t('settings.account_email'))}</td><td style="font-weight:600">${esc(currentUser.email || '–')}</td></tr>
         <tr><td style="color:var(--text-2)">${esc(t('settings.cloud_sync'))}</td><td style="font-weight:600;color:var(--success)">${esc(t('settings.cloud_synced'))}</td></tr>
       </tbody></table>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn secondary sm" onclick="window._settingsSignOut()" style="flex:1">${esc(t('settings.sign_out'))}</button>
-        <button class="btn danger sm" onclick="window._settingsDeleteAccount()" style="flex:1">${esc(t('settings.delete_account'))}</button>
-      </div>
     </section>` : '';
   $('#settingsContent').innerHTML = `
     <h2 class="section-title" style="margin-bottom:0">${esc(t('settings.title'))}</h2>
@@ -1601,6 +1597,8 @@ function renderSettings() {
       <div class="settings-box" onclick="window._settingsShare()">${esc(t('settings.share'))}</div>
       <div class="settings-box" onclick="showImportExport()">${esc(t('settings.import_export'))}</div>
       <div class="settings-box" onclick="window._settingsDeleteAll()" style="color:var(--danger)">${esc(t('settings.delete_all'))}</div>
+      ${currentUser ? `<div class="settings-box" onclick="window._settingsSignOut()">${esc(t('settings.sign_out'))}</div>` : ''}
+      ${currentUser ? `<div class="settings-box" onclick="window._settingsDeleteAccount()" style="color:var(--danger)">${esc(t('settings.delete_account'))}</div>` : ''}
       <div class="settings-box" id="btnAbout" onclick="window._settingsAbout(this)">${esc(t('settings.about'))}</div>
       <div class="settings-box" id="btnContact" onclick="window._settingsContact(this)">${esc(t('settings.contact'))}</div>
     </div>
@@ -1645,7 +1643,7 @@ window._settingsSignOut = function() {
 };
 window._settingsDeleteAccount = deleteAccount;
 window._settingsShare = function() {
-  const url = 'https://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx';
+  const url = 'https://mahmudulsapp.u.gy/meter-manager';
   const msg = 'Check out Meter Manager – a simple app to track DESCO prepaid electricity meters in Bangladesh!\n\nDownload: ' + url;
   if (window.NescoBridge && window.NescoBridge.shareText) {
     window.NescoBridge.shareText('Meter Manager', msg);
