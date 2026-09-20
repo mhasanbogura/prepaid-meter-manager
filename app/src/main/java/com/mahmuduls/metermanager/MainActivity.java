@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        settings.setUserAgentString("Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
 
         webView.addJavascriptInterface(new NescoBridge(), "NescoBridge");
 
@@ -152,6 +153,22 @@ public class MainActivity extends Activity {
             "  if(d && !d.hidden){" +
             "    if(typeof closeDialog==='function') closeDialog();" +
             "    return 'dialog';" +
+            "  }" +
+            "  var ls=document.getElementById('auth-login-screen');" +
+            "  var rs=document.getElementById('auth-register-screen');" +
+            "  var fs=document.getElementById('auth-forgot-screen');" +
+            "  var ws=document.getElementById('auth-screen');" +
+            "  if(ls && ls.style.display!=='none'){" +
+            "    if(typeof showAuthScreen==='function') showAuthScreen('auth-screen');" +
+            "    return 'auth';" +
+            "  }" +
+            "  if(rs && rs.style.display!=='none'){" +
+            "    if(typeof showAuthScreen==='function') showAuthScreen('auth-screen');" +
+            "    return 'auth';" +
+            "  }" +
+            "  if(fs && fs.style.display!=='none'){" +
+            "    if(typeof showAuthScreen==='function') showAuthScreen('auth-login-screen');" +
+            "    return 'auth';" +
             "  }" +
             "  if(typeof currentView!=='undefined' && currentView!=='home'){" +
             "    currentMeterId=null; showView('home');" +

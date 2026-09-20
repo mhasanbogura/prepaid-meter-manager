@@ -1,10 +1,11 @@
 /* Meter Manager — offline shell service worker (network-first, cache fallback) */
-const CACHE = 'metermanager-v16';
+const CACHE = 'metermanager-v18';
 const ASSETS = [
   './',
   './index.html',
   './css/styles.css',
   './js/app.js',
+  './firebase-config.js',
   './manifest.webmanifest',
   './icons/icon-electricity.svg',
   './icons/icon-512.png'

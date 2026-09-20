@@ -13,7 +13,125 @@
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-<div id="app" class="app">
+
+<!-- AUTH WELCOME SCREEN -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-container">
+    <div class="auth-header">
+      <img src="icons/icon-512.png" alt="Meter Manager" class="auth-logo">
+      <h1 data-i18n="app.name">Meter Manager</h1>
+      <p class="auth-subtitle" data-i18n="auth.subtitle">Track your DESCO / NESCO prepaid meter</p>
+    </div>
+    <div class="auth-card">
+      <h2 data-i18n="auth.welcome">Welcome</h2>
+      <p class="auth-hint" data-i18n="auth.welcome_hint">Log in to sync your meters across devices</p>
+      <button class="btn auth-btn-primary" id="authShowLogin">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <span data-i18n="auth.login_email">Login with Email</span>
+      </button>
+      <button class="btn auth-btn-google" id="authGoogleLogin">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span data-i18n="auth.login_google">Login with Google</span>
+      </button>
+      <div class="auth-footer">
+        <span data-i18n="auth.no_account">Don't have an account?</span>
+        <button class="btn-link" id="authShowRegister" data-i18n="auth.sign_up">Sign up</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH LOGIN SCREEN -->
+<div id="auth-login-screen" class="auth-screen" style="display:none">
+  <div class="auth-container">
+    <div class="auth-header">
+      <img src="icons/icon-512.png" alt="" class="auth-logo-sm">
+      <h1 data-i18n="auth.welcome_back">Welcome Back</h1>
+    </div>
+    <div class="auth-card">
+      <div class="input-group">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.5"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <input type="email" id="loginEmail" placeholder="Email address" data-i18n-ph="auth.email_ph" autocomplete="email">
+      </div>
+      <div class="input-group">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.5"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <input type="password" id="loginPassword" placeholder="Password" data-i18n-ph="auth.pass_ph" autocomplete="current-password">
+      </div>
+      <button class="btn auth-btn-primary" id="loginBtn" data-i18n="auth.login">Log in</button>
+      <button class="btn auth-btn-google" id="loginGoogleBtn">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span data-i18n="auth.login_google">Login with Google</span>
+      </button>
+      <button class="btn-link" id="forgotPasswordBtn" data-i18n="auth.forgot">Forgot Password?</button>
+      <div class="auth-sep"><span data-i18n="auth.or">or</span></div>
+      <button class="btn auth-btn-secondary" id="loginToRegister" data-i18n="auth.no_account_signup">Not registered? Sign Up</button>
+    </div>
+    <button class="btn-back" id="authLoginBack">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      <span data-i18n="auth.back">Back</span>
+    </button>
+  </div>
+</div>
+
+<!-- AUTH REGISTER SCREEN -->
+<div id="auth-register-screen" class="auth-screen" style="display:none">
+  <div class="auth-container">
+    <div class="auth-header">
+      <img src="icons/icon-512.png" alt="" class="auth-logo-sm">
+      <h1 data-i18n="auth.create_account">Create Account</h1>
+    </div>
+    <div class="auth-card">
+      <div class="input-group">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.5"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        <input type="text" id="regName" placeholder="Full name" data-i18n-ph="auth.name_ph" autocomplete="name">
+      </div>
+      <div class="input-group">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.5"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <input type="email" id="regEmail" placeholder="Email address" data-i18n-ph="auth.email_ph" autocomplete="email">
+      </div>
+      <div class="input-group">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.5"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <input type="password" id="regPassword" placeholder="Password (min 6 chars)" data-i18n-ph="auth.pass_ph" autocomplete="new-password">
+      </div>
+      <button class="btn auth-btn-primary" id="registerBtn" data-i18n="auth.sign_up_btn">SIGN UP</button>
+      <button class="btn auth-btn-google" id="registerGoogleBtn">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span data-i18n="auth.signup_google">Sign up with Google</span>
+      </button>
+      <div class="auth-sep"><span data-i18n="auth.or">or</span></div>
+      <button class="btn auth-btn-secondary" id="registerToLogin" data-i18n="auth.have_account">Already have account? Log In</button>
+    </div>
+    <button class="btn-back" id="authRegisterBack">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      <span data-i18n="auth.back">Back</span>
+    </button>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD SCREEN -->
+<div id="auth-forgot-screen" class="auth-screen" style="display:none">
+  <div class="auth-container">
+    <div class="auth-header">
+      <img src="icons/icon-512.png" alt="" class="auth-logo-sm">
+      <h1 data-i18n="auth.forgot_title">Forgot Password</h1>
+      <p class="auth-subtitle" data-i18n="auth.forgot_hint">We'll send you a reset link</p>
+    </div>
+    <div class="auth-card">
+      <div class="input-group">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:.5"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <input type="email" id="resetEmail" placeholder="Your email address" data-i18n-ph="auth.email_ph" autocomplete="email">
+      </div>
+      <button class="btn auth-btn-primary" id="sendResetBtn" data-i18n="auth.send_reset">Send Reset Link</button>
+    </div>
+    <button class="btn-back" id="authForgotBack">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      <span data-i18n="auth.back">Back</span>
+    </button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="app" style="display:none">
 
   <header class="topbar">
     <div class="brand" id="btnBrand" style="cursor:pointer" title="Home">
@@ -49,6 +167,11 @@
     </div>
   </div>
 </div>
-<script src="js/app.js?v=438"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/app.js?v=450"></script>
 </body>
 </html>

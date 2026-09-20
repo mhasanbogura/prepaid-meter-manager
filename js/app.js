@@ -83,7 +83,23 @@ const I18N = {
     'time.just': 'just now', 'time.min': '{m} min ago', 'time.hour': '{h} hour ago', 'time.hours': '{h} hours ago',
     'time.day': '{d} day ago', 'time.days': '{d} days ago', 'time.month': '{m} month ago', 'time.months': '{m} months ago',
     'detail.balance_updated': 'Updated {t}',
-    'today': 'Today'
+    'today': 'Today',
+    'auth.subtitle': 'Track your DESCO / NESCO prepaid meter',
+    'auth.welcome': 'Welcome', 'auth.welcome_hint': 'Log in to sync your meters across devices',
+    'auth.login_email': 'Login with Email', 'auth.login_google': 'Login with Google',
+    'auth.no_account': "Don't have an account?", 'auth.sign_up': 'Sign up',
+    'auth.welcome_back': 'Welcome Back', 'auth.email_ph': 'Email address', 'auth.pass_ph': 'Password',
+    'auth.login': 'Log in', 'auth.forgot': 'Forgot Password?',
+    'auth.or': 'or', 'auth.no_account_signup': 'Not registered? Sign Up',
+    'auth.back': 'Back', 'auth.create_account': 'Create Account', 'auth.name_ph': 'Full name',
+    'auth.sign_up_btn': 'SIGN UP', 'auth.signup_google': 'Sign up with Google',
+    'auth.have_account': 'Already have account? Log In',
+    'auth.forgot_title': 'Forgot Password', 'auth.forgot_hint': "We'll send you a reset link",
+    'auth.send_reset': 'Send Reset Link',
+    'settings.account': 'Account', 'settings.account_name': 'Name', 'settings.account_email': 'Email',
+    'settings.sign_out': 'Sign Out', 'settings.delete_account': 'Delete Account',
+    'settings.cloud_sync': 'Cloud Sync', 'settings.cloud_synced': 'Meters synced to your account',
+    'settings.cloud_offline': 'Offline – data saved locally',
   },
   bn: {
     'app.name': 'মিটার ম্যানেজার',
@@ -164,7 +180,23 @@ const I18N = {
     'time.just': 'এইমাত্র', 'time.min': '{m} মিনিট আগে', 'time.hour': '{h} ঘণ্টা আগে',
     'time.day': '{d} দিন আগে', 'time.days': '{d} দিন আগে', 'time.month': '{m} মাস আগে', 'time.months': '{m} মাস আগে',
     'detail.balance_updated': '{t} আপডেট হয়েছে',
-    'today': 'আজ'
+    'today': 'আজ',
+    'auth.subtitle': 'ডেসকো/নেসকো প্রিপেইড মিটার ট্র্যাক করুন',
+    'auth.welcome': 'স্বাগতম', 'auth.welcome_hint': 'ডিভাইস জুড়ে মিটার সিঙ্ক করতে লগ ইন করুন',
+    'auth.login_email': 'ইমেইল দিয়ে লগ ইন', 'auth.login_google': 'গুগল দিয়ে লগ ইন',
+    'auth.no_account': 'অ্যাকাউন্ট নেই?', 'auth.sign_up': 'সাইন আপ',
+    'auth.welcome_back': 'স্বাগতম পুনরায়', 'auth.email_ph': 'ইমেইল ঠিকানা', 'auth.pass_ph': 'পাসওয়ার্ড',
+    'auth.login': 'লগ ইন', 'auth.forgot': 'পাসওয়ার্ড ভুলে গেছেন?',
+    'auth.or': 'অথবা', 'auth.no_account_signup': 'নিবন্ধন হয়নি? সাইন আপ',
+    'auth.back': 'পেছনে', 'auth.create_account': 'অ্যাকাউন্ট তৈরি', 'auth.name_ph': 'পুরো নাম',
+    'auth.sign_up_btn': 'সাইন আপ', 'auth.signup_google': 'গুগল দিয়ে সাইন আপ',
+    'auth.have_account': 'ইতিমধ্যে অ্যাকাউন্ট আছে? লগ ইন',
+    'auth.forgot_title': 'পাসওয়ার্ড ভুলে গেছেন', 'auth.forgot_hint': 'আমরা আপনাকে রিসেট লিংক পাঠাবো',
+    'auth.send_reset': 'রিসেট লিংক পাঠান',
+    'settings.account': 'অ্যাকাউন্ট', 'settings.account_name': 'নাম', 'settings.account_email': 'ইমেইল',
+    'settings.sign_out': 'সাইন আউট', 'settings.delete_account': 'অ্যাকাউন্ট মুছে ফেলুন',
+    'settings.cloud_sync': 'ক্লাউড সিঙ্ক', 'settings.cloud_synced': 'মিটার আপনার অ্যাকাউন্টে সিঙ্ক হয়েছে',
+    'settings.cloud_offline': 'অফলাইন – তথ্য স্থানীয়ভাবে সংরক্ষিত',
   }
 };
 
@@ -196,8 +228,8 @@ function loadState() {
     alertFreq: 60, autoRefresh: true, autoFreq: 600
   }, state.settings);
 }
-function saveMeters() { localStorage.setItem(LS_METERS, JSON.stringify(state.meters)); }
-function saveSettings() { localStorage.setItem(LS_SETTINGS, JSON.stringify(state.settings)); }
+function saveMeters() { localStorage.setItem(LS_METERS, JSON.stringify(state.meters)); if (currentUser) saveToCloud(); }
+function saveSettings() { localStorage.setItem(LS_SETTINGS, JSON.stringify(state.settings)); if (currentUser) saveSettingsToCloud(); }
 
 const DRIVE_FOLDER_ID = '1PBrhSIvDk0QrgNS6XeTeA1RDLFPeTqKV';
 const DRIVE_API_KEY = 'AIzaSyA4ymjFIbuGVhFsKjxVV46RT-qWqNHNiY4';
@@ -1498,9 +1530,23 @@ function initUi() {
 function renderSettings() {
   const lang = state.settings.lang || 'en';
   const threshold = state.settings.alertThreshold ?? LOW_BALANCE;
+  const accountHtml = currentUser ? `
+    <section class="card">
+      <h3>${esc(t('settings.account'))}</h3>
+      <table class="list"><tbody>
+        <tr><td style="color:var(--text-2)">${esc(t('settings.account_name'))}</td><td style="font-weight:600">${esc(currentUser.displayName || '–')}</td></tr>
+        <tr><td style="color:var(--text-2)">${esc(t('settings.account_email'))}</td><td style="font-weight:600">${esc(currentUser.email || '–')}</td></tr>
+        <tr><td style="color:var(--text-2)">${esc(t('settings.cloud_sync'))}</td><td style="font-weight:600;color:var(--success)">${esc(t('settings.cloud_synced'))}</td></tr>
+      </tbody></table>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn secondary sm" onclick="window._settingsSignOut()" style="flex:1">${esc(t('settings.sign_out'))}</button>
+        <button class="btn danger sm" onclick="window._settingsDeleteAccount()" style="flex:1">${esc(t('settings.delete_account'))}</button>
+      </div>
+    </section>` : '';
   $('#settingsContent').innerHTML = `
     <h2 class="section-title" style="margin-bottom:0">${esc(t('settings.title'))}</h2>
     <p class="muted" style="margin-bottom:8px">${esc(t('settings.subtitle'))}</p>
+    ${accountHtml}
 
     <section class="card">
       <h3 style="text-align:center">${esc(t('settings.general'))}</h3>
@@ -1560,7 +1606,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.1.49'} (build ${'450'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.0'} (build ${'451'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1591,6 +1637,13 @@ function renderSettings() {
 }
 function syncSettingsUi() {
 }
+window._settingsSignOut = function() {
+  openDialog(t('settings.sign_out'), '<p class="body-text">Sign out from your account?</p>', [
+    { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
+    { key: 'signout', label: t('settings.sign_out'), cls: 'danger', fn: () => { closeDialog(); signOut(); } }
+  ]);
+};
+window._settingsDeleteAccount = deleteAccount;
 window._settingsShare = function() {
   const url = 'https://drive.google.com/uc?export=download&id=1dGVmrcVDRqGnTkBqa2dElq0tMnZ2dJHx';
   const msg = 'Check out Meter Manager – a simple app to track DESCO prepaid electricity meters in Bangladesh!\n\nDownload: ' + url;
@@ -1748,6 +1801,163 @@ async function checkAlerts() {
   }
 }
 
+/* ================= auth ================= */
+var currentUser = null;
+function showAuthScreen(screenId) {
+  ['auth-screen', 'auth-login-screen', 'auth-register-screen', 'auth-forgot-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === screenId ? '' : 'none';
+  });
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.style.display = 'none';
+}
+function showApp() {
+  ['auth-screen', 'auth-login-screen', 'auth-register-screen', 'auth-forgot-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.style.display = '';
+}
+function initAuth() {
+  const byId = id => document.getElementById(id);
+  const bind = (id, evt, fn) => { const el = byId(id); if (el) el.addEventListener(evt, fn); };
+  bind('authShowLogin', 'click', () => showAuthScreen('auth-login-screen'));
+  bind('authShowRegister', 'click', () => showAuthScreen('auth-register-screen'));
+  bind('authLoginBack', 'click', () => showAuthScreen('auth-screen'));
+  bind('authRegisterBack', 'click', () => showAuthScreen('auth-screen'));
+  bind('forgotPasswordBtn', 'click', () => showAuthScreen('auth-forgot-screen'));
+  bind('authForgotBack', 'click', () => showAuthScreen('auth-login-screen'));
+  bind('loginToRegister', 'click', () => showAuthScreen('auth-register-screen'));
+  bind('registerToLogin', 'click', () => showAuthScreen('auth-login-screen'));
+  bind('loginBtn', 'click', () => emailLogin());
+  bind('registerBtn', 'click', () => emailRegister());
+  bind('sendResetBtn', 'click', () => sendResetEmail());
+  bind('authGoogleLogin', 'click', () => googleLogin());
+  bind('loginGoogleBtn', 'click', () => googleLogin());
+  bind('registerGoogleBtn', 'click', () => googleLogin());
+}
+async function emailLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if (!email || !pass) { toast(t('auth.fill_all') || 'Fill all fields', true); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = '...';
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (e) {
+    let m = e.message;
+    if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+      try {
+        const methods = await auth.fetchSignInMethodsForEmail(email);
+        if (methods && methods.includes('google.com')) m = 'This account was created with Google. Use "Login with Google".';
+        else m = 'No account found. Please sign up.';
+      } catch { m = 'No account found. Please sign up.'; }
+    }
+    toast(m, true);
+  } finally { btn.disabled = false; btn.textContent = orig; }
+}
+async function emailRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  if (!name || !email || !pass) { toast('Fill all fields', true); return; }
+  if (pass.length < 6) { toast('Password min 6 chars', true); return; }
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = '...';
+  try {
+    const c = await auth.createUserWithEmailAndPassword(email, pass);
+    await c.user.updateProfile({ displayName: name });
+    await db.ref('users/' + c.user.uid).set({ name: name, email: email, createdAt: Date.now() });
+  } catch (e) {
+    let m = e.message;
+    if (e.code === 'auth/email-already-in-use') m = 'Already registered. Please log in.';
+    toast(m, true);
+  } finally { btn.disabled = false; btn.textContent = orig; }
+}
+async function googleLogin() {
+  const btns = document.querySelectorAll('.auth-btn-google');
+  btns.forEach(b => { b.disabled = true; });
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const c = await auth.signInWithPopup(provider);
+    const s = await db.ref('users/' + c.user.uid).once('value');
+    if (!s.exists()) await db.ref('users/' + c.user.uid).set({ name: c.user.displayName, email: c.user.email, createdAt: Date.now() });
+  } catch (e) {
+    let m = e.message || 'Google login failed';
+    if (e.code === 'auth/popup-closed-by-user') m = 'Cancelled';
+    else if (e.code === 'auth/popup-blocked') m = 'Popup blocked. Allow popups for this site.';
+    toast(m, true);
+  } finally { btns.forEach(b => { b.disabled = false; }); }
+}
+async function sendResetEmail() {
+  const email = document.getElementById('resetEmail').value.trim();
+  if (!email) { toast('Enter email', true); return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    toast('Reset link sent!');
+    setTimeout(() => showAuthScreen('auth-login-screen'), 2000);
+  } catch (e) { toast(e.message, true); }
+}
+async function signOut() {
+  try { await auth.signOut(); } catch {}
+}
+async function deleteAccount() {
+  if (!currentUser) return;
+  openDialog(t('settings.delete_account'), '<p class="body-text">This will permanently delete your account and all saved meters.</p>', [
+    { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
+    { key: 'delete', label: t('settings.delete_account'), cls: 'danger', fn: async () => {
+      closeDialog();
+      try {
+        await db.ref('users/' + currentUser.uid).remove();
+        await currentUser.delete();
+      } catch (e) { toast(e.message, true); }
+    }}
+  ]);
+}
+
+/* ================= cloud sync ================= */
+async function loadFromCloud() {
+  if (!currentUser) return;
+  try {
+    const snap = await db.ref('users/' + currentUser.uid + '/meters').once('value');
+    const cloudMeters = snap.val();
+    if (cloudMeters && Array.isArray(cloudMeters) && cloudMeters.length > 0) {
+      state.meters = cloudMeters;
+      saveMeters();
+    } else if (state.meters.length > 0) {
+      await saveToCloud();
+    }
+  } catch (e) {
+    console.warn('Cloud load failed, using local:', e);
+  }
+}
+async function saveToCloud() {
+  if (!currentUser) return;
+  try {
+    await db.ref('users/' + currentUser.uid + '/meters').set(state.meters);
+  } catch (e) {
+    console.warn('Cloud save failed:', e);
+  }
+}
+async function loadSettingsFromCloud() {
+  if (!currentUser) return;
+  try {
+    const snap = await db.ref('users/' + currentUser.uid + '/settings').once('value');
+    const cloud = snap.val();
+    if (cloud && typeof cloud === 'object') {
+      state.settings = Object.assign({}, state.settings, cloud);
+      saveSettings();
+    }
+  } catch (e) {}
+}
+async function saveSettingsToCloud() {
+  if (!currentUser) return;
+  try {
+    await db.ref('users/' + currentUser.uid + '/settings').set(state.settings);
+  } catch (e) {}
+}
+
 /* ================= PWA ================= */
 window.__pp = { get state() { return state; }, refreshMeter, probeSystemType, apiGet, t, DESCO };
 function registerSw() {
@@ -1768,17 +1978,31 @@ function dailyCacheCleanup() {
 async function boot() {
   loadState();
   dailyCacheCleanup();
-  applyLang();
   applyTheme();
   initUi();
+  initAuth();
   registerSw();
-  showView('home');
-  state.meters.forEach(m => { m.loading = true; m.err = null; });
-  renderHome();
-  await refreshAllMeters();
-  renderHome();
-  scheduleAlerts();
-  scheduleAutoRefresh();
+  try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch {}
+  try { await db.enablePersistence({ synchronizeTabs: true }); } catch {}
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUser = user;
+      showApp();
+      await loadFromCloud();
+      await loadSettingsFromCloud();
+      applyLang();
+      showView('home');
+      state.meters.forEach(m => { m.loading = true; m.err = null; });
+      renderHome();
+      await refreshAllMeters();
+      renderHome();
+      scheduleAlerts();
+      scheduleAutoRefresh();
+    } else {
+      currentUser = null;
+      showAuthScreen('auth-screen');
+    }
+  });
 }
 document.addEventListener('DOMContentLoaded', boot);
 
