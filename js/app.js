@@ -1999,9 +1999,8 @@ async function boot() {
       showView('home');
       state.meters.forEach(m => { m.loading = true; m.err = null; });
       renderHome();
-      await refreshAllMeters();
-      renderHome();
       hideSplash();
+      refreshAllMeters().then(() => renderHome());
       scheduleAlerts();
       scheduleAutoRefresh();
     } else {
