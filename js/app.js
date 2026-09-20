@@ -682,7 +682,7 @@ function importMetersFromText(text) {
 function showImportExport() {
   const txt = exportMetersTxt();
   openDialog('Import / Export', `
-    <textarea id="ieText" style="width:100%;min-height:120px;font-family:monospace;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical">${esc(txt)}</textarea>
+    <textarea id="ieText" placeholder="Home desco 12345678&#10;Office nesco 87654321&#10;desco 11223344" style="width:100%;min-height:120px;font-family:monospace;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);resize:vertical">${esc(txt)}</textarea>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
       <button class="btn secondary sm" onclick="ieExport()" style="white-space:nowrap">Export to file</button>
       <button class="btn secondary sm" onclick="ieImport()" style="white-space:nowrap">Import from file</button>
