@@ -93,11 +93,12 @@ def deployTo = { File dist ->
 
 task deployApk(dependsOn: 'assembleDebug') {
     doLast {
-        deployTo(file('C:/Google Drive/Apps/My Drive/Apk Store/Android'))
+        deployTo(file('/home/mhasanbogura/Google Drive/mahmudulhasandhk70/Apk Store/Android'))
     }
 }
 
 task uploadToGitHub {
+    def ghBin = '/home/mhasanbogura/gh-cli/bin/gh'
     doLast {
         def out = new ByteArrayOutputStream()
         exec {
@@ -118,10 +119,65 @@ task uploadToGitHub {
         }
         exec { commandLine 'git', 'push', 'origin', 'main'; workingDir = file('..') }
         println "GitHub: pushed (v${newVn} build ${newVc})"
+
+        def tagName = "v${newVn}"
+        exec {
+            commandLine 'git', 'tag', '-d', tagName
+            workingDir = file('..')
+            ignoreExitValue true
+        }
+        exec {
+            commandLine 'git', 'push', 'origin', ':refs/tags/' + tagName
+            workingDir = file('..')
+            ignoreExitValue true
+        }
+        exec {
+            commandLine 'git', 'tag', tagName
+            workingDir = file('..')
+        }
+        exec {
+            commandLine 'git', 'push', 'origin', tagName
+            workingDir = file('..')
+        }
+        println "GitHub: tagged ${tagName}"
+
+        def apkFile = "Meter Manager_com.mahmuduls.metermanager_v${newVn}_build_${newVc}.apk"
+        def apkPath = new File('/home/mhasanbogura/Google Drive/mahmudulhasandhk70/Apk Store/Android', apkFile)
+        def tmpApk = new File(layout.buildDirectory.get().asFile, 'meter-manager.apk')
+        exec {
+            commandLine ghBin, 'release', 'delete', tagName, '--yes'
+            workingDir = file('..')
+            ignoreExitValue true
+        }
+        if (apkPath.exists()) {
+            copy {
+                from apkPath
+                into tmpApk.parentFile
+                rename { tmpApk.name }
+            }
+            exec {
+                commandLine ghBin, 'release', 'create', tagName, tmpApk.absolutePath,
+                    '--title', "Meter Manager v${newVn} (build ${newVc})",
+                    '--notes', "Meter Manager v${newVn} build ${newVc}",
+                    '--latest'
+                workingDir = file('..')
+            }
+            tmpApk.delete()
+            println "GitHub: released ${tagName} with ${apkFile}"
+        } else {
+            exec {
+                commandLine ghBin, 'release', 'create', tagName,
+                    '--title', "Meter Manager v${newVn} (build ${newVc})",
+                    '--notes', "Meter Manager v${newVn} build ${newVc}",
+                    '--latest'
+                workingDir = file('..')
+            }
+            println "GitHub: released ${tagName} (no APK attached)"
+        }
     }
 }
 
 afterEvaluate {
     assembleDebug.finalizedBy deployApk
-    assembleDebug.finalizedBy uploadToGitHub
+    deployApk.finalizedBy uploadToGitHub
 }
