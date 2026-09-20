@@ -49,6 +49,7 @@ public class MainActivity extends Activity {
     private static final int RC_SIGN_IN = 9001;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String pendingSaveContent;
+    private String pendingGoogleToken;
     private GoogleSignInClient googleSignInClient;
 
     @Override
@@ -110,6 +111,7 @@ public class MainActivity extends Activity {
                     splash.startAnimation(fadeOut);
                 }
                 injectOverrides();
+                deliverGoogleTokenIfReady();
                 view.evaluateJavascript(
                     "(function(){var t=document.querySelector('meta[name=theme-color]');return t?t.content:'light'})()",
                     value -> {
@@ -180,6 +182,16 @@ public class MainActivity extends Activity {
             "};" +
             "})();";
         webView.evaluateJavascript(js, null);
+    }
+
+    private void deliverGoogleTokenIfReady() {
+        if (pendingGoogleToken != null) {
+            String token = pendingGoogleToken;
+            pendingGoogleToken = null;
+            String escaped = token.replace("\\", "\\\\").replace("'", "\\'");
+            webView.evaluateJavascript(
+                "if(window.onGoogleSignInResult) window.onGoogleSignInResult('" + escaped + "');", null);
+        }
     }
 
     @Override
@@ -794,9 +806,8 @@ public class MainActivity extends Activity {
                 com.google.android.gms.auth.api.signin.GoogleSignInAccount account = task.getResult(ApiException.class);
                 String idToken = account.getIdToken();
                 if (idToken != null) {
-                    String escaped = idToken.replace("\\", "\\\\").replace("'", "\\'");
-                    webView.evaluateJavascript(
-                        "if(window.onGoogleSignInResult) window.onGoogleSignInResult('" + escaped + "');", null);
+                    pendingGoogleToken = idToken;
+                    deliverGoogleTokenIfReady();
                 }
             } catch (ApiException e) {
                 Log.e(TAG, "Google Sign-In failed: code=" + e.getStatusCode(), e);
