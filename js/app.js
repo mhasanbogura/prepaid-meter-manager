@@ -1718,15 +1718,15 @@ window._settingsAbout = async function(el) {
   if (!md) md = await driveFetchCached('cached_about_md', 'Meter Manager_com.mahmuduls.metermanager.md');
   if (span) span.textContent = t('settings.about');
   if (!md) md = '## Overview\n\nMeter Manager is a web-based electricity meter management app that helps users monitor and track their DESCO and NESCO prepaid electricity meters. It provides live meter information, usage statistics, average daily costs, and recharge history in one convenient place.\n\n## Features\n\n- Check live prepaid meter balance\n- View meter information\n- Monitor average electricity cost per day\n- View total electricity usage for the current month\n- Compare usage with the previous month\n- Track daily electricity consumption\n- Track monthly electricity consumption\n- View recharge history\n- Monitor electricity usage trends\n- Simple and convenient web-based interface\n\n## Best for\n\nDESCO and NESCO prepaid electricity meter users who want to conveniently check their live balance, monitor daily and monthly electricity consumption, track average daily costs, compare usage, and review recharge history from one place.';
-  let html = '<div style="text-align:center;margin-bottom:12px"><img src="icons/icon-512.png" class="about-logo" style="width:80px;height:80px;border-radius:20px"><div style="font-weight:700;font-size:16px;margin-top:4px">Meter Manager</div></div>';
+  let html = '<div style="text-align:center;margin-bottom:8px"><img src="icons/icon-512.png" class="about-logo" style="width:64px;height:64px;border-radius:16px"><div style="font-weight:700;font-size:15px;margin-top:2px">Meter Manager</div></div>';
   for (const line of md.split('\n')) {
     const trimmed = line.trim();
-    if (!trimmed) { html += '<br>'; continue; }
-    if (trimmed.startsWith('## ')) { html += `<div style="font-weight:700;font-size:14px;color:var(--primary);margin:8px 0 4px">${esc(trimmed.slice(3))}</div>`; }
+    if (!trimmed) { html += '<div style="height:4px"></div>'; continue; }
+    if (trimmed.startsWith('## ')) { html += `<div style="font-weight:700;font-size:13px;color:var(--primary);margin:6px 0 2px">${esc(trimmed.slice(3))}</div>`; }
     else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       const txt = trimmed.slice(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      html += `<div style="font-size:13px;line-height:1.6;margin-left:8px">• ${txt}</div>`;
-    } else { html += `<div style="font-size:13px;line-height:1.6">${trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px">$1</code>')}</div>`; }
+      html += `<div style="font-size:12px;line-height:1.5;margin-left:8px">• ${txt}</div>`;
+    } else { html += `<div style="font-size:12px;line-height:1.5">${trimmed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code style="background:var(--surface-2);padding:1px 4px;border-radius:3px">$1</code>')}</div>`; }
   }
   openDialog('', html, []);
 };
