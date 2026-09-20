@@ -1655,7 +1655,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.3'} (build ${'458'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.5'} (build ${'462'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1882,10 +1882,7 @@ function initAuth() {
   const bind = (id, evt, fn) => { const el = byId(id); if (el) el.addEventListener(evt, fn); };
   bind('authShowLogin', 'click', () => showAuthScreen('auth-login-screen'));
   bind('authShowRegister', 'click', () => showAuthScreen('auth-register-screen'));
-  bind('authLoginBack', 'click', () => showAuthScreen('auth-screen'));
-  bind('authRegisterBack', 'click', () => showAuthScreen('auth-screen'));
   bind('forgotPasswordBtn', 'click', () => showAuthScreen('auth-forgot-screen'));
-  bind('authForgotBack', 'click', () => showAuthScreen('auth-login-screen'));
   bind('loginToRegister', 'click', () => showAuthScreen('auth-register-screen'));
   bind('registerToLogin', 'click', () => showAuthScreen('auth-login-screen'));
   bind('loginBtn', 'click', () => emailLogin());
@@ -1933,6 +1930,7 @@ async function emailRegister() {
     toast(m, true);
   } finally { btn.disabled = false; btn.textContent = orig; }
 }
+let googleSignInInProgress = false;
 async function googleLogin() {
   const btns = document.querySelectorAll('.auth-btn-google');
   btns.forEach(b => { b.disabled = true; });
@@ -1940,6 +1938,7 @@ async function googleLogin() {
     const provider = new firebase.auth.GoogleAuthProvider();
     const isAndroid = !!(window.NescoBridge && typeof window.NescoBridge.shareText === 'function');
     if (isAndroid) {
+      googleSignInInProgress = true;
       NescoBridge.googleSignIn();
       return;
     }
@@ -1954,8 +1953,10 @@ async function googleLogin() {
   } finally { btns.forEach(b => { b.disabled = false; }); }
 }
 window.onGoogleSignInResult = async function(idToken) {
+  googleSignInInProgress = false;
   const btns = document.querySelectorAll('.auth-btn-google');
   btns.forEach(b => { b.disabled = true; });
+  if (!idToken) { toast('Google sign-in cancelled', true); btns.forEach(b => { b.disabled = false; }); return; }
   try {
     const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
     const c = await auth.signInWithCredential(credential);
@@ -2090,7 +2091,7 @@ async function boot() {
       scheduleAutoRefresh();
     } else {
       currentUser = null;
-      showAuthScreen('auth-screen');
+      if (!googleSignInInProgress) showAuthScreen('auth-screen');
     }
   });
 }
