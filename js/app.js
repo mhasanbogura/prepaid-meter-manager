@@ -234,7 +234,7 @@ function saveMeters() { localStorage.setItem(LS_METERS, JSON.stringify(state.met
 function saveSettings() { localStorage.setItem(LS_SETTINGS, JSON.stringify(state.settings)); if (currentUser) saveSettingsToCloud(); }
 
 const DRIVE_FOLDER_ID = '1PBrhSIvDk0QrgNS6XeTeA1RDLFPeTqKV';
-const DRIVE_API_KEY = 'AIzaSyA4ymjFIbuGVhFsKjxVV46RT-qWqNHNiY4';
+const DRIVE_API_KEY = 'AIzaSyAX7T6Vd75LnhQg15IydOLEYqjfGUT8TO8';
 
 async function driveFetchMdByName(fileName) {
   try {
