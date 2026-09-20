@@ -1930,7 +1930,7 @@ async function emailRegister() {
     toast(m, true);
   } finally { btn.disabled = false; btn.textContent = orig; }
 }
-let googleSignInInProgress = false;
+let googleSignInInProgress = sessionStorage.getItem('gsi') === '1';
 async function googleLogin() {
   const btns = document.querySelectorAll('.auth-btn-google');
   btns.forEach(b => { b.disabled = true; });
@@ -1939,6 +1939,7 @@ async function googleLogin() {
     const isAndroid = !!(window.NescoBridge && typeof window.NescoBridge.shareText === 'function');
     if (isAndroid) {
       googleSignInInProgress = true;
+      sessionStorage.setItem('gsi', '1');
       NescoBridge.googleSignIn();
       return;
     }
@@ -1953,16 +1954,25 @@ async function googleLogin() {
   } finally { btns.forEach(b => { b.disabled = false; }); }
 }
 window.onGoogleSignInResult = async function(idToken) {
-  googleSignInInProgress = false;
   const btns = document.querySelectorAll('.auth-btn-google');
   btns.forEach(b => { b.disabled = true; });
-  if (!idToken) { toast('Google sign-in cancelled', true); btns.forEach(b => { b.disabled = false; }); return; }
+  if (!idToken) {
+    googleSignInInProgress = false;
+    sessionStorage.removeItem('gsi');
+    toast('Google sign-in cancelled', true);
+    btns.forEach(b => { b.disabled = false; });
+    return;
+  }
   try {
     const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
     const c = await auth.signInWithCredential(credential);
+    googleSignInInProgress = false;
+    sessionStorage.removeItem('gsi');
     const s = await db.ref('users/' + c.user.uid).once('value');
     if (!s.exists()) await db.ref('users/' + c.user.uid).set({ name: c.user.displayName, email: c.user.email, createdAt: Date.now() });
   } catch (e) {
+    googleSignInInProgress = false;
+    sessionStorage.removeItem('gsi');
     toast(e.message || 'Google login failed', true);
   } finally { btns.forEach(b => { b.disabled = false; }); }
 };
