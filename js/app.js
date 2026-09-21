@@ -1655,7 +1655,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.19'} (build ${'502'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.20'} (build ${'505'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -2116,7 +2116,12 @@ async function boot() {
   if (window.NescoBridge && typeof window.NescoBridge.getPendingGoogleToken === 'function') {
     const pendingToken = window.NescoBridge.getPendingGoogleToken();
     if (pendingToken && typeof window.onGoogleSignInResult === 'function') {
-      window.onGoogleSignInResult(pendingToken);
+      const pendingEmail = (typeof window.NescoBridge.getPendingGoogleEmail === 'function')
+        ? window.NescoBridge.getPendingGoogleEmail() : '';
+      window.onGoogleSignInResult(pendingToken, pendingEmail);
+      if (typeof window.NescoBridge.clearPendingGoogleToken === 'function') {
+        window.NescoBridge.clearPendingGoogleToken();
+      }
     }
   }
 }

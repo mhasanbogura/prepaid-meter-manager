@@ -47,6 +47,9 @@ public class MainActivity extends Activity {
     private static final String SUBMIT_HISTORY = "\u09B0\u09BF\u099A\u09BE\u09B0\u09CD\u099C \u09B9\u09BF\u09B8\u09CD\u099F\u09CD\u09B0\u09BF";
     private static final String SUBMIT_MONTHLY = "\u09AE\u09BE\u09B8\u09BF\u0995 \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0";
     private static final int RC_SIGN_IN = 9001;
+    private static final String PREFS_NAME = "MeterManagerPrefs";
+    private static final String KEY_PENDING_GOOGLE_TOKEN = "pendingGoogleToken";
+    private static final String KEY_PENDING_GOOGLE_EMAIL = "pendingGoogleEmail";
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String pendingSaveContent;
     private GoogleSignInClient googleSignInClient;
@@ -747,6 +750,26 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String getPendingGoogleToken() {
+            return getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_PENDING_GOOGLE_TOKEN, null);
+        }
+
+        @JavascriptInterface
+        public String getPendingGoogleEmail() {
+            return getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(KEY_PENDING_GOOGLE_EMAIL, "");
+        }
+
+        @JavascriptInterface
+        public void clearPendingGoogleToken() {
+            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                .remove(KEY_PENDING_GOOGLE_TOKEN)
+                .remove(KEY_PENDING_GOOGLE_EMAIL)
+                .apply();
+        }
+
+        @JavascriptInterface
         public void shareText(String title, String text) {
             mainHandler.post(() -> {
                 Intent intent = new Intent(Intent.ACTION_SEND);
@@ -820,11 +843,21 @@ public class MainActivity extends Activity {
                 String email = account.getEmail() != null ? account.getEmail() : "";
                 Log.d(TAG, "Google Sign-In success, idToken=" + (idToken != null ? "present" : "null"));
                 if (idToken != null) {
+                    // Store in SharedPreferences as fallback
+                    getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                        .putString(KEY_PENDING_GOOGLE_TOKEN, idToken)
+                        .putString(KEY_PENDING_GOOGLE_EMAIL, email)
+                        .apply();
+
                     String escapedToken = idToken.replace("\\", "\\\\").replace("'", "\\'");
                     String escapedEmail = email.replace("\\", "\\\\").replace("'", "\\'");
                     String js = "(function(){if(typeof window.onGoogleSignInResult==='function'){window.onGoogleSignInResult('" + escapedToken + "','" + escapedEmail + "');return 'ok';}return 'nofunc';})()";
                     webView.evaluateJavascript(js, value -> {
                         Log.d(TAG, "evaluateJavascript result: " + value);
+                        // If JS wasn't ready, clear prefs (boot will pick it up)
+                        if (value != null && value.contains("nofunc")) {
+                            Log.d(TAG, "JS not ready, token stored in prefs for boot()");
+                        }
                     });
                 }
             } catch (ApiException e) {
