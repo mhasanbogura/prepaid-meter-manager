@@ -852,13 +852,24 @@ public class MainActivity extends Activity {
                     String escapedToken = idToken.replace("\\", "\\\\").replace("'", "\\'");
                     String escapedEmail = email.replace("\\", "\\\\").replace("'", "\\'");
                     String js = "(function(){if(typeof window.onGoogleSignInResult==='function'){window.onGoogleSignInResult('" + escapedToken + "','" + escapedEmail + "');return 'ok';}return 'nofunc';})()";
+                    // Try immediately
                     webView.evaluateJavascript(js, value -> {
-                        Log.d(TAG, "evaluateJavascript result: " + value);
-                        // If JS wasn't ready, clear prefs (boot will pick it up)
-                        if (value != null && value.contains("nofunc")) {
-                            Log.d(TAG, "JS not ready, token stored in prefs for boot()");
-                        }
+                        Log.d(TAG, "evaluateJavascript (immediate) result: " + value);
                     });
+                    // Retry after delay in case WebView JS context wasn't ready
+                    final String retryJs = js;
+                    mainHandler.postDelayed(() -> {
+                        webView.evaluateJavascript(retryJs, value -> {
+                            Log.d(TAG, "evaluateJavascript (delayed) result: " + value);
+                            // Clear pending token after successful delivery
+                            if (value != null && value.contains("ok")) {
+                                getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                                    .remove(KEY_PENDING_GOOGLE_TOKEN)
+                                    .remove(KEY_PENDING_GOOGLE_EMAIL)
+                                    .apply();
+                            }
+                        });
+                    }, 500);
                 }
             } catch (ApiException e) {
                 Log.e(TAG, "Google Sign-In failed: code=" + e.getStatusCode(), e);
