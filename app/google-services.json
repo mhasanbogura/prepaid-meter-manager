@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1034014653431-bgbleibkhrcpkum9t4k7uv15brbcqlp9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mahmuduls.metermanager",
+            "certificate_hash": "4e8e70902a44c0f05f501fa8d62c08ec011ce875"
+          }
+        },
+        {
           "client_id": "1034014653431-gfluor3kopu8i3t329av99g706ekvpup.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
