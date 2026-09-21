@@ -817,10 +817,12 @@ public class MainActivity extends Activity {
             try {
                 com.google.android.gms.auth.api.signin.GoogleSignInAccount account = task.getResult(ApiException.class);
                 String idToken = account.getIdToken();
+                String email = account.getEmail() != null ? account.getEmail() : "";
                 Log.d(TAG, "Google Sign-In success, idToken=" + (idToken != null ? "present" : "null"));
                 if (idToken != null) {
-                    String escaped = idToken.replace("\\", "\\\\").replace("'", "\\'");
-                    String js = "(function(){if(typeof window.onGoogleSignInResult==='function'){window.onGoogleSignInResult('" + escaped + "');return 'ok';}return 'nofunc';})()";
+                    String escapedToken = idToken.replace("\\", "\\\\").replace("'", "\\'");
+                    String escapedEmail = email.replace("\\", "\\\\").replace("'", "\\'");
+                    String js = "(function(){if(typeof window.onGoogleSignInResult==='function'){window.onGoogleSignInResult('" + escapedToken + "','" + escapedEmail + "');return 'ok';}return 'nofunc';})()";
                     webView.evaluateJavascript(js, value -> {
                         Log.d(TAG, "evaluateJavascript result: " + value);
                     });
