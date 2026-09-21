@@ -1655,7 +1655,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.21'} (build ${'508'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.22'} (build ${'511'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1930,7 +1930,10 @@ async function emailRegister() {
     toast(m, true);
   } finally { btn.disabled = false; btn.textContent = orig; }
 }
+let _googleAuthInProgress = false;
 async function googleLogin() {
+  if (_googleAuthInProgress) return;
+  _googleAuthInProgress = true;
   const btns = document.querySelectorAll('.auth-btn-google');
   btns.forEach(b => { b.disabled = true; });
   try {
@@ -1948,14 +1951,18 @@ async function googleLogin() {
     if (e.code === 'auth/popup-closed-by-user') m = 'Cancelled';
     else if (e.code === 'auth/popup-blocked') m = 'Popup blocked. Allow popups for this site.';
     toast(m, true);
-  } finally { btns.forEach(b => { b.disabled = false; }); }
+  } finally { btns.forEach(b => { b.disabled = false; }); _googleAuthInProgress = false; }
 }
 window.onGoogleSignInResult = async function(idToken, email) {
+  if (_googleAuthInProgress) return;
+  if (currentUser) return;
+  _googleAuthInProgress = true;
   const btns = document.querySelectorAll('.auth-btn-google');
   btns.forEach(b => { b.disabled = true; });
   if (!idToken) {
     toast('Google sign-in cancelled', true);
     btns.forEach(b => { b.disabled = false; });
+    _googleAuthInProgress = false;
     return;
   }
   btns.forEach(b => { b.disabled = false; });
@@ -1970,7 +1977,7 @@ window.onGoogleSignInResult = async function(idToken, email) {
     '<p style="font-size:12px;color:var(--text-2);line-height:1.5">Review Meter Manager\'s privacy policy and Terms of Service to understand how Meter Manager will process and protect your data.</p>' +
     '</div>',
     [
-      { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: closeDialog },
+      { key: 'cancel', label: t('btn.cancel'), cls: 'secondary', fn: () => { _googleAuthInProgress = false; closeDialog(); } },
       { key: 'continue', label: 'Continue', cls: '', fn: async () => {
         closeDialog();
         btns.forEach(b => { b.disabled = true; });
@@ -1981,7 +1988,7 @@ window.onGoogleSignInResult = async function(idToken, email) {
           if (!s.exists()) await db.ref('users/' + c.user.uid).set({ name: c.user.displayName, email: c.user.email, createdAt: Date.now() });
         } catch (e) {
           toast(e.message || 'Google login failed', true);
-        } finally { btns.forEach(b => { b.disabled = false; }); }
+        } finally { btns.forEach(b => { b.disabled = false; }); _googleAuthInProgress = false; }
       }}
     ]);
 };
