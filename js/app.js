@@ -1655,7 +1655,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.23'} (build ${'514'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.24'} (build ${'517'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1861,7 +1861,6 @@ function showAuthScreen(screenId) {
   });
   const appEl = document.getElementById('app');
   if (appEl) appEl.style.display = 'none';
-  hideSplash();
 }
 function showApp() {
   ['auth-screen', 'auth-login-screen', 'auth-register-screen', 'auth-forgot-screen'].forEach(id => {
@@ -1870,13 +1869,8 @@ function showApp() {
   });
   const appEl = document.getElementById('app');
   if (appEl) appEl.style.display = '';
-  const splash = document.getElementById('splash-screen');
-  if (splash) splash.classList.add('visible');
 }
-function hideSplash() {
-  const splash = document.getElementById('splash-screen');
-  if (splash) splash.classList.remove('visible');
-}
+function hideSplash() {}
 function initAuth() {
   const byId = id => document.getElementById(id);
   const bind = (id, evt, fn) => { const el = byId(id); if (el) el.addEventListener(evt, fn); };

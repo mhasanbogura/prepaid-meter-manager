@@ -17,9 +17,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
+
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -39,8 +37,6 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends Activity {
     private WebView webView;
-    private FrameLayout splash;
-    private boolean splashHidden = false;
     private static final String TAG = "MeterManager";
     private static final String WEB_URL = "https://mhasanbogura.github.io/prepaid-meter-manager/";
     private static final String PANEL = "https://customer.nesco.gov.bd/pre/panel";
@@ -71,7 +67,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         webView = findViewById(R.id.webView);
-        splash = findViewById(R.id.splash);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -114,22 +109,6 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                if (!splashHidden) {
-                    splashHidden = true;
-                    AlphaAnimation fadeOut = new AlphaAnimation(1.0f, 0.0f);
-                    fadeOut.setDuration(300);
-                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
-                        @Override public void onAnimationStart(Animation a) {}
-                        @Override public void onAnimationRepeat(Animation a) {}
-                        @Override public void onAnimationEnd(Animation a) {
-                            splash.setVisibility(View.GONE);
-                            setStatusBarColorDirect("light".equals(
-                                getSharedPreferences("MeterManager", MODE_PRIVATE).getString("theme", "light"))
-                                ? "#e8ebf0" : "#1a1f2a");
-                        }
-                    });
-                    splash.startAnimation(fadeOut);
-                }
                 injectOverrides();
                 view.evaluateJavascript(
                     "(function(){var t=document.querySelector('meta[name=theme-color]');return t?t.content:'light'})()",
