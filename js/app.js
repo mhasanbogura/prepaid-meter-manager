@@ -1562,18 +1562,16 @@ function renderSettings() {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
             <div>
               <div style="font-weight:600">${esc(t('settings.device_theme'))}</div>
-              <div class="hint" style="margin:0">${esc(t('settings.device_theme_hint'))}</div>
             </div>
           </div>
           <label class="toggle"><input type="checkbox" id="settDeviceTheme" ${state.settings.theme === 'system' ? 'checked' : ''}><span class="toggle-slider"></span></label>
         </div>
 
-        <div class="row" style="justify-content:space-between;gap:12px">
+        <div class="row" style="justify-content:space-between;gap:12px;border-bottom:0">
           <div style="display:flex;align-items:center;gap:12px;flex:1">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:.6"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/></svg>
             <div>
               <div style="font-weight:600">${esc(t('settings.oled_theme'))}</div>
-              <div class="hint" style="margin:0">${esc(t('settings.oled_theme_hint'))}</div>
             </div>
           </div>
           <label class="toggle"><input type="checkbox" id="settDarkTheme" ${state.settings.theme === 'oled' ? 'checked' : ''}><span class="toggle-slider"></span></label>
@@ -1659,7 +1657,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.25'} (build ${'520'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.26'} (build ${'523'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
@@ -1718,8 +1716,9 @@ window._settingsDeleteAll = function() {
 window._settingsAbout = async function(el) {
   const span = el.querySelector('span');
   if (span) span.textContent = state.settings.lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...';
-  let md = localStorage.getItem('cached_about_md');
-  if (!md) md = await driveFetchCached('cached_about_md', 'Meter Manager_com.mahmuduls.metermanager.md');
+  let md = await driveFetchMdByName('Meter Manager_com.mahmuduls.metermanager.md');
+  if (!md) md = localStorage.getItem('cached_about_md');
+  if (md) localStorage.setItem('cached_about_md', md);
   if (span) span.textContent = t('settings.about');
   if (!md) md = '## Overview\n\nMeter Manager is a web-based electricity meter management app that helps users monitor and track their DESCO and NESCO prepaid electricity meters. It provides live meter information, usage statistics, average daily costs, and recharge history in one convenient place.\n\n## Features\n\n- Check live prepaid meter balance\n- View meter information\n- Monitor average electricity cost per day\n- View total electricity usage for the current month\n- Compare usage with the previous month\n- Track daily electricity consumption\n- Track monthly electricity consumption\n- View recharge history\n- Monitor electricity usage trends\n- Simple and convenient web-based interface\n\n## Best for\n\nDESCO and NESCO prepaid electricity meter users who want to conveniently check their live balance, monitor daily and monthly electricity consumption, track average daily costs, compare usage, and review recharge history from one place.';
   let html = '<div style="text-align:center;margin-bottom:8px"><img src="icons/icon-512.png" class="about-logo" style="width:64px;height:64px;border-radius:16px"><div style="font-weight:700;font-size:15px;margin-top:2px">Meter Manager</div></div>';
