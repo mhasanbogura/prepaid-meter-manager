@@ -572,8 +572,12 @@ async function refreshAllMeters() {
 function openDialog(title, bodyHtml, actions = []) {
   $('#dlgTitle').textContent = title;
   $('#dlgBody').innerHTML = bodyHtml;
-  $('#dlgActions').innerHTML = actions.map(a =>
-    `<button class="btn ${a.cls || 'secondary'}" data-act="${a.key}">${esc(a.label)}</button>`).join('');
+  $('#dlgActions').innerHTML = actions.map(a => {
+    let extra = '';
+    if (a.cls === '' || a.cls === 'primary') extra = 'primary-action';
+    else if (a.cls === 'danger') extra = 'danger-action';
+    return `<button class="btn ${extra}" data-act="${a.key}">${esc(a.label)}</button>`;
+  }).join('');
   $('#dlg').hidden = false;
   $('#dlgActions').onclick = ev => {
     const btn = ev.target.closest('[data-act]'); if (!btn) return;
@@ -1655,7 +1659,7 @@ function renderSettings() {
     </div>
 
     <div style="text-align:center;margin-top:40px;padding:16px 0;border-top:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.24'} (build ${'517'})</span>
+      <span style="font-size:11px;color:var(--text-2);font-family:serif;letter-spacing:0.5px">Version ${'1.2.25'} (build ${'520'})</span>
     </div>`;
 
   $('#settDeviceTheme').onchange = (e) => {
